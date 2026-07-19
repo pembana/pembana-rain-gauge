@@ -1,0 +1,17 @@
+package com.pembana.raingauge.station;
+
+public enum RainfallCapability {
+
+	SUPPORTED_ACCUMULATOR,
+
+	SUPPORTED_INTERVAL_PRECIPITATION,
+
+	PRECIPITATION_TYPE_UNKNOWN,
+
+	NO_PRECIPITATION_VARIABLE,
+
+	TEMPORARILY_SILENT,
+
+	UNSUPPORTED
+
+}

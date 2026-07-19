@@ -1,0 +1,13 @@
+gg:
+  jte:
+    development-mode: false
+    use-precompiled-templates: true
+
+hawaii:
+  rainfall:
+    administrator:
+      username: ${ADMIN_USERNAME}
+      password: ${ADMIN_PASSWORD}
+
+server:
+  forward-headers-strategy: framework

@@ -1,0 +1,41 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "WIHH1",
+      "properties": {
+        "elevation": 470.33478,
+        "sname": "Kailua-Kona 3SE - Waiaha",
+        "time_domain": "(2012-Now)",
+        "archive_begin": "2012-03-20",
+        "archive_end": null,
+        "state": "HI",
+        "country": "US",
+        "climate_site": "HI6198",
+        "wfo": "HFO",
+        "tzname": "Pacific/Honolulu",
+        "county": "Hawaii in Hawaii",
+        "sid": "WIHH1",
+        "network": "HI_DCP",
+        "online": true,
+        "attributes": { "": "" }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-155.9489, 19.6333]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "TESTH1",
+      "properties": {
+        "sname": "Station with optional metadata absent",
+        "sid": "TESTH1",
+        "network": "HI_DCP",
+        "online": false
+      },
+      "geometry": null
+    }
+  ]
+}

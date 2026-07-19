@@ -1,0 +1,17 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    { "type": "Feature", "properties": { "sid": "BAD" } },
+    { "type": "Feature", "properties": "not-an-object" },
+    {
+      "type": "Feature",
+      "properties": {
+        "sid": "GOODH1",
+        "sname": "Usable station",
+        "network": "HI_DCP",
+        "online": true
+      },
+      "geometry": { "type": "Point", "coordinates": [-157.8, 21.3] }
+    }
+  ]
+}

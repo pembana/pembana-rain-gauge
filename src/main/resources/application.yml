@@ -1,0 +1,94 @@
+spring:
+  application:
+    name: pembana-rain-gauge
+  datasource:
+    url: jdbc:h2:mem:pembana-rain-gauge;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    username: sa
+    password:
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+  mvc:
+    problemdetails:
+      enabled: true
+
+server:
+  error:
+    include-message: never
+    include-stacktrace: never
+  compression:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+  health:
+    defaults:
+      enabled: true
+
+gg:
+  jte:
+    development-mode: false
+    use-precompiled-templates: true
+    trim-control-structures: true
+
+hawaii:
+  rainfall:
+    catalog:
+      network: HI_DCP
+      refresh-interval: 24h
+      refresh-initial-delay: 24h
+      fail-startup-when-empty: false
+      startup-enabled: true
+    providers:
+      iem-base-url: https://mesonet.agron.iastate.edu
+      hads-base-url: https://mesonet.agron.iastate.edu
+      connect-timeout: 5s
+      read-timeout: 30s
+      retries: 2
+      retry-initial-backoff: 200ms
+      maximum-payload-bytes: 5000000
+      user-agent: Pembana-Rain-Gauge/0.1 (+https://github.com/pembana/pembana-rain-gauge)
+    cache:
+      observations: 5m
+      historical-observations: 24h
+      stale-observations: 7d
+      dashboard: 2m
+      station-variables: 6h
+      daily-summaries: 6h
+    query:
+      maximum-range: 366d
+      baseline-lookback: 6h
+    dashboard:
+      default-station: WIHH1
+      default-period: 28d
+      default-unit: imperial
+    reset:
+      near-zero-threshold: 0.05
+      rollover-maximum: 100.00
+      suspected-outlier-increment: 5.00
+    administrator:
+      username: ${ADMIN_USERNAME:admin}
+      password: ${ADMIN_PASSWORD:{noop}change-me}
+    station-overrides:
+      WIHH1:
+        alias: HI82
+        preferred-name: Waiaha
+        island: Hawaiʻi
+        region: North Kona
+        enabled: true
+        featured: true
+        precipitation-key: PCIRG
+        note: Waiaha station near Kailua-Kona; NOAA metadata reports 15-minute PCIRG samples

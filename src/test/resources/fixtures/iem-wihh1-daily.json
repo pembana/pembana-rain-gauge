@@ -1,0 +1,14 @@
+{
+  "schema": {
+    "fields": [
+      { "name": "station", "type": "string" },
+      { "name": "date", "type": "string" },
+      { "name": "precip", "type": "number" },
+      { "name": "precip_est", "type": "boolean" }
+    ]
+  },
+  "data": [
+    { "station": "WIHH1", "date": "2026-07-01", "precip": 0.01, "precip_est": false },
+    { "station": "WIHH1", "date": "2026-07-02", "precip": null, "precip_est": false }
+  ]
+}

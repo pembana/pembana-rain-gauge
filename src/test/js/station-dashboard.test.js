@@ -1,0 +1,50 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+
+import {
+  buildDashboardUrl,
+  historyUrl,
+  isCurrentRequest,
+  qualityPresentation,
+  requiredDashboardFields
+} from '../../main/resources/static/js/station-dashboard.js';
+
+test('dashboard URL encodes path and query values', () => {
+  assert.equal(
+    buildDashboardUrl('WI HH1', 'custom 7d', 'imperial/US'),
+    '/api/stations/WI%20HH1/dashboard?period=custom%207d&unit=imperial%2FUS'
+  );
+});
+
+test('history URL preserves the current dashboard selection', () => {
+  assert.equal(
+    historyUrl('WIHH1', '28d', 'metric'),
+    '/?station=WIHH1&period=28d&unit=metric'
+  );
+});
+
+test('dashboard response validation requires every top-level section', () => {
+  const response = {
+    station: {},
+    selection: {},
+    summary: {},
+    quality: {},
+    dailyRainfall: [],
+    charts: {},
+    source: {}
+  };
+
+  assert.equal(requiredDashboardFields(response), true);
+  assert.equal(requiredDashboardFields({ ...response, quality: null }), false);
+  assert.equal(requiredDashboardFields(null), false);
+});
+
+test('only the newest asynchronous request can update the dashboard', () => {
+  assert.equal(isCurrentRequest(4, 4), true);
+  assert.equal(isCurrentRequest(3, 4), false);
+});
+
+test('quality presentation safely falls back for unknown states', () => {
+  assert.deepEqual(qualityPresentation('COMPLETE'), ['Complete', 'bg-green-lt text-green']);
+  assert.deepEqual(qualityPresentation('NOT_A_STATUS'), ['Unavailable', 'bg-secondary-lt text-secondary']);
+});
