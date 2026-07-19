@@ -1,6 +1,7 @@
 package com.pembana.raingauge;
 
 import com.pembana.raingauge.config.RainfallProperties;
+import com.pembana.raingauge.config.RequiredAdministratorPropertiesInitializer;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -15,7 +16,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class PembanaRainGaugeApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(PembanaRainGaugeApplication.class, args);
+		SpringApplication application = new SpringApplication(PembanaRainGaugeApplication.class);
+		application.addInitializers(new RequiredAdministratorPropertiesInitializer());
+		application.run(args);
 	}
 
 }
