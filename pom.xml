@@ -30,7 +30,7 @@
 		<jte.version>3.2.4</jte.version>
 		<testcontainers.version>1.21.4</testcontainers.version>
 		<maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
-		<exec-maven-plugin.version>3.5.0</exec-maven-plugin.version>
+		<exec-maven-plugin.version>3.6.3</exec-maven-plugin.version>
 	</properties>
 
 	<dependencies>
