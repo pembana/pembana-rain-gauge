@@ -1,0 +1,13 @@
+.git
+.github
+.idea
+.vscode
+.kamal
+config
+target
+node_modules
+.env
+.env.*
+*.iml
+*.log
+.DS_Store

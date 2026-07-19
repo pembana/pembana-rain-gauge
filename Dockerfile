@@ -1,4 +1,5 @@
 FROM eclipse-temurin:21-jdk-alpine AS build
+RUN apk add --no-cache nodejs
 WORKDIR /workspace
 COPY . .
 RUN ./mvnw --batch-mode --no-transfer-progress verify
@@ -8,5 +9,6 @@ RUN addgroup -S pembana && adduser -S pembana -G pembana
 USER pembana
 WORKDIR /app
 COPY --from=build /workspace/target/pembana-rain-gauge-*.jar app.jar
+ENV SPRING_PROFILES_ACTIVE=prod
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "/app/app.jar", "--spring.profiles.active=prod"]
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

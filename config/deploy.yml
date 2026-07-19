@@ -1,0 +1,31 @@
+service: pembana-rain-gauge
+image: pembana/pembana-rain-gauge
+minimum_version: 2.12.0
+deploy_timeout: 120
+
+servers:
+  web:
+    hosts:
+      - 46.224.62.221
+proxy:
+  app_port: 8080
+  forward_headers: true
+  healthcheck:
+    path: /actuator/health
+    interval: 5
+    timeout: 10
+
+registry:
+  server: ghcr.io
+  username:
+    - KAMAL_REGISTRY_USERNAME
+  password:
+    - KAMAL_REGISTRY_PASSWORD
+
+builder:
+  arch: amd64
+
+env:
+  secret:
+    - ADMIN_USERNAME
+    - ADMIN_PASSWORD

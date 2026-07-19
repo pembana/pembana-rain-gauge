@@ -12,6 +12,8 @@ jobs:
     env:
       KAMAL_REGISTRY_PASSWORD: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
       KAMAL_REGISTRY_USERNAME: ${{ secrets.KAMAL_REGISTRY_USERNAME }}
+      KAMAL_ADMIN_USERNAME: ${{ secrets.KAMAL_ADMIN_USERNAME }}
+      KAMAL_ADMIN_PASSWORD: ${{ secrets.KAMAL_ADMIN_PASSWORD }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -24,6 +26,6 @@ jobs:
           ruby-version: 3.4.5
       - name: Install dependencies
         run: |
-          gem install kamal -v 2.7.0
+          gem install kamal -v 2.12.0
       - name: Run KAMAL command
         run: ${{ github.event.inputs.command }}
