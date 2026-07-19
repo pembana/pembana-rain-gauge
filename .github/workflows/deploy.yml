@@ -1,0 +1,36 @@
+name: KAMAL Deploy
+
+on:
+  workflow_dispatch:
+jobs:
+  Command:
+    runs-on: ubuntu-latest
+    env:
+      KAMAL_REGISTRY_PASSWORD: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
+      KAMAL_REGISTRY_USERNAME: ${{ secrets.KAMAL_REGISTRY_USERNAME }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 3.4.5
+      - name: Install dependencies
+        run: |
+          gem install kamal -v 2.7.0
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'liberica'
+          cache: maven
+      - name: Build with Maven
+        run: mvn -B --no-transfer-progress package --file pom.xml
+      - name: Run KAMAL command
+        run: kamal deploy
