@@ -17,6 +17,8 @@ This file tracks completed implementation work and remaining follow-ups.
 - [x] Configure Kamal-managed Let's Encrypt HTTPS for Cloudflare Full (strict) deployment.
 - [x] Add canonical, Open Graph, and Twitter card metadata with a branded social image.
 - [x] Separate chart y-axis unit labels from chart titles.
+- [x] Prevent the decorative page background from repeating on long pages.
+- [x] Calculate partial rainfall totals from the first in-range observation when the starting accumulator baseline is unavailable.
 
 ## Follow-ups
 

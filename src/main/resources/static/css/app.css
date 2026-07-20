@@ -12,6 +12,8 @@ body {
   background:
     radial-gradient(circle at 85% 0%, rgba(41, 182, 217, 0.12), transparent 32rem),
     var(--tblr-body-bg);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
 .app-navbar {
