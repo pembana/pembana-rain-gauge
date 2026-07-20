@@ -42,10 +42,18 @@ public class RainfallAccumulator {
 		warnings.addAll(deduplicated.warnings());
 		List<PrecipitationObservation> observations = deduplicated.observations();
 		PrecipitationObservation baseline = findBaseline(observations, from);
+		boolean provisionalBaseline = false;
 		if (baseline == null) {
-			warnings.add("No valid accumulator baseline was available at or before the requested start");
-			return unavailable(from, to, calculatedAt, batch, unit, cadence, warnings,
-					deduplicated.conflicts());
+			baseline = findFirstValidInWindow(observations, from, to);
+			if (baseline == null) {
+				warnings.add("No valid accumulator observations were available in the requested range");
+				return unavailable(from, to, calculatedAt, batch, unit, cadence, warnings,
+						deduplicated.conflicts());
+			}
+			provisionalBaseline = true;
+			warnings.add("No valid accumulator baseline was available at or before the requested "
+					+ "start; the total begins at " + baseline.validAt()
+					+ " and may exclude earlier rainfall");
 		}
 
 		BigDecimal total = BigDecimal.ZERO;
@@ -121,7 +129,7 @@ public class RainfallAccumulator {
 		RainfallResultStatus status;
 		if (deduplicated.conflicts() > 0) {
 			status = RainfallResultStatus.CONFLICTING;
-		} else if (unresolvedResets > 0 || materialGap || outlier) {
+		} else if (provisionalBaseline || unresolvedResets > 0 || materialGap || outlier) {
 			status = RainfallResultStatus.PARTIAL;
 		} else if (batch.staleCache() || stale) {
 			status = RainfallResultStatus.STALE;
@@ -133,7 +141,8 @@ public class RainfallAccumulator {
 				batch.warnings().size(), sourceAge, batch.staleCache());
 		return new RainfallResult(new RainfallAmount(total), unit, "in",
 				unit == RainfallUnit.IMPERIAL ? 2 : 1, new BigDecimal("0.01"), from, to,
-				from, last, last, calculatedAt, status, warnings, quality, increments,
+				provisionalBaseline ? baseline.validAt() : from, last, last, calculatedAt, status,
+				warnings, quality, increments,
 				batch.provider(), batch.fetchedAt());
 	}
 
@@ -196,6 +205,18 @@ public class RainfallAccumulator {
 			}
 		}
 		return baseline;
+	}
+
+	private @Nullable PrecipitationObservation findFirstValidInWindow(
+			List<PrecipitationObservation> observations, Instant from, Instant to) {
+		for (PrecipitationObservation observation : observations) {
+			if (!observation.validAt().isBefore(from)
+					&& observation.validAt().isBefore(to)
+					&& observation.quality() == ObservationQuality.VALID) {
+				return observation;
+			}
+		}
+		return null;
 	}
 
 	private @Nullable PrecipitationObservation nextValid(

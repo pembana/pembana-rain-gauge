@@ -124,11 +124,25 @@ class RainfallAccumulatorTests {
 	}
 
 	@Test
-	void missingBaselineMakesResultUnavailable() {
+	void missingBaselineUsesFirstValidObservationAndMakesResultPartial() {
 		List<PrecipitationObservation> observations = List.of(
 				observation(1, "3.02", 0), observation(2, "3.05", 1));
 
 		RainfallResult result = calculate(observations, 3);
+
+		assertThat(result.status()).isEqualTo(RainfallResultStatus.PARTIAL);
+		assertThat(result.amount().inches()).isEqualByComparingTo("0.03");
+		assertThat(result.coveredStart()).isEqualTo(START.plus(Duration.ofHours(1)));
+		assertThat(result.warnings()).anyMatch((warning) -> warning.contains("may exclude earlier"));
+	}
+
+	@Test
+	void noValidObservationInRangeMakesResultUnavailable() {
+		PrecipitationObservation malformed = new PrecipitationObservation("WIHH1", START, null,
+				"PCIRG", "PCIRG", new BigDecimal("1.00"), ObservationQuality.MALFORMED_QUALIFIER,
+				"???", null, "in", 0);
+
+		RainfallResult result = calculate(List.of(malformed), 2);
 
 		assertThat(result.status()).isEqualTo(RainfallResultStatus.UNAVAILABLE);
 		assertThat(result.amount()).isNull();
@@ -153,13 +167,17 @@ class RainfallAccumulatorTests {
 	}
 
 	@Test
-	void malformedQualifierCannotServeAsBaseline() {
+	void malformedQualifierCannotServeAsBaselineButLaterValidObservationCan() {
 		PrecipitationObservation malformed = new PrecipitationObservation("WIHH1", START, null,
 				"PCIRG", "PCIRG", new BigDecimal("1.00"), ObservationQuality.MALFORMED_QUALIFIER,
 				"???", null, "in", 0);
 		List<PrecipitationObservation> observations = List.of(malformed, observation(1, "1.02", 1));
 
-		assertThat(calculate(observations, 2).status()).isEqualTo(RainfallResultStatus.UNAVAILABLE);
+		RainfallResult result = calculate(observations, 2);
+
+		assertThat(result.status()).isEqualTo(RainfallResultStatus.PARTIAL);
+		assertThat(result.amount().inches()).isZero();
+		assertThat(result.coveredStart()).isEqualTo(START.plus(Duration.ofHours(1)));
 	}
 
 	@Test
