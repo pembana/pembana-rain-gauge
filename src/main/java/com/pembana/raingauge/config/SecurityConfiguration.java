@@ -40,7 +40,7 @@ public class SecurityConfiguration {
 						"/api/stations/**", "/api/compare", "/actuator/health")
 				.permitAll()
 				.requestMatchers("/css/**", "/js/**", "/vendor/**", "/favicon.svg",
-						"/favicon.ico", "/error")
+						"/favicon.ico", "/social-image.png", "/error")
 				.permitAll()
 				.anyRequest().denyAll());
 		configureHeaders(http);

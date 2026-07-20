@@ -1,13 +1,16 @@
 @import com.pembana.raingauge.dashboard.ComparisonView
 @import com.pembana.raingauge.dashboard.ComparisonResponse
 @import com.pembana.raingauge.station.StationResponse
+@import com.pembana.raingauge.support.PageMetadata
 
 @param ComparisonView view
+@param PageMetadata pageMetadata
 
 @template.layout.page(
   title = "Compare stations — Pembana Rain Gauge",
   active = "compare",
   scriptModule = "/js/comparison.js",
+  pageMetadata = pageMetadata,
   content = @`
     <div class="page-header"><div class="container-xl py-4"><div class="page-pretitle">Common-period analysis</div><h1 class="page-title">Compare rainfall stations</h1><p class="text-secondary mb-0">Nearby stations can experience different microclimates; comparison does not make them interchangeable.</p></div></div>
     <div class="page-body"><div class="container-xl">

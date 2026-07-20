@@ -78,6 +78,8 @@ hawaii:
       default-station: WIHH1
       default-period: 28d
       default-unit: imperial
+    site:
+      base-url: ${RAINGAUGE_PUBLIC_BASE_URL:http://localhost:8080}
     station-map:
       tile-url: https://tile.openstreetmap.org/{z}/{x}/{y}.png
       attribution-label: OpenStreetMap

@@ -29,6 +29,8 @@ builder:
   arch: amd64
 
 env:
+  clear:
+    RAINGAUGE_PUBLIC_BASE_URL: https://<%= ENV.fetch("KAMAL_PROXY_HOST") %>
   secret:
     - RAINGAUGE_ADMIN_USERNAME
     - RAINGAUGE_ADMIN_PASSWORD

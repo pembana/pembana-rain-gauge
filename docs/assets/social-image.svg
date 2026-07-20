@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#071b29"/>
+      <stop offset="1" stop-color="#0b506e"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.82" cy="0.12" r="0.78">
+      <stop offset="0" stop-color="#29b6d9" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#29b6d9" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#background)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <circle cx="1050" cy="530" r="280" fill="#0f9f8f" opacity="0.08"/>
+  <g transform="translate(112 151) scale(5.125)">
+    <rect width="64" height="64" rx="14" fill="#1677a3"/>
+    <path d="M32 9C22 23 15 31 15 42a17 17 0 0 0 34 0C49 31 42 23 32 9Z" fill="#fff"/>
+    <path d="M23 43c2 6 6 9 12 9" fill="none" stroke="#0f9f8f" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <text x="500" y="280" fill="#fff" font-size="88" font-weight="700" letter-spacing="-3">Pembana</text>
+    <text x="502" y="354" fill="#77d3f3" font-size="46" font-weight="600" letter-spacing="7" textLength="362.227" lengthAdjust="spacing">RAIN GAUGE</text>
+    <text x="505" y="425" fill="#d5e7ee" font-size="29" font-weight="400">Hawaiʻi rainfall from native station observations</text>
+  </g>
+</svg>

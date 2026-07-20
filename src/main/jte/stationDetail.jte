@@ -1,11 +1,14 @@
 @import com.pembana.raingauge.station.StationDetailView
+@import com.pembana.raingauge.support.PageMetadata
 
 @param StationDetailView view
+@param PageMetadata pageMetadata
 
 @template.layout.page(
   title = view.station().displayName() + " — Pembana Rain Gauge",
   active = "stations",
   scriptModule = "/js/station-dashboard.js",
+  pageMetadata = pageMetadata,
   content = @`
     <div class="page-header"><div class="container-xl py-4">
       <div class="page-pretitle">Station ${view.station().stationId()} · ${view.station().network()}</div>

@@ -1,11 +1,14 @@
 @import com.pembana.raingauge.dashboard.AboutDataView
+@import com.pembana.raingauge.support.PageMetadata
 
 @param AboutDataView view
+@param PageMetadata pageMetadata
 
 @template.layout.page(
   title = "About the data — Pembana Rain Gauge",
   active = "about",
   scriptModule = "/js/site.js",
+  pageMetadata = pageMetadata,
   content = @`
     <div class="page-header"><div class="container-xl py-4"><div class="page-pretitle">Methods and provenance</div><h1 class="page-title">About the data</h1><p class="text-secondary mb-0">How Pembana Rain Gauge discovers stations, calculates totals, and communicates uncertainty.</p></div></div>
     <div class="page-body"><div class="container-xl"><div class="row row-cards">

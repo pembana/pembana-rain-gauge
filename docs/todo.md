@@ -15,6 +15,7 @@ This file tracks completed implementation work and remaining follow-ups.
 - [x] Replace the illustrative station map with Leaflet and configurable OpenStreetMap tiles.
 - [x] Allow the configured map-tile host in the browser security policy and make the map modal full-screen on mobile.
 - [x] Configure Kamal-managed Let's Encrypt HTTPS for Cloudflare Full (strict) deployment.
+- [x] Add canonical, Open Graph, and Twitter card metadata with a branded social image.
 
 ## Follow-ups
 

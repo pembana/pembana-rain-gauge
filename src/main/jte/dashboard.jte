@@ -1,13 +1,16 @@
 @import com.pembana.raingauge.dashboard.DashboardView
 @import com.pembana.raingauge.dashboard.DashboardResponse
 @import com.pembana.raingauge.station.StationResponse
+@import com.pembana.raingauge.support.PageMetadata
 
 @param DashboardView view
+@param PageMetadata pageMetadata
 
 @template.layout.page(
   title = view.title(),
   active = "dashboard",
   scriptModule = "/js/station-dashboard.js",
+  pageMetadata = pageMetadata,
   content = @`
     <div class="page-header d-print-none">
       <div class="container-xl py-4">

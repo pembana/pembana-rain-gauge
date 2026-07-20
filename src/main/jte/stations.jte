@@ -1,13 +1,16 @@
 @import com.pembana.raingauge.station.StationListView
 @import com.pembana.raingauge.station.StationResponse
 @import com.pembana.raingauge.station.RainfallCapability
+@import com.pembana.raingauge.support.PageMetadata
 
 @param StationListView view
+@param PageMetadata pageMetadata
 
 @template.layout.page(
   title = "Weather stations — Pembana Rain Gauge",
   active = "stations",
   scriptModule = "/js/site.js",
+  pageMetadata = pageMetadata,
   content = @`
     <div class="page-header"><div class="container-xl py-4">
       <div class="page-pretitle">HI_DCP catalog</div>

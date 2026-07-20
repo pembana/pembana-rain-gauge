@@ -45,7 +45,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = {
 		"hawaii.rainfall.catalog.startup-enabled=false",
 		"hawaii.rainfall.administrator.username=admin",
-		"hawaii.rainfall.administrator.password={noop}change-me"
+		"hawaii.rainfall.administrator.password={noop}change-me",
+		"hawaii.rainfall.site.base-url=https://rain.example.test"
 })
 class DashboardMvcTests {
 
@@ -101,6 +102,15 @@ class DashboardMvcTests {
 				.andExpect(content().string(containsString("Pembana")))
 				.andExpect(content().string(containsString("Waiaha (HI82)")))
 				.andExpect(content().string(containsString("method=\"get\"")))
+				.andExpect(content().string(containsString(
+						"<link rel=\"canonical\" href=\"https://rain.example.test/\">")))
+				.andExpect(content().string(containsString(
+						"<meta property=\"og:type\" content=\"website\">")))
+				.andExpect(content().string(containsString(
+						"<meta property=\"og:image\" "
+						+ "content=\"https://rain.example.test/social-image.png\">")))
+				.andExpect(content().string(containsString(
+						"<meta name=\"twitter:card\" content=\"summary_large_image\">")))
 				.andExpect(content().string(containsString("id=\"station-map-modal\"")))
 				.andExpect(content().string(containsString("data-station-map-pin")))
 				.andExpect(content().string(containsString("data-latitude=\"19.640000\"")))
@@ -115,6 +125,10 @@ class DashboardMvcTests {
 
 	@Test
 	void browserFallbackFaviconDoesNotTriggerBasicAuthentication() throws Exception {
+		this.mockMvc.perform(get("/social-image.png"))
+				.andExpect(status().isOk())
+				.andExpect(content().contentType("image/png"))
+				.andExpect(header().doesNotExist("WWW-Authenticate"));
 		this.mockMvc.perform(get("/favicon.ico"))
 				.andExpect(status().isNotFound())
 				.andExpect(header().doesNotExist("WWW-Authenticate"));

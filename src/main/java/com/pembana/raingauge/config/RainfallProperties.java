@@ -1,6 +1,7 @@
 package com.pembana.raingauge.config;
 
 import java.math.BigDecimal;
+import java.net.URI;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -36,6 +37,9 @@ public class RainfallProperties {
 	private final Dashboard dashboard = new Dashboard();
 
 	@Valid
+	private final Site site = new Site();
+
+	@Valid
 	private final StationMap stationMap = new StationMap();
 
 	@Valid
@@ -64,6 +68,10 @@ public class RainfallProperties {
 
 	public Dashboard getDashboard() {
 		return this.dashboard;
+	}
+
+	public Site getSite() {
+		return this.site;
 	}
 
 	public StationMap getStationMap() {
@@ -432,6 +440,21 @@ public class RainfallProperties {
 
 		public void setAttributionUrl(String attributionUrl) {
 			this.attributionUrl = attributionUrl;
+		}
+
+	}
+
+	public static class Site {
+
+		@NotNull
+		private URI baseUrl = URI.create("http://localhost:8080");
+
+		public URI getBaseUrl() {
+			return this.baseUrl;
+		}
+
+		public void setBaseUrl(URI baseUrl) {
+			this.baseUrl = baseUrl;
 		}
 
 	}
