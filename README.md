@@ -1,6 +1,6 @@
 # Pembana Rain Gauge
 
-Pembana Rain Gauge is a Java 21/Spring Boot 4.1 application for exploring near-real-time and
+Pembana Rain Gauge is a Java 26/Spring Boot 4.1 application for exploring near-real-time and
 historical rainfall at Hawaiʻi HADS/DCP stations. **Pembana** is the primary brand; **Rain Gauge**
 describes the product. It calculates totals from native station observations and makes gaps,
 resets, conflicts, stale data, and unavailable data visible instead of presenting graph estimates
@@ -36,7 +36,7 @@ key is normalized to `PCIRG`. NOAA metadata reports a 60-minute transmission int
 `PCIRG` is an accumulator in inches. For a requested half-open period `[from, to)`, the application:
 
 1. requests an additional baseline lookback and selects the latest valid reading at or before
-   `from`;
+   `from`, or starts a partial total at the first in-range reading when no baseline exists;
 2. sorts readings by valid time and deterministically collapses retransmissions;
 3. subtracts each previous accumulator from the next one;
 4. adds nonnegative deltas whose timestamp falls inside the requested period;
@@ -82,7 +82,7 @@ rainfall calculations stay outside controllers and templates.
 
 ## Running locally
 
-Requirements: Java 21. Docker is optional unless running PostgreSQL integration tests or the
+Requirements: Java 26. Docker is optional unless running PostgreSQL integration tests or the
 PostgreSQL profile.
 
 ```bash

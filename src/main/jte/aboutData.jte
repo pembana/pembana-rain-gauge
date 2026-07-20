@@ -20,7 +20,7 @@
         <h2>Time and precision</h2><p>Calendar windows use <code>Pacific/Honolulu</code> and half-open <code>[from, to)</code> boundaries. “Previous 28 days” is exactly 672 hours. Calculations use decimal arithmetic. Inches are displayed to 0.01 in and metric values to 0.1 mm; 0.01 in equals 0.254 mm, so metric formatting does not increase sensor resolution.</p>
         <h2>Caching and provisional data</h2><p>Successful observation responses are cached briefly, with longer caching for immutable historical ranges. Provider errors are not cached as valid empty results. A failed live request can use an explicitly marked stale cached response. NOAA/NWS and IEM observations are provisional and can be corrected.</p>
       </div></article></div>
-      <div class="col-lg-4"><article class="card"><div class="card-header"><h2 class="card-title">Build information</h2></div><div class="card-body"><dl class="quality-grid"><div><dt>Application</dt><dd>Pembana Rain Gauge</dd></div><div><dt>Version</dt><dd>${view.applicationVersion()}</dd></div><div><dt>Built</dt><dd>${view.buildTimestamp()}</dd></div><div><dt>Runtime</dt><dd>Java 21 · Spring Boot 4.1</dd></div></dl></div></article></div>
+      <div class="col-lg-4"><article class="card"><div class="card-header"><h2 class="card-title">Build information</h2></div><div class="card-body"><dl class="quality-grid"><div><dt>Application</dt><dd>Pembana Rain Gauge</dd></div><div><dt>Version</dt><dd>${view.applicationVersion()}</dd></div><div><dt>Built</dt><dd>${view.buildTimestamp()}</dd></div><div><dt>Runtime</dt><dd>Java 26 · Spring Boot 4.1</dd></div></dl></div></article></div>
     </div></div></div>
   `
 )

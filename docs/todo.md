@@ -19,6 +19,7 @@ This file tracks completed implementation work and remaining follow-ups.
 - [x] Separate chart y-axis unit labels from chart titles.
 - [x] Prevent the decorative page background from repeating on long pages.
 - [x] Calculate partial rainfall totals from the first in-range observation when the starting accumulator baseline is unavailable.
+- [x] Upgrade the build and runtime to Java 26 and explicitly use the G1 garbage collector in production.
 
 ## Follow-ups
 
