@@ -42,7 +42,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 @AutoConfigureMockMvc
-@SpringBootTest(properties = "hawaii.rainfall.catalog.startup-enabled=false")
+@SpringBootTest(properties = {
+		"hawaii.rainfall.catalog.startup-enabled=false",
+		"hawaii.rainfall.administrator.username=admin",
+		"hawaii.rainfall.administrator.password={noop}change-me"
+})
 class DashboardMvcTests {
 
 	@Autowired
