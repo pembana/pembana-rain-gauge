@@ -36,6 +36,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -98,6 +99,16 @@ class DashboardMvcTests {
 				.andExpect(content().string(containsString("method=\"get\"")))
 				.andExpect(content().string(containsString("Provisional data")))
 				.andExpect(content().string(containsString("daily-rainfall-table")));
+	}
+
+	@Test
+	void browserFallbackFaviconDoesNotTriggerBasicAuthentication() throws Exception {
+		this.mockMvc.perform(get("/favicon.ico"))
+				.andExpect(status().isNotFound())
+				.andExpect(header().doesNotExist("WWW-Authenticate"));
+		this.mockMvc.perform(get("/actuator/info"))
+				.andExpect(status().isForbidden())
+				.andExpect(header().doesNotExist("WWW-Authenticate"));
 	}
 
 	@Test
@@ -179,7 +190,9 @@ class DashboardMvcTests {
 	@Test
 	void administratorRefreshRequiresAuthenticationAndCsrf() throws Exception {
 		this.mockMvc.perform(post("/admin/station-catalog/refresh").with(csrf()))
-				.andExpect(status().isUnauthorized());
+				.andExpect(status().isUnauthorized())
+				.andExpect(header().string("WWW-Authenticate",
+						org.hamcrest.Matchers.containsString("Basic")));
 		this.mockMvc.perform(post("/admin/station-catalog/refresh")
 				.with(httpBasic("admin", "change-me")))
 				.andExpect(status().isForbidden());

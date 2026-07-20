@@ -9,6 +9,7 @@ This file tracks completed implementation work and remaining follow-ups.
 - [x] Fail application startup early when the administrator username or password is missing or blank.
 - [x] Filter rainfall-facing station selectors and APIs to confirmed accumulator stations while preserving the complete catalog on the station diagnostics page.
 - [x] Discover and persist unknown station rainfall capabilities in a bounded background refresh so application health checks do not wait for hundreds of provider requests.
+- [x] Restrict HTTP Basic authentication to administrator routes so missing public assets cannot trigger a browser login dialog.
 
 ## Follow-ups
 

@@ -2,6 +2,7 @@ package com.pembana.raingauge.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.User;
@@ -13,23 +14,37 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfiguration {
 
 	@Bean
-	SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+	@Order(1)
+	SecurityFilterChain adminSecurityFilterChain(HttpSecurity http) throws Exception {
+		http.securityMatcher("/admin/**")
+			.authorizeHttpRequests((requests) -> requests.anyRequest().hasRole("ADMIN"))
+			.httpBasic(Customizer.withDefaults());
+		configureHeaders(http);
+		return http.build();
+	}
+
+	@Bean
+	@Order(2)
+	SecurityFilterChain publicSecurityFilterChain(HttpSecurity http) throws Exception {
 		http.authorizeHttpRequests((requests) -> requests
 				.requestMatchers("/", "/stations", "/stations/**", "/compare", "/about-data",
 						"/api/stations/**", "/api/compare", "/actuator/health")
 				.permitAll()
-				.requestMatchers("/css/**", "/js/**", "/vendor/**", "/favicon.svg")
+				.requestMatchers("/css/**", "/js/**", "/vendor/**", "/favicon.svg",
+						"/favicon.ico", "/error")
 				.permitAll()
-				.requestMatchers("/admin/**").hasRole("ADMIN")
-				.anyRequest().denyAll())
-			.httpBasic(Customizer.withDefaults())
-			.headers((headers) -> headers.contentSecurityPolicy(
+				.anyRequest().denyAll());
+		configureHeaders(http);
+		return http.build();
+	}
+
+	private void configureHeaders(HttpSecurity http) throws Exception {
+		http.headers((headers) -> headers.contentSecurityPolicy(
 					(policy) -> policy.policyDirectives(
 							"default-src 'self'; script-src 'self'; style-src 'self'; "
 							+ "img-src 'self' data:; connect-src 'self'; font-src 'self'; "
 							+ "object-src 'none'; base-uri 'self'; "
 							+ "frame-ancestors 'none'")));
-		return http.build();
 	}
 
 	@Bean
