@@ -6,8 +6,8 @@ gg:
 hawaii:
   rainfall:
     administrator:
-      username: ${ADMIN_USERNAME}
-      password: ${ADMIN_PASSWORD}
+      username: ${RAINGAUGE_ADMIN_USERNAME}
+      password: ${RAINGAUGE_ADMIN_PASSWORD}
 
 server:
   forward-headers-strategy: framework

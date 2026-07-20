@@ -27,5 +27,5 @@ builder:
 
 env:
   secret:
-    - ADMIN_USERNAME
-    - ADMIN_PASSWORD
+    - RAINGAUGE_ADMIN_USERNAME
+    - RAINGAUGE_ADMIN_PASSWORD
