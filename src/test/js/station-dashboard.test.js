@@ -5,6 +5,7 @@ import {
   buildDashboardUrl,
   historyUrl,
   isCurrentRequest,
+  stationCoordinates,
   qualityPresentation,
   requiredDashboardFields
 } from '../../main/resources/static/js/station-dashboard.js';
@@ -14,6 +15,13 @@ test('dashboard URL encodes path and query values', () => {
     buildDashboardUrl('WI HH1', 'custom 7d', 'imperial/US'),
     '/api/stations/WI%20HH1/dashboard?period=custom%207d&unit=imperial%2FUS'
   );
+});
+
+test('station coordinates are validated against the Hawaii map bounds', () => {
+  assert.deepEqual(stationCoordinates(19.6, -155.5), [19.6, -155.5]);
+  assert.deepEqual(stationCoordinates('22.08', '-159.5'), [22.08, -159.5]);
+  assert.equal(stationCoordinates(40.7128, -74.006), null);
+  assert.equal(stationCoordinates(null, null), null);
 });
 
 test('history URL preserves the current dashboard selection', () => {

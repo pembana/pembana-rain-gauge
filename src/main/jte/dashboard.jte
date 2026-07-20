@@ -30,7 +30,8 @@
             message = "No local stations are available yet. The provider may be temporarily unavailable; automatic retry remains enabled.")
         @else
           @template.components.stationSelector(stations = view.stations(),
-            selectedStationId = view.selectedStation().stationId(), period = view.period(), unit = view.unit())
+            selectedStationId = view.selectedStation().stationId(), period = view.period(), unit = view.unit(),
+            stationMap = view.stationMap())
         @endif
         <div id="dashboard-error" class="alert alert-danger mt-3 ${view.error() == null ? "d-none" : ""}" role="alert">
           <strong>Could not update rainfall data.</strong>
@@ -143,5 +144,6 @@
         @endif
       </div>
     </div>
+    <script src="/vendor/leaflet/leaflet.js"></script>
   `
 )

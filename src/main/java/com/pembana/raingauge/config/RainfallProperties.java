@@ -36,6 +36,9 @@ public class RainfallProperties {
 	private final Dashboard dashboard = new Dashboard();
 
 	@Valid
+	private final StationMap stationMap = new StationMap();
+
+	@Valid
 	private final Reset reset = new Reset();
 
 	@Valid
@@ -61,6 +64,10 @@ public class RainfallProperties {
 
 	public Dashboard getDashboard() {
 		return this.dashboard;
+	}
+
+	public StationMap getStationMap() {
+		return this.stationMap;
 	}
 
 	public Reset getReset() {
@@ -388,6 +395,43 @@ public class RainfallProperties {
 
 		public void setDefaultUnit(String defaultUnit) {
 			this.defaultUnit = defaultUnit;
+		}
+
+	}
+
+	public static class StationMap {
+
+		@NotBlank
+		private String tileUrl = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+
+		@NotBlank
+		private String attributionLabel = "OpenStreetMap";
+
+		@NotBlank
+		private String attributionUrl = "https://www.openstreetmap.org/copyright";
+
+		public String getTileUrl() {
+			return this.tileUrl;
+		}
+
+		public void setTileUrl(String tileUrl) {
+			this.tileUrl = tileUrl;
+		}
+
+		public String getAttributionLabel() {
+			return this.attributionLabel;
+		}
+
+		public void setAttributionLabel(String attributionLabel) {
+			this.attributionLabel = attributionLabel;
+		}
+
+		public String getAttributionUrl() {
+			return this.attributionUrl;
+		}
+
+		public void setAttributionUrl(String attributionUrl) {
+			this.attributionUrl = attributionUrl;
 		}
 
 	}

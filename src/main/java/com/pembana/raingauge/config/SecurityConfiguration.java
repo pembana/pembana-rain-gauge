@@ -1,5 +1,8 @@
 package com.pembana.raingauge.config;
 
+import java.net.URI;
+import java.util.Locale;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -12,6 +15,12 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration(proxyBeanMethods = false)
 public class SecurityConfiguration {
+
+	private final RainfallProperties properties;
+
+	SecurityConfiguration(RainfallProperties properties) {
+		this.properties = properties;
+	}
 
 	@Bean
 	@Order(1)
@@ -39,12 +48,40 @@ public class SecurityConfiguration {
 	}
 
 	private void configureHeaders(HttpSecurity http) throws Exception {
+		String tileImageSource = stationMapTileImageSource();
 		http.headers((headers) -> headers.contentSecurityPolicy(
 					(policy) -> policy.policyDirectives(
 							"default-src 'self'; script-src 'self'; style-src 'self'; "
-							+ "img-src 'self' data:; connect-src 'self'; font-src 'self'; "
+							+ "img-src 'self' data:" + tileImageSource
+							+ "; connect-src 'self'; font-src 'self'; "
 							+ "object-src 'none'; base-uri 'self'; "
 							+ "frame-ancestors 'none'")));
+	}
+
+	private String stationMapTileImageSource() {
+		String tileUrl = this.properties.getStationMap().getTileUrl();
+		if (tileUrl.startsWith("/")) {
+			return "";
+		}
+		try {
+			URI uri = URI.create(tileUrl.replaceAll("\\{[^}]+}", "0"));
+			String scheme = uri.getScheme();
+			if (scheme == null || uri.getHost() == null
+					|| !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))) {
+				throw new IllegalArgumentException("URL must use HTTP or HTTPS and include a host");
+			}
+			String host = uri.getHost().toLowerCase(Locale.ROOT);
+			if (host.contains(":")) {
+				host = "[" + host + "]";
+			}
+			String port = uri.getPort() == -1 ? "" : ":" + uri.getPort();
+			return " " + scheme.toLowerCase(Locale.ROOT) + "://" + host + port;
+		} catch (IllegalArgumentException ex) {
+			throw new IllegalStateException(
+					"hawaii.rainfall.station-map.tile-url must be a relative "
+					+ "or HTTP(S) URL template",
+					ex);
+		}
 	}
 
 	@Bean

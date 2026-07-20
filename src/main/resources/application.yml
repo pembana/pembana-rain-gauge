@@ -78,6 +78,10 @@ hawaii:
       default-station: WIHH1
       default-period: 28d
       default-unit: imperial
+    station-map:
+      tile-url: https://tile.openstreetmap.org/{z}/{x}/{y}.png
+      attribution-label: OpenStreetMap
+      attribution-url: https://www.openstreetmap.org/copyright
     reset:
       near-zero-threshold: 0.05
       rollover-maximum: 100.00

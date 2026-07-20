@@ -27,6 +27,24 @@ export function historyUrl(stationId, period, unit) {
   return `/?${parameters.toString()}`;
 }
 
+const HAWAII_BOUNDS = Object.freeze({
+  north: 22.35,
+  south: 18.75,
+  west: -160.4,
+  east: -154.5
+});
+
+export function stationCoordinates(latitude, longitude) {
+  const lat = Number(latitude);
+  const lon = Number(longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)
+      || lat < HAWAII_BOUNDS.south || lat > HAWAII_BOUNDS.north
+      || lon < HAWAII_BOUNDS.west || lon > HAWAII_BOUNDS.east) {
+    return null;
+  }
+  return [lat, lon];
+}
+
 export function qualityPresentation(status) {
   const presentations = {
     COMPLETE: ['Complete', 'bg-green-lt text-green'],
@@ -114,6 +132,11 @@ export class StationDashboardController {
     this.unitSelector = root.querySelector('#unit-selector');
     this.region = root.querySelector('#dashboard-region');
     this.error = root.querySelector('#dashboard-error');
+    this.map = root.querySelector('#station-map');
+    this.mapModal = root.querySelector('#station-map-modal');
+    this.mapPins = [...root.querySelectorAll('[data-station-map-pin]')];
+    this.stationMap = null;
+    this.stationMapMarkers = new Map();
     this.requestSequence = 0;
     this.abortController = null;
     this.charts = this.createCharts();
@@ -144,9 +167,123 @@ export class StationDashboardController {
     this.unitSelector?.addEventListener('change', () => {
       this.load(this.stationSelector.value, { push: true });
     });
+    this.connectStationMap();
     window.addEventListener('popstate', () => this.restoreFromLocation());
-    window.addEventListener('resize', () => Object.values(this.charts).forEach((chart) => chart.resize()));
+    window.addEventListener('resize', () => {
+      Object.values(this.charts).forEach((chart) => chart.resize());
+      this.stationMap?.invalidateSize({ pan: false });
+    });
     this.load(this.stationSelector.value, { replace: true });
+  }
+
+  connectStationMap() {
+    if (!this.map || !this.mapModal) return;
+    if (!window.L) {
+      putText(this.map, '[data-map-loading]', 'The interactive map could not be loaded.');
+      return;
+    }
+    this.mapModal.addEventListener('shown.bs.modal', () => {
+      if (!this.stationMap) this.initializeStationMap();
+      this.stationMap?.invalidateSize({ pan: false });
+    });
+  }
+
+  initializeStationMap() {
+    const leaflet = window.L;
+    this.map.querySelector('[data-map-loading]')?.remove();
+    this.stationMap = leaflet.map(this.map, {
+      maxBounds: [[17.5, -162], [23.5, -153]],
+      maxBoundsViscosity: 0.65,
+      minZoom: 5
+    });
+    leaflet.tileLayer(this.map.dataset.tileUrl, {
+      attribution: this.mapAttribution(),
+      maxZoom: 19
+    }).addTo(this.stationMap);
+    leaflet.control.scale({ imperial: true, metric: true, position: 'bottomleft' })
+      .addTo(this.stationMap);
+    for (const pin of this.mapPins) {
+      const coordinates = stationCoordinates(pin.dataset.latitude, pin.dataset.longitude);
+      if (!coordinates) continue;
+      const selected = pin.dataset.stationId === this.stationSelector.value;
+      const marker = leaflet.marker(coordinates, {
+        alt: `Show ${pin.dataset.stationLabel}`,
+        icon: this.stationMapIcon(selected),
+        keyboard: true,
+        riseOnHover: true,
+        title: pin.dataset.stationLabel,
+        zIndexOffset: selected ? 1000 : 0
+      }).addTo(this.stationMap);
+      marker.bindPopup(this.stationMapPopup(pin), { minWidth: 190 });
+      this.stationMapMarkers.set(pin.dataset.stationId, marker);
+    }
+    this.stationMap.fitBounds([
+      [HAWAII_BOUNDS.south, HAWAII_BOUNDS.west],
+      [HAWAII_BOUNDS.north, HAWAII_BOUNDS.east]
+    ], { padding: [24, 24] });
+  }
+
+  stationMapIcon(selected) {
+    const stroke = selected ? '#7f1d1d' : '#c2413b';
+    const fill = selected ? '#fecaca' : '#fee2e2';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" `
+      + `fill="${fill}" stroke="${stroke}" stroke-width="2" stroke-linecap="round" `
+      + 'stroke-linejoin="round"><path d="M12 21c-4-4.35-6-7.35-6-10a6 6 0 1 1 12 0'
+      + 'c0 2.65-2 5.65-6 10z"/><circle cx="12" cy="11" r="2"/></svg>';
+    return window.L.icon({
+      className: `station-leaflet-marker${selected ? ' is-selected' : ''}`,
+      iconAnchor: [14, 38],
+      iconUrl: `data:image/svg+xml,${encodeURIComponent(svg)}`,
+      iconSize: [28, 38],
+      popupAnchor: [0, -34]
+    });
+  }
+
+  stationMapPopup(pin) {
+    const popup = document.createElement('div');
+    popup.className = 'station-map-popup';
+    const name = document.createElement('strong');
+    name.textContent = pin.dataset.stationLabel;
+    const location = document.createElement('span');
+    location.className = 'text-secondary';
+    location.textContent = pin.dataset.stationLocation || 'Hawaiʻi';
+    const button = document.createElement('button');
+    button.className = 'btn btn-primary btn-sm mt-2';
+    button.type = 'button';
+    button.textContent = 'View station';
+    button.addEventListener('click', () => this.selectMapStation(pin.dataset.stationId));
+    popup.append(name, location, button);
+    return popup;
+  }
+
+  mapAttribution() {
+    const link = document.createElement('a');
+    const fallback = 'https://www.openstreetmap.org/copyright';
+    try {
+      const configured = new URL(this.map.dataset.attributionUrl, location.href);
+      link.href = ['http:', 'https:'].includes(configured.protocol) ? configured.href : fallback;
+    } catch {
+      link.href = fallback;
+    }
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = this.map.dataset.attributionLabel || 'OpenStreetMap';
+    return `&copy; ${link.outerHTML} contributors`;
+  }
+
+  selectMapStation(stationId) {
+    this.stationSelector.value = stationId;
+    this.updateStationMapSelection(stationId);
+    this.mapModal.querySelector('.btn-close')?.click();
+    this.load(stationId, { push: true });
+  }
+
+  updateStationMapSelection(stationId) {
+    for (const [candidateId, marker] of this.stationMapMarkers) {
+      const selected = candidateId === stationId;
+      marker.setIcon(this.stationMapIcon(selected));
+      marker.setZIndexOffset(selected ? 1000 : 0);
+    }
   }
 
   async load(stationId, historyMode = {}) {
@@ -218,6 +355,7 @@ export class StationDashboardController {
     this.updateWarnings(dashboard.warnings, dashboard.discrepancies);
     this.updateCharts(dashboard);
     if (this.stationSelector) this.stationSelector.value = station.stationId;
+    this.updateStationMapSelection(station.stationId);
   }
 
   updateDailyTable(days) {

@@ -101,6 +101,14 @@ class DashboardMvcTests {
 				.andExpect(content().string(containsString("Pembana")))
 				.andExpect(content().string(containsString("Waiaha (HI82)")))
 				.andExpect(content().string(containsString("method=\"get\"")))
+				.andExpect(content().string(containsString("id=\"station-map-modal\"")))
+				.andExpect(content().string(containsString("data-station-map-pin")))
+				.andExpect(content().string(containsString("data-latitude=\"19.640000\"")))
+				.andExpect(content().string(containsString("/vendor/leaflet/leaflet.js")))
+				.andExpect(content().string(containsString(
+						"data-tile-url=\"https://tile.openstreetmap.org/{z}/{x}/{y}.png\"")))
+				.andExpect(header().string("Content-Security-Policy", containsString(
+						"img-src 'self' data: https://tile.openstreetmap.org")))
 				.andExpect(content().string(containsString("Provisional data")))
 				.andExpect(content().string(containsString("daily-rainfall-table")));
 	}
@@ -207,7 +215,8 @@ class DashboardMvcTests {
 
 	private Station station(String stationId, String sourceName, boolean enabled) {
 		Station station = new Station("HI_DCP", stationId, sourceName);
-		station.updateSourceMetadata(sourceName, null, null, null, true, null, null, "HI", "US",
+		station.updateSourceMetadata(sourceName, new BigDecimal("19.640000"),
+				new BigDecimal("-155.980000"), null, true, null, null, "HI", "US",
 				"Pacific/Honolulu", "fixture", Instant.now());
 		if (!enabled) {
 			station.applyOverride(new StationOverride(null, null, null, null, false, false,

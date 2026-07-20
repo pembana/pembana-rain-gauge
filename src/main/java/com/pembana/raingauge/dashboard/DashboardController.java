@@ -59,7 +59,10 @@ public class DashboardController {
 						: selected.getDisplayName() + " rainfall — Pembana Rain Gauge",
 				stations.stream().map(StationResponse::from).toList(),
 				selected == null ? null : StationResponse.from(selected), response, periodToken,
-				unitToken, error, stations.isEmpty(), this.providerStatusRegistry.catalog());
+				unitToken, error, stations.isEmpty(), this.providerStatusRegistry.catalog(),
+				new DashboardView.StationMap(this.properties.getStationMap().getTileUrl(),
+						this.properties.getStationMap().getAttributionLabel(),
+						this.properties.getStationMap().getAttributionUrl()));
 		model.addAttribute("view", view);
 		return "dashboard";
 	}

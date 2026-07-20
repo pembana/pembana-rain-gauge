@@ -16,9 +16,13 @@ public record DashboardView(
 		String unit,
 		@Nullable String error,
 		boolean catalogEmpty,
-		ProviderStatusRegistry.ProviderState catalogProvider) {
+		ProviderStatusRegistry.ProviderState catalogProvider,
+		StationMap stationMap) {
 
 	public DashboardView {
 		stations = List.copyOf(stations);
+	}
+
+	public record StationMap(String tileUrl, String attributionLabel, String attributionUrl) {
 	}
 }

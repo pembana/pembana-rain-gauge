@@ -11,6 +11,9 @@ This file tracks completed implementation work and remaining follow-ups.
 - [x] Discover and persist unknown station rainfall capabilities in a bounded background refresh so application health checks do not wait for hundreds of provider requests.
 - [x] Restrict HTTP Basic authentication to administrator routes so missing public assets cannot trigger a browser login dialog.
 - [x] Isolate administrator security tests from locally configured production credentials.
+- [x] Add an accessible Hawaiʻi station-map modal with coordinate-positioned rainfall station pins.
+- [x] Replace the illustrative station map with Leaflet and configurable OpenStreetMap tiles.
+- [x] Allow the configured map-tile host in the browser security policy and make the map modal full-screen on mobile.
 
 ## Follow-ups
 
