@@ -79,13 +79,13 @@ function formatHawaii(timestamp) {
   return `${HAWAII_TIME.format(new Date(timestamp))} HST`;
 }
 
-function chartOption(title, points, type, unit, cumulative = false) {
+export function chartOption(title, points, type, unit, cumulative = false) {
   const color = type === 'bar' ? '#0f9f8f' : '#1677a3';
   return {
     animationDuration: 350,
     backgroundColor: 'transparent',
     title: { text: title, left: 8, textStyle: { fontSize: 14 } },
-    grid: { left: 50, right: 22, top: 48, bottom: 64 },
+    grid: { left: 68, right: 22, top: 48, bottom: 64 },
     tooltip: {
       trigger: 'axis',
       formatter(parameters) {
@@ -108,7 +108,15 @@ function chartOption(title, points, type, unit, cumulative = false) {
         }
       }
     },
-    yAxis: { type: 'value', name: unit, min: 0, scale: !cumulative },
+    yAxis: {
+      type: 'value',
+      name: unit,
+      nameLocation: 'middle',
+      nameGap: 46,
+      nameRotate: 90,
+      min: 0,
+      scale: !cumulative
+    },
     dataZoom: [{ type: 'inside' }, { type: 'slider', height: 18, bottom: 10 }],
     series: [{
       name: title,

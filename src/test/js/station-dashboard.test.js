@@ -3,12 +3,22 @@ import assert from 'node:assert/strict';
 
 import {
   buildDashboardUrl,
+  chartOption,
   historyUrl,
   isCurrentRequest,
   stationCoordinates,
   qualityPresentation,
   requiredDashboardFields
 } from '../../main/resources/static/js/station-dashboard.js';
+
+test('chart unit label is separated from the chart title', () => {
+  const option = chartOption('Daily rainfall', [], 'bar', 'in');
+
+  assert.equal(option.grid.left, 68);
+  assert.equal(option.yAxis.nameLocation, 'middle');
+  assert.equal(option.yAxis.nameGap, 46);
+  assert.equal(option.yAxis.nameRotate, 90);
+});
 
 test('dashboard URL encodes path and query values', () => {
   assert.equal(
