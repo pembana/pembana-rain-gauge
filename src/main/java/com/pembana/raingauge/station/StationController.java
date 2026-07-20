@@ -78,7 +78,7 @@ public class StationController {
 			error = ex.getMessage();
 		}
 		model.addAttribute("view", new StationDetailView(StationResponse.from(station),
-				this.stationService.findPublicStations().stream().map(StationResponse::from).toList(),
+				this.stationService.findRainfallStations().stream().map(StationResponse::from).toList(),
 				dashboard, customResult, from, to, unit, error));
 		return "stationDetail";
 	}

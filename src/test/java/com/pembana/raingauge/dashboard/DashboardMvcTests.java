@@ -10,6 +10,7 @@ import com.pembana.raingauge.observation.ObservationBatch;
 import com.pembana.raingauge.observation.PrecipitationObservation;
 import com.pembana.raingauge.observation.client.HadsObservationClient;
 import com.pembana.raingauge.observation.client.IemDailySummaryClient;
+import com.pembana.raingauge.station.RainfallCapability;
 import com.pembana.raingauge.station.Station;
 import com.pembana.raingauge.station.StationOverride;
 import com.pembana.raingauge.station.StationRepository;
@@ -128,6 +129,31 @@ class DashboardMvcTests {
 		this.mockMvc.perform(get("/api/stations/OFFH1"))
 				.andExpect(status().isNotFound())
 				.andExpect(jsonPath("$.title").value("Station not found"));
+	}
+
+	@Test
+	void intervalOnlyStationIsExcludedFromRainfallChoicesButRemainsDiagnosable()
+			throws Exception {
+		Station intervalOnly = station("HLRH1", "Helemano 11 Reservoir", true);
+		intervalOnly.updateCapability(RainfallCapability.SUPPORTED_INTERVAL_PRECIPITATION,
+				"PPHRZ");
+		this.repository.saveAndFlush(intervalOnly);
+
+		this.mockMvc.perform(get("/"))
+				.andExpect(status().isOk())
+				.andExpect(content().string(org.hamcrest.Matchers.not(containsString("HLRH1"))));
+		this.mockMvc.perform(get("/compare"))
+				.andExpect(status().isOk())
+				.andExpect(content().string(org.hamcrest.Matchers.not(containsString("HLRH1"))));
+		this.mockMvc.perform(get("/api/stations"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$[?(@.stationId == 'HLRH1')]").isEmpty());
+		this.mockMvc.perform(get("/api/stations/HLRH1/dashboard"))
+				.andExpect(status().isUnprocessableEntity())
+				.andExpect(jsonPath("$.title").value("Rainfall data unsupported"));
+		this.mockMvc.perform(get("/stations"))
+				.andExpect(status().isOk())
+				.andExpect(content().string(containsString("HLRH1")));
 	}
 
 	@Test

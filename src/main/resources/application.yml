@@ -50,6 +50,9 @@ hawaii:
       network: HI_DCP
       refresh-interval: 24h
       refresh-initial-delay: 24h
+      capability-refresh-interval: 6h
+      capability-refresh-initial-delay: 6h
+      capability-refresh-concurrency: 8
       fail-startup-when-empty: false
       startup-enabled: true
     providers:

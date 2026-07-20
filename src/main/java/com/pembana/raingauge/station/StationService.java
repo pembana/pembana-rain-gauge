@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.pembana.raingauge.config.RainfallProperties;
+import com.pembana.raingauge.rainfall.UnsupportedRainfallStationException;
 import com.pembana.raingauge.station.client.CatalogStation;
 import com.pembana.raingauge.station.client.IemStationCatalogClient;
 import com.pembana.raingauge.station.client.ProviderException;
@@ -17,6 +18,7 @@ import com.pembana.raingauge.station.client.StationCatalogResult;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -34,15 +36,19 @@ public class StationService {
 
 	private final TransactionTemplate transactionTemplate;
 
+	private final ApplicationEventPublisher eventPublisher;
+
 	private final Clock clock;
 
 	public StationService(StationRepository stationRepository,
 			IemStationCatalogClient stationCatalogClient, RainfallProperties properties,
-			TransactionTemplate transactionTemplate, Clock clock) {
+			TransactionTemplate transactionTemplate, ApplicationEventPublisher eventPublisher,
+			Clock clock) {
 		this.stationRepository = stationRepository;
 		this.stationCatalogClient = stationCatalogClient;
 		this.properties = properties;
 		this.transactionTemplate = transactionTemplate;
+		this.eventPublisher = eventPublisher;
 		this.clock = clock;
 	}
 
@@ -80,6 +86,7 @@ public class StationService {
 		logger.info("Station catalog refreshed added={} updated={} unconfirmed={} rejected={} warnings={}",
 				summary.added(), summary.updated(), summary.unconfirmed(), summary.rejected(),
 				summary.warnings());
+		this.eventPublisher.publishEvent(new StationCatalogRefreshedEvent(summary.refreshedAt()));
 		return summary;
 	}
 
@@ -142,6 +149,11 @@ public class StationService {
 		return this.stationRepository.findAllByEnabledTrueOrderByDisplayNameAsc();
 	}
 
+	public List<Station> findRainfallStations() {
+		return this.stationRepository.findRainfallStations(
+				RainfallCapability.SUPPORTED_ACCUMULATOR);
+	}
+
 	public List<Station> findAllStations() {
 		return this.stationRepository.findAllByOrderByDisplayNameAsc();
 	}
@@ -155,6 +167,15 @@ public class StationService {
 				.orElseThrow(() -> new StationNotFoundException(stationId));
 		if (!station.isEnabled()) {
 			throw new StationNotFoundException(stationId);
+		}
+		return station;
+	}
+
+	public Station requireRainfallStation(String stationId) {
+		Station station = requirePublicStation(stationId);
+		if (station.getRainfallCapability() != RainfallCapability.SUPPORTED_ACCUMULATOR
+				|| station.getPrecipitationKey() == null) {
+			throw new UnsupportedRainfallStationException(stationId);
 		}
 		return station;
 	}

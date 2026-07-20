@@ -17,6 +17,7 @@ import com.pembana.raingauge.station.client.StationCatalogResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.SimpleTransactionStatus;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -39,6 +40,8 @@ class StationServiceTests {
 
 	private RainfallProperties properties;
 
+	private ApplicationEventPublisher eventPublisher;
+
 	private StationService service;
 
 	@BeforeEach
@@ -46,6 +49,7 @@ class StationServiceTests {
 	void setUp() {
 		this.repository = mock(StationRepository.class);
 		this.catalogClient = mock(IemStationCatalogClient.class);
+		this.eventPublisher = mock(ApplicationEventPublisher.class);
 		this.properties = new RainfallProperties();
 		TransactionTemplate transactionTemplate = mock(TransactionTemplate.class);
 		when(transactionTemplate.execute(any())).thenAnswer((invocation) -> {
@@ -53,7 +57,7 @@ class StationServiceTests {
 			return callback.doInTransaction(new SimpleTransactionStatus());
 		});
 		this.service = new StationService(this.repository, this.catalogClient, this.properties,
-				transactionTemplate, Clock.fixed(NOW, ZoneOffset.UTC));
+				transactionTemplate, this.eventPublisher, Clock.fixed(NOW, ZoneOffset.UTC));
 	}
 
 	@Test
@@ -65,6 +69,7 @@ class StationServiceTests {
 		assertThat(this.service.initializeCatalogIfEmpty()).isTrue();
 		verify(this.catalogClient).fetchCompleteCatalog("HI_DCP");
 		verify(this.repository).saveAll(any());
+		verify(this.eventPublisher).publishEvent(any(StationCatalogRefreshedEvent.class));
 	}
 
 	@Test
@@ -132,6 +137,16 @@ class StationServiceTests {
 		assertThat(summary.unconfirmed()).isEqualTo(1);
 		assertThat(existing.getSourceName()).isEqualTo("Kailua-Kona 3SE - Waiaha");
 		assertThat(absent.isCatalogConfirmed()).isFalse();
+	}
+
+	@Test
+	void rainfallStationsReturnsOnlyRepositoryConfirmedAccumulators() {
+		Station supported = new Station("HI_DCP", "WIHH1", "Supported");
+		supported.updateCapability(RainfallCapability.SUPPORTED_ACCUMULATOR, "PCIRG");
+		when(this.repository.findRainfallStations(RainfallCapability.SUPPORTED_ACCUMULATOR))
+				.thenReturn(List.of(supported));
+
+		assertThat(this.service.findRainfallStations()).containsExactly(supported);
 	}
 
 	private StationCatalogResult result(CatalogStation station) {

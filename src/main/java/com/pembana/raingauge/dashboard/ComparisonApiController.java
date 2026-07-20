@@ -32,7 +32,7 @@ public class ComparisonApiController {
 			throw new IllegalArgumentException("At least one station must be selected");
 		}
 		List<Station> stations = stationIds.stream()
-				.map(this.stationService::requirePublicStation)
+				.map(this.stationService::requireRainfallStation)
 				.toList();
 		return this.comparisonService.compare(stations, RainfallWindow.fromToken(period),
 				RainfallUnit.fromToken(unit));

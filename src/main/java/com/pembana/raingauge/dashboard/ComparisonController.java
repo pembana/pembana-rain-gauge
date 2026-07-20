@@ -32,7 +32,7 @@ public class ComparisonController {
 			@Nullable List<String> stationIds,
 			@RequestParam(defaultValue = "28d") String period,
 			@RequestParam(defaultValue = "imperial") String unit, Model model) {
-		List<Station> available = this.stationService.findPublicStations();
+		List<Station> available = this.stationService.findRainfallStations();
 		List<String> selectedIds = stationIds == null ? List.of() : stationIds;
 		ComparisonResponse response = null;
 		String error = null;
@@ -40,7 +40,7 @@ public class ComparisonController {
 			try {
 				List<Station> selected = new ArrayList<>();
 				for (String stationId : selectedIds) {
-					selected.add(this.stationService.requirePublicStation(stationId));
+					selected.add(this.stationService.requireRainfallStation(stationId));
 				}
 				response = this.comparisonService.compare(selected, RainfallWindow.fromToken(period),
 						RainfallUnit.fromToken(unit));

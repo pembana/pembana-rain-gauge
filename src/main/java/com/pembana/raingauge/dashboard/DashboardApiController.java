@@ -35,7 +35,7 @@ public class DashboardApiController {
 			@RequestParam(required = false) @Nullable String period,
 			@RequestParam(required = false) @Nullable String unit) {
 		validateStationId(stationId);
-		Station station = this.stationService.requirePublicStation(stationId);
+		Station station = this.stationService.requireRainfallStation(stationId);
 		RainfallWindow window = RainfallWindow.fromToken(period == null
 				? this.properties.getDashboard().getDefaultPeriod() : period);
 		RainfallUnit rainfallUnit = RainfallUnit.fromToken(unit == null

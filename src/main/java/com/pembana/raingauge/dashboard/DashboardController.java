@@ -39,7 +39,7 @@ public class DashboardController {
 	public String dashboard(@RequestParam(required = false) @Nullable String station,
 			@RequestParam(required = false) @Nullable String period,
 			@RequestParam(required = false) @Nullable String unit, Model model) {
-		List<Station> stations = this.stationService.findPublicStations();
+		List<Station> stations = this.stationService.findRainfallStations();
 		String periodToken = period == null ? this.properties.getDashboard().getDefaultPeriod() : period;
 		String unitToken = unit == null ? this.properties.getDashboard().getDefaultUnit() : unit;
 		RainfallWindow window = RainfallWindow.fromToken(periodToken);

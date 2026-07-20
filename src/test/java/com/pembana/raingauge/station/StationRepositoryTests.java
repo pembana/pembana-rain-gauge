@@ -37,6 +37,11 @@ class StationRepositoryTests {
 				.singleElement()
 				.extracting(Station::getId)
 				.isEqualTo(loaded.getId());
+		assertThat(this.repository.findRainfallStations(
+				RainfallCapability.SUPPORTED_ACCUMULATOR))
+				.singleElement()
+				.extracting(Station::getStationId)
+				.isEqualTo("WIHH1");
 	}
 
 	@Test
@@ -48,6 +53,21 @@ class StationRepositoryTests {
 
 		assertThat(this.repository.findAllByEnabledTrueOrderByDisplayNameAsc()).isEmpty();
 		assertThat(this.repository.findByStationIdIgnoreCase("offh1")).isPresent();
+	}
+
+	@Test
+	void unsupportedRainfallStationIsExcludedFromRainfallSelectorQuery() {
+		Station station = new Station("HI_DCP", "HLRH1", "Interval-only station");
+		station.updateCapability(RainfallCapability.SUPPORTED_INTERVAL_PRECIPITATION, "PPHRZ");
+		this.repository.saveAndFlush(station);
+
+		assertThat(this.repository.findRainfallStations(
+				RainfallCapability.SUPPORTED_ACCUMULATOR))
+				.isEmpty();
+		assertThat(this.repository.findAllByEnabledTrueOrderByDisplayNameAsc())
+				.singleElement()
+				.extracting(Station::getStationId)
+				.isEqualTo("HLRH1");
 	}
 
 }

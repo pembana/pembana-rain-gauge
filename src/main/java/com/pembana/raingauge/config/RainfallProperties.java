@@ -86,6 +86,16 @@ public class RainfallProperties {
 		@NotNull
 		private Duration refreshInitialDelay = Duration.ofHours(24);
 
+		@NotNull
+		private Duration capabilityRefreshInterval = Duration.ofHours(6);
+
+		@NotNull
+		private Duration capabilityRefreshInitialDelay = Duration.ofHours(6);
+
+		@Min(1)
+		@Max(32)
+		private int capabilityRefreshConcurrency = 8;
+
 		private boolean failStartupWhenEmpty;
 
 		private boolean startupEnabled = true;
@@ -112,6 +122,30 @@ public class RainfallProperties {
 
 		public void setRefreshInitialDelay(Duration refreshInitialDelay) {
 			this.refreshInitialDelay = refreshInitialDelay;
+		}
+
+		public Duration getCapabilityRefreshInterval() {
+			return this.capabilityRefreshInterval;
+		}
+
+		public void setCapabilityRefreshInterval(Duration capabilityRefreshInterval) {
+			this.capabilityRefreshInterval = capabilityRefreshInterval;
+		}
+
+		public Duration getCapabilityRefreshInitialDelay() {
+			return this.capabilityRefreshInitialDelay;
+		}
+
+		public void setCapabilityRefreshInitialDelay(Duration capabilityRefreshInitialDelay) {
+			this.capabilityRefreshInitialDelay = capabilityRefreshInitialDelay;
+		}
+
+		public int getCapabilityRefreshConcurrency() {
+			return this.capabilityRefreshConcurrency;
+		}
+
+		public void setCapabilityRefreshConcurrency(int capabilityRefreshConcurrency) {
+			this.capabilityRefreshConcurrency = capabilityRefreshConcurrency;
 		}
 
 		public boolean isFailStartupWhenEmpty() {

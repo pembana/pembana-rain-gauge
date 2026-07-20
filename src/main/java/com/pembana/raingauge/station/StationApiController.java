@@ -19,7 +19,7 @@ public class StationApiController {
 
 	@GetMapping
 	public List<StationResponse> stations() {
-		return this.stationService.findPublicStations().stream().map(StationResponse::from).toList();
+		return this.stationService.findRainfallStations().stream().map(StationResponse::from).toList();
 	}
 
 	@GetMapping("/{stationId}")
