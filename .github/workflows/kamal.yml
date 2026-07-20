@@ -14,6 +14,7 @@ jobs:
       KAMAL_REGISTRY_USERNAME: ${{ secrets.KAMAL_REGISTRY_USERNAME }}
       KAMAL_ADMIN_USERNAME: ${{ secrets.KAMAL_ADMIN_USERNAME }}
       KAMAL_ADMIN_PASSWORD: ${{ secrets.KAMAL_ADMIN_PASSWORD }}
+      KAMAL_PROXY_HOST: ${{ vars.KAMAL_PROXY_HOST }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6

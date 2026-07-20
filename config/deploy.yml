@@ -8,7 +8,10 @@ servers:
     hosts:
       - 46.224.62.221
 proxy:
+  host: <%= ENV.fetch("KAMAL_PROXY_HOST") %>
   app_port: 8080
+  ssl: true
+  ssl_redirect: true
   forward_headers: true
   healthcheck:
     path: /actuator/health

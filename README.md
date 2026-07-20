@@ -204,9 +204,15 @@ docker build -t pembana-rain-gauge .
 ## Deploying with Kamal
 
 The production configuration targets your server IP with Kamal 2.12.0. It publishes the image to
-GitHub Container Registry and serves the application through `kamal-proxy` on HTTP port 80. The
-application currently uses its default in-memory H2 database, so station records are rebuilt after
-each application restart.
+GitHub Container Registry and serves the application through `kamal-proxy` on HTTPS port 443.
+Kamal provisions and renews a Let's Encrypt certificate, and HTTP requests are redirected to HTTPS.
+The application currently uses its default in-memory H2 database, so station records are rebuilt
+after each application restart.
+
+Create a Cloudflare DNS record for the application hostname that points to the server listed in
+`config/deploy.yml`. For the first deployment, keep the record **DNS only** so Kamal can complete the
+Let's Encrypt challenge directly against the origin. After HTTPS is working, change the record to
+**Proxied** and set the zone's SSL/TLS encryption mode to **Full (strict)**.
 
 Install the pinned Kamal release and export the required values before the first deployment:
 
@@ -216,19 +222,21 @@ export KAMAL_REGISTRY_USERNAME='<github-user>'
 export KAMAL_REGISTRY_PASSWORD='<github-token-with-package-access>'
 export KAMAL_ADMIN_USERNAME='<administrator-username>'
 export KAMAL_ADMIN_PASSWORD='<encoded-spring-security-password>'
+export KAMAL_PROXY_HOST='<rainfall.example.com>'
 kamal setup
 ```
 
 `kamal setup` bootstraps Docker and the proxy, builds and pushes
 `ghcr.io/pembana/pembana-rain-gauge`, and deploys the application. Later releases use `kamal deploy`.
 The server must accept SSH key authentication for `root` (Kamal's default SSH user), and inbound TCP
-ports 22 and 80 must be open.
+ports 22, 80, and 443 must be open. Access the deployed application through the configured hostname.
 
-The GitHub Actions deployment and Kamal-command workflows require the same four `KAMAL_*` values
-as repository secrets, plus `SSH_PRIVATE_KEY`. `KAMAL_ADMIN_PASSWORD` must include an encoder prefix
-under Spring Security's delegating password format, for example `{bcrypt}` followed by a bcrypt
-hash. The committed `.kamal/secrets` file contains environment references only; never put raw
-credentials in it.
+The GitHub Actions deployment and Kamal-command workflows require `KAMAL_PROXY_HOST` as a repository
+variable. Add `KAMAL_REGISTRY_USERNAME`, `KAMAL_REGISTRY_PASSWORD`, `KAMAL_ADMIN_USERNAME`,
+`KAMAL_ADMIN_PASSWORD`, and `SSH_PRIVATE_KEY` as repository secrets. `KAMAL_ADMIN_PASSWORD` must
+include an encoder prefix under Spring Security's delegating password format, for example `{bcrypt}`
+followed by a bcrypt hash. The committed `.kamal/secrets` file contains environment references only;
+never put raw credentials in it.
 
 ## Known limitations
 
