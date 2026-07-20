@@ -17,7 +17,7 @@ jobs:
       KAMAL_PROXY_HOST: ${{ vars.KAMAL_PROXY_HOST }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
