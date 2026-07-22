@@ -22,11 +22,11 @@ import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import com.pembana.raingauge.rainfall.RainfallDataQuality;
 import com.pembana.raingauge.rainfall.RainfallResultStatus;
 import com.pembana.raingauge.station.StationResponse;
-
-import org.jspecify.annotations.Nullable;
 
 /**
  * Describes a dashboard response.

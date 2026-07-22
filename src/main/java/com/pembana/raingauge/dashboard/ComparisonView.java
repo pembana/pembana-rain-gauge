@@ -18,9 +18,9 @@ package com.pembana.raingauge.dashboard;
 
 import java.util.List;
 
-import com.pembana.raingauge.station.StationResponse;
-
 import org.jspecify.annotations.Nullable;
+
+import com.pembana.raingauge.station.StationResponse;
 
 /**
  * Describes a comparison view.

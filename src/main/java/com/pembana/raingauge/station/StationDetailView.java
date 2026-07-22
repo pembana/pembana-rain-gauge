@@ -18,10 +18,10 @@ package com.pembana.raingauge.station;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import com.pembana.raingauge.dashboard.DashboardResponse;
 import com.pembana.raingauge.rainfall.RainfallResult;
-
-import org.jspecify.annotations.Nullable;
 
 /**
  * Describes a station detail view.

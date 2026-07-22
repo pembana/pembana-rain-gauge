@@ -21,6 +21,13 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
+
 import com.pembana.raingauge.config.ProviderRestClientFactory;
 import com.pembana.raingauge.config.RainfallProperties;
 import com.pembana.raingauge.observation.HadsObservationParser;
@@ -28,13 +35,6 @@ import com.pembana.raingauge.observation.ObservationBatch;
 import com.pembana.raingauge.observation.ObservationParseResult;
 import com.pembana.raingauge.station.client.ProviderException;
 import com.pembana.raingauge.support.ProviderStatusRegistry;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestClientResponseException;
 
 /**
  * Retrieves HADS observation data from its remote provider.

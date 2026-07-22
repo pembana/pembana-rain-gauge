@@ -22,6 +22,14 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
 import com.pembana.raingauge.observation.ObservationBatch;
 import com.pembana.raingauge.observation.PrecipitationObservation;
 import com.pembana.raingauge.observation.client.HadsObservationClient;
@@ -33,14 +41,6 @@ import com.pembana.raingauge.station.StationRepository;
 import com.pembana.raingauge.station.client.CatalogStation;
 import com.pembana.raingauge.station.client.IemStationCatalogClient;
 import com.pembana.raingauge.station.client.StationCatalogResult;
-
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;

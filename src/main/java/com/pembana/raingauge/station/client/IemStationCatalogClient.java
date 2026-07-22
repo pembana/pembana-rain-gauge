@@ -26,10 +26,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import com.pembana.raingauge.config.ProviderRestClientFactory;
-import com.pembana.raingauge.config.RainfallProperties;
-import com.pembana.raingauge.support.ProviderStatusRegistry;
-
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +35,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
+
+import com.pembana.raingauge.config.ProviderRestClientFactory;
+import com.pembana.raingauge.config.RainfallProperties;
+import com.pembana.raingauge.support.ProviderStatusRegistry;
 
 /**
  * Retrieves IEM station catalog data from its remote provider.

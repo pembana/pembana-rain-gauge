@@ -16,14 +16,14 @@
 
 package com.pembana.raingauge;
 
-import com.pembana.raingauge.config.RainfallProperties;
-import com.pembana.raingauge.config.RequiredAdministratorPropertiesInitializer;
-
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.scheduling.annotation.EnableScheduling;
+
+import com.pembana.raingauge.config.RainfallProperties;
+import com.pembana.raingauge.config.RequiredAdministratorPropertiesInitializer;
 
 /**
  * Bootstraps the Pembana Rain Gauge Spring application.

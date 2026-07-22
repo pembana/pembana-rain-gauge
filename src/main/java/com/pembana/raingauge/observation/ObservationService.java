@@ -23,11 +23,11 @@ import java.util.Map;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import org.springframework.stereotype.Service;
+
 import com.pembana.raingauge.config.RainfallProperties;
 import com.pembana.raingauge.observation.client.HadsObservationClient;
 import com.pembana.raingauge.station.client.ProviderException;
-
-import org.springframework.stereotype.Service;
 
 /**
  * Provides observation operations.

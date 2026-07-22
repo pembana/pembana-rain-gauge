@@ -24,10 +24,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.stereotype.Component;
+
 import com.pembana.raingauge.observation.ObservationQuality;
 import com.pembana.raingauge.observation.PrecipitationObservation;
-
-import org.springframework.stereotype.Component;
 
 /**
  * Provides observation cadence detector behavior.

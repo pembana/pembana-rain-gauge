@@ -20,13 +20,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 
-import com.pembana.raingauge.config.ProviderRestClientFactory;
-import com.pembana.raingauge.config.RainfallProperties;
-import com.pembana.raingauge.support.ProviderStatusRegistry;
-
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.web.client.RestClient;
+
+import com.pembana.raingauge.config.ProviderRestClientFactory;
+import com.pembana.raingauge.config.RainfallProperties;
+import com.pembana.raingauge.support.ProviderStatusRegistry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;

@@ -18,10 +18,10 @@ package com.pembana.raingauge.station;
 
 import java.util.List;
 
-import com.pembana.raingauge.config.RainfallProperties;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import com.pembana.raingauge.config.RainfallProperties;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;

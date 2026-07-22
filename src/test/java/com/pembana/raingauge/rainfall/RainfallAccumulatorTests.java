@@ -24,12 +24,12 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.Test;
+
 import com.pembana.raingauge.config.RainfallProperties;
 import com.pembana.raingauge.observation.ObservationBatch;
 import com.pembana.raingauge.observation.ObservationQuality;
 import com.pembana.raingauge.observation.PrecipitationObservation;
-
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

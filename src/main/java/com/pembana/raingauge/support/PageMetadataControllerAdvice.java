@@ -17,11 +17,10 @@
 package com.pembana.raingauge.support;
 
 import jakarta.servlet.http.HttpServletRequest;
-
-import com.pembana.raingauge.config.RainfallProperties;
-
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
+
+import com.pembana.raingauge.config.RainfallProperties;
 
 /**
  * Adds canonical page metadata to MVC models.

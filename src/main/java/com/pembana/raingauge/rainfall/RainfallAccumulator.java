@@ -28,13 +28,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.jspecify.annotations.Nullable;
+import org.springframework.stereotype.Component;
+
 import com.pembana.raingauge.config.RainfallProperties;
 import com.pembana.raingauge.observation.ObservationBatch;
 import com.pembana.raingauge.observation.ObservationQuality;
 import com.pembana.raingauge.observation.PrecipitationObservation;
-
-import org.jspecify.annotations.Nullable;
-import org.springframework.stereotype.Component;
 
 /**
  * Provides rainfall accumulator behavior.

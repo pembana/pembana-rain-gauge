@@ -18,10 +18,10 @@ package com.pembana.raingauge.dashboard;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
+
 import com.pembana.raingauge.station.StationResponse;
 import com.pembana.raingauge.support.ProviderStatusRegistry;
-
-import org.jspecify.annotations.Nullable;
 
 /**
  * Describes a dashboard view.

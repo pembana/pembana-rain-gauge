@@ -19,11 +19,11 @@ package com.pembana.raingauge.dashboard;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.stereotype.Service;
+
 import com.pembana.raingauge.rainfall.RainfallUnit;
 import com.pembana.raingauge.rainfall.RainfallWindow;
 import com.pembana.raingauge.station.Station;
-
-import org.springframework.stereotype.Service;
 
 /**
  * Provides comparison operations.

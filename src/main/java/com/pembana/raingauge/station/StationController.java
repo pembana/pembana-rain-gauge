@@ -22,19 +22,19 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 
-import com.pembana.raingauge.dashboard.DashboardResponse;
-import com.pembana.raingauge.dashboard.DashboardService;
-import com.pembana.raingauge.rainfall.RainfallUnit;
-import com.pembana.raingauge.rainfall.RainfallResult;
-import com.pembana.raingauge.rainfall.RainfallService;
-import com.pembana.raingauge.rainfall.RainfallWindow;
-
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import com.pembana.raingauge.dashboard.DashboardResponse;
+import com.pembana.raingauge.dashboard.DashboardService;
+import com.pembana.raingauge.rainfall.RainfallResult;
+import com.pembana.raingauge.rainfall.RainfallService;
+import com.pembana.raingauge.rainfall.RainfallUnit;
+import com.pembana.raingauge.rainfall.RainfallWindow;
 
 /**
  * Handles station HTTP requests.

@@ -17,7 +17,6 @@
 package com.pembana.raingauge.config;
 
 import org.junit.jupiter.api.Test;
-
 import org.springframework.context.ApplicationContextException;
 import org.springframework.mock.env.MockEnvironment;
 

@@ -23,14 +23,14 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.stereotype.Service;
+
 import com.pembana.raingauge.config.RainfallProperties;
 import com.pembana.raingauge.observation.ObservationBatch;
 import com.pembana.raingauge.observation.ObservationService;
 import com.pembana.raingauge.station.RainfallCapability;
 import com.pembana.raingauge.station.RainfallCapabilityService;
 import com.pembana.raingauge.station.Station;
-
-import org.springframework.stereotype.Service;
 
 /**
  * Provides rainfall operations.

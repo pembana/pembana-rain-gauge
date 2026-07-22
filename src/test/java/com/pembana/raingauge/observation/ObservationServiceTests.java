@@ -23,11 +23,11 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 
+import org.junit.jupiter.api.Test;
+
 import com.pembana.raingauge.config.RainfallProperties;
 import com.pembana.raingauge.observation.client.HadsObservationClient;
 import com.pembana.raingauge.station.client.ProviderException;
-
-import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;

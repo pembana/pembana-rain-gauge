@@ -27,19 +27,19 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.web.client.RestClient;
+
 import com.pembana.raingauge.config.ProviderRestClientFactory;
 import com.pembana.raingauge.config.RainfallProperties;
 import com.pembana.raingauge.observation.HadsObservationParser;
 import com.pembana.raingauge.observation.ObservationBatch;
 import com.pembana.raingauge.station.client.ProviderException;
 import com.pembana.raingauge.support.ProviderStatusRegistry;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
-import com.sun.net.httpserver.HttpServer;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.web.client.RestClient;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

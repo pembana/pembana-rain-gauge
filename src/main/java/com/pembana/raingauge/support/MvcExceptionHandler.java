@@ -17,13 +17,12 @@
 package com.pembana.raingauge.support;
 
 import jakarta.servlet.http.HttpServletResponse;
-
-import com.pembana.raingauge.station.StationNotFoundException;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+
+import com.pembana.raingauge.station.StationNotFoundException;
 
 /**
  * Handles MVC exception.

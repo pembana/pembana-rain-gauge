@@ -19,11 +19,11 @@ package com.pembana.raingauge.station;
 import java.util.Comparator;
 import java.util.Set;
 
-import com.pembana.raingauge.station.client.IemStationVariableClient;
-import com.pembana.raingauge.station.client.ProviderException;
-
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
+
+import com.pembana.raingauge.station.client.IemStationVariableClient;
+import com.pembana.raingauge.station.client.ProviderException;
 
 /**
  * Provides rainfall capability operations.
