@@ -97,7 +97,8 @@ public class HadsObservationClient {
 			return new ObservationBatch(parsed.observations(), parsed.warnings(), fetchedAt,
 					java.time.Duration.ZERO, false, false, "IEM HADS archive",
 					parsed.rejectedRows());
-		} catch (RuntimeException ex) {
+		}
+		catch (RuntimeException ex) {
 			this.providerStatusRegistry.observationsFailed(this.clock.instant(), ex.getMessage());
 			throw ex;
 		}
@@ -134,7 +135,8 @@ public class HadsObservationClient {
 					throw new ProviderException("HADS archive response exceeded the payload limit");
 				}
 				return body;
-			} catch (RestClientException ex) {
+			}
+			catch (RestClientException ex) {
 				if (attempt == attempts || !isRetryable(ex)) {
 					throw new ProviderException("Unable to retrieve HADS observations", ex);
 				}
@@ -166,7 +168,8 @@ public class HadsObservationClient {
 		long millis = this.properties.getProviders().getRetryInitialBackoff().toMillis() * multiplier;
 		try {
 			Thread.sleep(millis);
-		} catch (InterruptedException ex) {
+		}
+		catch (InterruptedException ex) {
 			Thread.currentThread().interrupt();
 			throw new ProviderException("Interrupted while retrying HADS observations", ex);
 		}

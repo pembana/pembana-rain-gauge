@@ -71,7 +71,8 @@ public final class RequiredAdministratorPropertiesInitializer
 	private static boolean hasText(Environment environment, String property) {
 		try {
 			return StringUtils.hasText(environment.getProperty(property));
-		} catch (IllegalArgumentException ex) {
+		}
+		catch (IllegalArgumentException ex) {
 			return false;
 		}
 	}

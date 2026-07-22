@@ -145,8 +145,8 @@ public class DashboardService {
 	 */
 	private DashboardResponse.Result view(RainfallResult result) {
 		RainfallAmount amount = result.amount();
-		return new DashboardResponse.Result(amount == null ? null : amount.value(result.unit()),
-				amount == null ? null : amount.inches(), amount == null ? null : amount.millimeters(),
+		return new DashboardResponse.Result((amount != null) ? amount.value(result.unit()) : null,
+				(amount != null) ? amount.inches() : null, (amount != null) ? amount.millimeters() : null,
 				result.displayValue(), result.unit().symbol(), result.status(),
 				result.quality().completenessPercentage(), result.observationCutoff(),
 				result.warnings());
@@ -173,7 +173,8 @@ public class DashboardService {
 			if (inches == null) {
 				daily.add(new DashboardResponse.DailyRainfall(date, null, null, null,
 						"No observations", RainfallResultStatus.UNAVAILABLE));
-			} else {
+			}
+			else {
 				RainfallAmount amount = new RainfallAmount(inches);
 				daily.add(new DashboardResponse.DailyRainfall(date, amount.value(unit), amount.inches(),
 						amount.millimeters(), amount.display(unit), selected.status()));
@@ -205,7 +206,7 @@ public class DashboardService {
 		List<DashboardResponse.ChartPoint> dailyPoints = daily.stream()
 				.map((item) -> new DashboardResponse.ChartPoint(item.date().toString(), item.value(),
 						item.inches(), item.millimeters(),
-						item.status() == RainfallResultStatus.UNAVAILABLE ? "missing" : null))
+						(item.status() == RainfallResultStatus.UNAVAILABLE) ? "missing" : null))
 				.toList();
 		return new DashboardResponse.Charts(increments, dailyPoints, cumulative);
 	}
@@ -243,7 +244,8 @@ public class DashboardService {
 							+ validationValue.toPlainString() + " in");
 				}
 			}
-		} catch (ProviderException ex) {
+		}
+		catch (ProviderException ex) {
 			warnings.add("Daily validation source was unavailable: " + ex.getMessage());
 		}
 		return List.copyOf(discrepancies);
@@ -269,10 +271,10 @@ public class DashboardService {
 	 * @return the resulting cadence label
 	 */
 	private String cadenceLabel(RainfallResult result) {
-		long seconds = result.quality().expectedSamples() == 0 ? 0
+		long seconds = (result.quality().expectedSamples() == 0) ? 0
 				: Duration.between(result.requestedStart(), result.requestedEnd()).toSeconds()
 						/ result.quality().expectedSamples();
-		return seconds % 60 == 0 ? (seconds / 60) + " minutes" : seconds + " seconds";
+		return (seconds % 60 == 0) ? (seconds / 60) + " minutes" : seconds + " seconds";
 	}
 
 }

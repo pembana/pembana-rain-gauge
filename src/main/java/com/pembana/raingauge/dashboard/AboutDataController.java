@@ -48,8 +48,8 @@ public class AboutDataController {
 	public String aboutData(Model model) {
 		BuildProperties build = this.buildProperties.getIfAvailable();
 		model.addAttribute("view", new AboutDataView(
-				build == null ? "development" : build.getVersion(),
-				build == null || build.getTime() == null ? "local build" : build.getTime().toString()));
+				(build != null) ? build.getVersion() : "development",
+				(build == null || build.getTime() == null) ? "local build" : build.getTime().toString()));
 		return "aboutData";
 	}
 

@@ -71,8 +71,9 @@ public class IemDailySummaryClient {
 							.build())
 					.retrieve()
 					.body(String.class);
-			return body == null ? Map.of() : parse(body);
-		} catch (RestClientException ex) {
+			return (body != null) ? parse(body) : Map.of();
+		}
+		catch (RestClientException ex) {
 			throw new ProviderException("Unable to retrieve IEM daily validation data", ex);
 		}
 	}

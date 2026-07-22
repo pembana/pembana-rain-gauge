@@ -105,7 +105,8 @@ class HadsObservationClientTests {
 		startServer((exchange) -> {
 			if (requests.incrementAndGet() == 1) {
 				respond(exchange, 429, "rate limited");
-			} else {
+			}
+			else {
 				respond(exchange, 200, VALID_BODY);
 			}
 		});
@@ -127,7 +128,8 @@ class HadsObservationClientTests {
 		startServer((exchange) -> {
 			if (requests.incrementAndGet() == 1) {
 				respond(exchange, 503, "temporarily unavailable");
-			} else {
+			}
+			else {
 				respond(exchange, 200, VALID_BODY);
 			}
 		});
@@ -166,9 +168,11 @@ class HadsObservationClientTests {
 			try {
 				Thread.sleep(150);
 				respond(exchange, 200, VALID_BODY);
-			} catch (InterruptedException ex) {
+			}
+			catch (InterruptedException ex) {
 				Thread.currentThread().interrupt();
-			} catch (IOException ex) {
+			}
+			catch (IOException ex) {
 				// The client closes the exchange when its configured read timeout wins.
 			}
 		});

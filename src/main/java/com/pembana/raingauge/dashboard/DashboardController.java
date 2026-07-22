@@ -75,8 +75,8 @@ public class DashboardController {
 			@RequestParam(required = false) @Nullable String period,
 			@RequestParam(required = false) @Nullable String unit, Model model) {
 		List<Station> stations = this.stationService.findRainfallStations();
-		String periodToken = period == null ? this.properties.getDashboard().getDefaultPeriod() : period;
-		String unitToken = unit == null ? this.properties.getDashboard().getDefaultUnit() : unit;
+		String periodToken = (period != null) ? period : this.properties.getDashboard().getDefaultPeriod();
+		String unitToken = (unit != null) ? unit : this.properties.getDashboard().getDefaultUnit();
 		RainfallWindow window = RainfallWindow.fromToken(periodToken);
 		RainfallUnit rainfallUnit = RainfallUnit.fromToken(unitToken);
 		Station selected = select(stations, station);
@@ -85,15 +85,16 @@ public class DashboardController {
 		if (selected != null) {
 			try {
 				response = this.dashboardService.build(selected, window, rainfallUnit);
-			} catch (RuntimeException ex) {
+			}
+			catch (RuntimeException ex) {
 				error = "Rainfall observations are temporarily unavailable: " + ex.getMessage();
 			}
 		}
 		DashboardView view = new DashboardView(
-				selected == null ? "Pembana Rain Gauge — Hawaiʻi Rainfall Station Data"
-						: selected.getDisplayName() + " rainfall — Pembana Rain Gauge",
+				(selected != null) ? selected.getDisplayName() + " rainfall — Pembana Rain Gauge"
+						: "Pembana Rain Gauge — Hawaiʻi Rainfall Station Data",
 				stations.stream().map(StationResponse::from).toList(),
-				selected == null ? null : StationResponse.from(selected), response, periodToken,
+				(selected != null) ? StationResponse.from(selected) : null, response, periodToken,
 				unitToken, error, stations.isEmpty(), this.providerStatusRegistry.catalog(),
 				new DashboardView.StationMap(this.properties.getStationMap().getTileUrl(),
 						this.properties.getStationMap().getAttributionLabel(),
@@ -112,8 +113,8 @@ public class DashboardController {
 		if (stations.isEmpty()) {
 			return null;
 		}
-		String stationId = requested == null
-				? this.properties.getDashboard().getDefaultStation() : requested;
+		String stationId = (requested != null)
+				? requested : this.properties.getDashboard().getDefaultStation();
 		return stations.stream()
 				.filter((station) -> station.getStationId().equalsIgnoreCase(stationId))
 				.findFirst()

@@ -66,7 +66,7 @@ public class ComparisonController {
 			@RequestParam(defaultValue = "28d") String period,
 			@RequestParam(defaultValue = "imperial") String unit, Model model) {
 		List<Station> available = this.stationService.findRainfallStations();
-		List<String> selectedIds = stationIds == null ? List.of() : stationIds;
+		List<String> selectedIds = (stationIds != null) ? stationIds : List.of();
 		ComparisonResponse response = null;
 		String error = null;
 		if (!selectedIds.isEmpty()) {
@@ -77,7 +77,8 @@ public class ComparisonController {
 				}
 				response = this.comparisonService.compare(selected, RainfallWindow.fromToken(period),
 						RainfallUnit.fromToken(unit));
-			} catch (RuntimeException ex) {
+			}
+			catch (RuntimeException ex) {
 				error = ex.getMessage();
 			}
 		}

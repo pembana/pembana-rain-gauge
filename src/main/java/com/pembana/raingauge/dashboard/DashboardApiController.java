@@ -69,10 +69,10 @@ public class DashboardApiController {
 			@RequestParam(required = false) @Nullable String unit) {
 		validateStationId(stationId);
 		Station station = this.stationService.requireRainfallStation(stationId);
-		RainfallWindow window = RainfallWindow.fromToken(period == null
-				? this.properties.getDashboard().getDefaultPeriod() : period);
-		RainfallUnit rainfallUnit = RainfallUnit.fromToken(unit == null
-				? this.properties.getDashboard().getDefaultUnit() : unit);
+		RainfallWindow window = RainfallWindow.fromToken((period != null)
+				? period : this.properties.getDashboard().getDefaultPeriod());
+		RainfallUnit rainfallUnit = RainfallUnit.fromToken((unit != null)
+				? unit : this.properties.getDashboard().getDefaultUnit());
 		return this.dashboardService.build(station, window, rainfallUnit);
 	}
 

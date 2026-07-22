@@ -101,7 +101,8 @@ public class HadsObservationParser {
 				if (rowHadValue) {
 					parsedRows++;
 				}
-			} catch (RuntimeException ex) {
+			}
+			catch (RuntimeException ex) {
 				rejectedRows++;
 				warnings.add("Row " + (lineIndex + 1) + " rejected: " + ex.getMessage());
 			}
@@ -190,7 +191,7 @@ public class HadsObservationParser {
 	 * @return the resulting value
 	 */
 	private @Nullable String value(List<String> values, @Nullable Integer index) {
-		return index != null && index >= 0 && index < values.size() ? values.get(index).strip() : null;
+		return (index != null && index >= 0 && index < values.size()) ? values.get(index).strip() : null;
 	}
 
 	/**
@@ -201,10 +202,12 @@ public class HadsObservationParser {
 	private Instant timestamp(String value) {
 		try {
 			return Instant.parse(value);
-		} catch (DateTimeParseException ex) {
+		}
+		catch (DateTimeParseException ex) {
 			try {
 				return LocalDateTime.parse(value, IEM_TIMESTAMP).toInstant(ZoneOffset.UTC);
-			} catch (DateTimeParseException nested) {
+			}
+			catch (DateTimeParseException nested) {
 				throw new IllegalArgumentException("timestamp was invalid", nested);
 			}
 		}
@@ -216,7 +219,7 @@ public class HadsObservationParser {
 	 * @return the resulting timestamp or null
 	 */
 	private @Nullable Instant timestampOrNull(@Nullable String value) {
-		return value == null || value.isBlank() ? null : timestamp(value);
+		return (value == null || value.isBlank()) ? null : timestamp(value);
 	}
 
 	/**
@@ -249,13 +252,16 @@ public class HadsObservationParser {
 				if (quoted && index + 1 < line.length() && line.charAt(index + 1) == '"') {
 					current.append('"');
 					index++;
-				} else {
+				}
+				else {
 					quoted = !quoted;
 				}
-			} else if (character == ',' && !quoted) {
+			}
+			else if (character == ',' && !quoted) {
 				values.add(current.toString());
 				current.setLength(0);
-			} else {
+			}
+			else {
 				current.append(character);
 			}
 		}

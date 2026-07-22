@@ -121,7 +121,8 @@ public class StationController {
 						LocalDateTime.parse(to).atZone(RainfallWindow.HAWAII).toInstant(),
 						RainfallUnit.fromToken(unit));
 			}
-		} catch (RuntimeException ex) {
+		}
+		catch (RuntimeException ex) {
 			error = ex.getMessage();
 		}
 		model.addAttribute("view", new StationDetailView(StationResponse.from(station),

@@ -93,7 +93,8 @@ public class StationService {
 		try {
 			refreshCatalog();
 			return true;
-		} catch (ProviderException ex) {
+		}
+		catch (ProviderException ex) {
 			if (this.properties.getCatalog().isFailStartupWhenEmpty()
 					&& this.stationRepository.count() == 0) {
 				throw ex;
@@ -135,7 +136,8 @@ public class StationService {
 	public void scheduledRefresh() {
 		try {
 			refreshCatalog();
-		} catch (RuntimeException ex) {
+		}
+		catch (RuntimeException ex) {
 			logger.warn("Scheduled station catalog refresh failed; existing records remain available: {}",
 					ex.getMessage());
 		}
@@ -163,7 +165,8 @@ public class StationService {
 				station = new Station(source.network(), source.stationId(), source.sourceName());
 				existing.put(key, station);
 				added++;
-			} else {
+			}
+			else {
 				updated++;
 			}
 			station.updateSourceMetadata(source.sourceName(), source.latitude(), source.longitude(),

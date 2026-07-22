@@ -119,9 +119,10 @@ public class SecurityConfiguration {
 			if (host.contains(":")) {
 				host = "[" + host + "]";
 			}
-			String port = uri.getPort() == -1 ? "" : ":" + uri.getPort();
+			String port = (uri.getPort() == -1) ? "" : ":" + uri.getPort();
 			return " " + scheme.toLowerCase(Locale.ROOT) + "://" + host + port;
-		} catch (IllegalArgumentException ex) {
+		}
+		catch (IllegalArgumentException ex) {
 			throw new IllegalStateException(
 					"hawaii.rainfall.station-map.tile-url must be a relative "
 					+ "or HTTP(S) URL template",

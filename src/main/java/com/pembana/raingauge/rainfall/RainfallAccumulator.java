@@ -118,12 +118,14 @@ public class RainfallAccumulator {
 					recognizedResets++;
 					qualityFlag = "rollover";
 					warnings.add("Accumulator rollover recognized at " + current.validAt());
-				} else if (isCorroboratedReset(current, next, cadence)) {
+				}
+				else if (isCorroboratedReset(current, next, cadence)) {
 					delta = current.value();
 					recognizedResets++;
 					qualityFlag = "reset";
 					warnings.add("Accumulator reset recognized at " + current.validAt());
-				} else {
+				}
+				else {
 					unresolvedResets++;
 					warnings.add("Unresolved negative accumulator change at " + current.validAt());
 					previous = current;
@@ -164,19 +166,22 @@ public class RainfallAccumulator {
 		RainfallResultStatus status;
 		if (deduplicated.conflicts() > 0) {
 			status = RainfallResultStatus.CONFLICTING;
-		} else if (provisionalBaseline || unresolvedResets > 0 || materialGap || outlier) {
+		}
+		else if (provisionalBaseline || unresolvedResets > 0 || materialGap || outlier) {
 			status = RainfallResultStatus.PARTIAL;
-		} else if (batch.staleCache() || stale) {
+		}
+		else if (batch.staleCache() || stale) {
 			status = RainfallResultStatus.STALE;
-		} else {
+		}
+		else {
 			status = RainfallResultStatus.COMPLETE;
 		}
 		RainfallDataQuality quality = new RainfallDataQuality(expected, received, completeness,
 				longestGap, first, last, unresolvedResets, recognizedResets, deduplicated.conflicts(),
 				batch.warnings().size(), sourceAge, batch.staleCache());
 		return new RainfallResult(new RainfallAmount(total), unit, "in",
-				unit == RainfallUnit.IMPERIAL ? 2 : 1, new BigDecimal("0.01"), from, to,
-				provisionalBaseline ? baseline.validAt() : from, last, last, calculatedAt, status,
+				(unit == RainfallUnit.IMPERIAL) ? 2 : 1, new BigDecimal("0.01"), from, to,
+				(provisionalBaseline) ? baseline.validAt() : from, last, last, calculatedAt, status,
 				warnings, quality, increments,
 				batch.provider(), batch.fetchedAt());
 	}
@@ -201,7 +206,7 @@ public class RainfallAccumulator {
 		RainfallDataQuality quality = new RainfallDataQuality(expected, 0, BigDecimal.ZERO,
 				Duration.ZERO, null, null, 0, 0, conflicts, batch.warnings().size(),
 				Duration.ZERO, batch.staleCache());
-		return new RainfallResult(null, unit, "in", unit == RainfallUnit.IMPERIAL ? 2 : 1,
+		return new RainfallResult(null, unit, "in", (unit == RainfallUnit.IMPERIAL) ? 2 : 1,
 				new BigDecimal("0.01"), from, to, null, null, null, calculatedAt,
 				RainfallResultStatus.UNAVAILABLE, warnings, quality, List.of(), batch.provider(),
 				batch.fetchedAt());
@@ -247,7 +252,7 @@ public class RainfallAccumulator {
 	 * @return the resulting quality rank
 	 */
 	private int qualityRank(PrecipitationObservation observation) {
-		return observation.quality() == ObservationQuality.VALID ? 0 : 1;
+		return (observation.quality() == ObservationQuality.VALID) ? 0 : 1;
 	}
 
 	/**

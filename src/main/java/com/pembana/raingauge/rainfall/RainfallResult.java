@@ -92,6 +92,6 @@ public record RainfallResult(
 	 * @return the formatted display value
 	 */
 	public String displayValue() {
-		return this.amount == null ? "Unavailable" : this.amount.display(this.unit);
+		return (this.amount == null) ? "Unavailable" : this.amount.display(this.unit);
 	}
 }

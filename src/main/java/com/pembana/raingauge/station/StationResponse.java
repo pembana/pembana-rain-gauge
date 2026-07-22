@@ -91,7 +91,7 @@ public record StationResponse(
 	 * @return the resulting selection label
 	 */
 	public String selectionLabel() {
-		return this.alias == null ? this.displayName + " (" + this.stationId + ')'
-				: this.displayName + " (" + this.alias + ')';
+		return (this.alias != null) ? this.displayName + " (" + this.alias + ')'
+				: this.displayName + " (" + this.stationId + ')';
 	}
 }

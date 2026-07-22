@@ -100,7 +100,8 @@ public class RainfallCapabilityRefresher {
 		Thread.startVirtualThread(() -> {
 			try {
 				refresh();
-			} finally {
+			}
+			finally {
 				this.running.set(false);
 			}
 		});
@@ -167,10 +168,12 @@ public class RainfallCapabilityRefresher {
 					case TEMPORARILY_SILENT -> silent++;
 					default -> unknown++;
 				}
-			} catch (InterruptedException ex) {
+			}
+			catch (InterruptedException ex) {
 				Thread.currentThread().interrupt();
 				unknown++;
-			} catch (ExecutionException ex) {
+			}
+			catch (ExecutionException ex) {
 				logger.warn("Rainfall capability refresh failed: {}", ex.getCause().getMessage());
 				unknown++;
 			}

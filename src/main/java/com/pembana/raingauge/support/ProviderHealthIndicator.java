@@ -46,7 +46,7 @@ public class ProviderHealthIndicator implements HealthIndicator {
 		ProviderStatusRegistry.ProviderState observations = this.statusRegistry.observations();
 		String providerStatus = (!catalog.known() && !observations.known())
 				? "UNKNOWN"
-				: (catalog.available() && observations.available() ? "AVAILABLE" : "DEGRADED");
+				: ((catalog.available() && observations.available()) ? "AVAILABLE" : "DEGRADED");
 		return Health.up()
 				.withDetail("providerStatus", providerStatus)
 				.withDetail("catalog", catalog)

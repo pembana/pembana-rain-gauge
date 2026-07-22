@@ -96,7 +96,8 @@ public class ObservationService {
 			cache.put(query, fetched);
 			this.staleCache.put(query, fetched);
 			return fetched;
-		} catch (ProviderException ex) {
+		}
+		catch (ProviderException ex) {
 			ObservationBatch stale = findCovering(this.staleCache, query);
 			if (stale != null) {
 				return stale.asCached(this.clock.instant(), true,

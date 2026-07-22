@@ -70,7 +70,8 @@ public class RainfallCapabilityService {
 						normalize(interval));
 			}
 			return new CapabilityDiscovery(RainfallCapability.TEMPORARILY_SILENT, null);
-		} catch (ProviderException ex) {
+		}
+		catch (ProviderException ex) {
 			return new CapabilityDiscovery(RainfallCapability.PRECIPITATION_TYPE_UNKNOWN, null);
 		}
 	}

@@ -66,7 +66,8 @@ public class IemStationVariableClient {
 				return Set.of();
 			}
 			return parse(body);
-		} catch (RestClientException ex) {
+		}
+		catch (RestClientException ex) {
 			throw new ProviderException("Unable to retrieve station variables for " + stationId, ex);
 		}
 	}

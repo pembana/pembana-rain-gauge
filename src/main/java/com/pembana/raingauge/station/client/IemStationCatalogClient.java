@@ -90,7 +90,8 @@ public class IemStationCatalogClient {
 					"IEM", network, duration, result.stations().size(), result.rejectedEntries(),
 					result.warnings().size());
 			return result;
-		} catch (RuntimeException ex) {
+		}
+		catch (RuntimeException ex) {
 			this.providerStatusRegistry.catalogFailed(this.clock.instant(), ex.getMessage());
 			throw ex;
 		}
@@ -119,7 +120,8 @@ public class IemStationCatalogClient {
 							"IEM station catalog exceeded the configured payload limit");
 				}
 				return body;
-			} catch (RestClientException ex) {
+			}
+			catch (RestClientException ex) {
 				if (attempt == attempts || !isRetryable(ex)) {
 					throw new ProviderException("Unable to retrieve the IEM station catalog", ex);
 				}
@@ -151,7 +153,8 @@ public class IemStationCatalogClient {
 		long millis = this.properties.getProviders().getRetryInitialBackoff().toMillis() * multiplier;
 		try {
 			Thread.sleep(millis);
-		} catch (InterruptedException ex) {
+		}
+		catch (InterruptedException ex) {
 			Thread.currentThread().interrupt();
 			throw new ProviderException("Interrupted while retrying the station catalog", ex);
 		}
@@ -169,7 +172,8 @@ public class IemStationCatalogClient {
 		Map<String, Object> root;
 		try {
 			root = parser.parseMap(body);
-		} catch (RuntimeException ex) {
+		}
+		catch (RuntimeException ex) {
 			throw new ProviderException("IEM station catalog was not valid JSON", ex);
 		}
 		Object featuresValue = root.get("features");
@@ -187,7 +191,8 @@ public class IemStationCatalogClient {
 				}
 				CatalogStation station = mapFeature((Map<String, Object>) feature, expectedNetwork);
 				stations.add(station);
-			} catch (RuntimeException ex) {
+			}
+			catch (RuntimeException ex) {
 				rejected++;
 				warnings.add("Feature " + index + " rejected: " + ex.getMessage());
 			}
@@ -257,7 +262,7 @@ public class IemStationCatalogClient {
 	 * @return the resulting nullable string
 	 */
 	private @Nullable String nullableString(@Nullable Object value) {
-		return value instanceof String string && !string.isBlank() ? string : null;
+		return (value instanceof String string && !string.isBlank()) ? string : null;
 	}
 
 	/**
@@ -272,7 +277,8 @@ public class IemStationCatalogClient {
 		if (value instanceof String string && !string.isBlank()) {
 			try {
 				return new BigDecimal(string);
-			} catch (NumberFormatException ex) {
+			}
+			catch (NumberFormatException ex) {
 				return null;
 			}
 		}
@@ -291,7 +297,8 @@ public class IemStationCatalogClient {
 		}
 		try {
 			return LocalDate.parse(text);
-		} catch (DateTimeParseException ex) {
+		}
+		catch (DateTimeParseException ex) {
 			return null;
 		}
 	}

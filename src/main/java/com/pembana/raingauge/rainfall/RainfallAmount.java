@@ -50,7 +50,7 @@ public record RainfallAmount(BigDecimal inches) {
 	 * @return the resulting value
 	 */
 	public BigDecimal value(RainfallUnit unit) {
-		return unit == RainfallUnit.IMPERIAL ? this.inches : millimeters();
+		return (unit == RainfallUnit.IMPERIAL) ? this.inches : millimeters();
 	}
 
 	/**
@@ -59,7 +59,7 @@ public record RainfallAmount(BigDecimal inches) {
 	 * @return the resulting display scale
 	 */
 	public int displayScale(RainfallUnit unit) {
-		return unit == RainfallUnit.IMPERIAL ? 2 : 1;
+		return (unit == RainfallUnit.IMPERIAL) ? 2 : 1;
 	}
 
 	/**
