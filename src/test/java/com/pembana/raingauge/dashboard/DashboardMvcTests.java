@@ -233,7 +233,7 @@ class DashboardMvcTests {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$[?(@.stationId == 'HLRH1')]").isEmpty());
 		this.mockMvc.perform(get("/api/stations/HLRH1/dashboard"))
-				.andExpect(status().isUnprocessableEntity())
+				.andExpect(status().isUnprocessableContent())
 				.andExpect(jsonPath("$.title").value("Rainfall data unsupported"));
 		this.mockMvc.perform(get("/stations"))
 				.andExpect(status().isOk())

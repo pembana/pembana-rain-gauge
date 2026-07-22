@@ -57,7 +57,7 @@ public class ApiExceptionHandler {
 	 */
 	@ExceptionHandler(UnsupportedRainfallStationException.class)
 	ProblemDetail unsupported(UnsupportedRainfallStationException exception) {
-		return problem(HttpStatus.UNPROCESSABLE_ENTITY, "Rainfall data unsupported",
+		return problem(HttpStatus.UNPROCESSABLE_CONTENT, "Rainfall data unsupported",
 				exception.getMessage(), "rainfall-unsupported");
 	}
 
