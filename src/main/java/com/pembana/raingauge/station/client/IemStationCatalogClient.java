@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Gunnar Hillert
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.pembana.raingauge.station.client;
 
 import java.math.BigDecimal;
@@ -24,6 +40,10 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 
+/**
+ * Retrieves IEM station catalog data from its remote provider.
+ * @author Gunnar Hillert
+ */
 @Component
 public class IemStationCatalogClient {
 
@@ -39,6 +59,13 @@ public class IemStationCatalogClient {
 
 	private final Clock clock;
 
+	/**
+	 * Creates a new {@code IemStationCatalogClient}.
+	 * @param restClientFactory the rest client factory
+	 * @param properties the rainfall application properties
+	 * @param providerStatusRegistry the provider status registry
+	 * @param clock the clock used to obtain the current time
+	 */
 	public IemStationCatalogClient(ProviderRestClientFactory restClientFactory,
 			RainfallProperties properties, ProviderStatusRegistry providerStatusRegistry, Clock clock) {
 		this.restClient = restClientFactory.create(properties.getProviders().getIemBaseUrl());
@@ -47,6 +74,11 @@ public class IemStationCatalogClient {
 		this.clock = clock;
 	}
 
+	/**
+	 * Fetches complete catalog.
+	 * @param network the provider network identifier
+	 * @return the retrieved provider data
+	 */
 	public StationCatalogResult fetchCompleteCatalog(String network) {
 		long started = System.nanoTime();
 		try {
@@ -64,6 +96,11 @@ public class IemStationCatalogClient {
 		}
 	}
 
+	/**
+	 * Retrieves with retry.
+	 * @param network the provider network identifier
+	 * @return the retrieved provider data
+	 */
 	private String retrieveWithRetry(String network) {
 		int attempts = this.properties.getProviders().getRetries() + 1;
 		for (int attempt = 1; attempt <= attempts; attempt++) {
@@ -92,6 +129,11 @@ public class IemStationCatalogClient {
 		throw new ProviderException("Unable to retrieve the IEM station catalog");
 	}
 
+	/**
+	 * Returns whether retryable.
+	 * @param exception the exception to translate
+	 * @return {@code true} if retryable; otherwise {@code false}
+	 */
 	private boolean isRetryable(RestClientException exception) {
 		if (exception instanceof RestClientResponseException responseException) {
 			int status = responseException.getStatusCode().value();
@@ -100,6 +142,10 @@ public class IemStationCatalogClient {
 		return true;
 	}
 
+	/**
+	 * Waits for the configured retry backoff interval.
+	 * @param attempt the attempt
+	 */
 	private void backOff(int attempt) {
 		long multiplier = 1L << Math.min(attempt - 1, 8);
 		long millis = this.properties.getProviders().getRetryInitialBackoff().toMillis() * multiplier;
@@ -111,6 +157,12 @@ public class IemStationCatalogClient {
 		}
 	}
 
+	/**
+	 * Parses a complete station catalog from an IEM GeoJSON response.
+	 * @param body the provider response body
+	 * @param expectedNetwork the expected network
+	 * @return the parsed result
+	 */
 	@SuppressWarnings("unchecked")
 	StationCatalogResult parse(String body, String expectedNetwork) {
 		JsonParser parser = JsonParserFactory.getJsonParser();
@@ -143,6 +195,12 @@ public class IemStationCatalogClient {
 		return new StationCatalogResult(stations, warnings, rejected);
 	}
 
+	/**
+	 * Maps a provider GeoJSON feature to catalog station metadata.
+	 * @param feature the feature
+	 * @param expectedNetwork the expected network
+	 * @return the resulting map feature
+	 */
 	@SuppressWarnings("unchecked")
 	private CatalogStation mapFeature(Map<String, Object> feature, String expectedNetwork) {
 		Object propertiesValue = feature.get("properties");
@@ -179,6 +237,12 @@ public class IemStationCatalogClient {
 				nullableString(properties.get("tzname")), properties.toString());
 	}
 
+	/**
+	 * Returns a required provider string value.
+	 * @param values the values
+	 * @param key the key
+	 * @return the required d string
+	 */
 	private String requiredString(Map<String, Object> values, String key) {
 		String value = nullableString(values.get(key));
 		if (value == null || value.isBlank()) {
@@ -187,10 +251,20 @@ public class IemStationCatalogClient {
 		return value;
 	}
 
+	/**
+	 * Converts a provider value to a nullable string.
+	 * @param value the value
+	 * @return the resulting nullable string
+	 */
 	private @Nullable String nullableString(@Nullable Object value) {
 		return value instanceof String string && !string.isBlank() ? string : null;
 	}
 
+	/**
+	 * Converts a provider value to a decimal number.
+	 * @param value the value
+	 * @return the resulting decimal
+	 */
 	private @Nullable BigDecimal decimal(@Nullable Object value) {
 		if (value instanceof Number number) {
 			return new BigDecimal(number.toString());
@@ -205,6 +279,11 @@ public class IemStationCatalogClient {
 		return null;
 	}
 
+	/**
+	 * Converts a provider value to a local date.
+	 * @param value the value
+	 * @return the resulting date
+	 */
 	private @Nullable LocalDate date(@Nullable Object value) {
 		String text = nullableString(value);
 		if (text == null) {
@@ -217,6 +296,11 @@ public class IemStationCatalogClient {
 		}
 	}
 
+	/**
+	 * Converts a provider value to a boolean.
+	 * @param value the value
+	 * @return {@code true} when boolean value; otherwise {@code false}
+	 */
 	private boolean booleanValue(@Nullable Object value) {
 		return value instanceof Boolean booleanValue && booleanValue;
 	}

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Gunnar Hillert
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.pembana.raingauge.station.client;
 
 import java.io.IOException;
@@ -16,8 +32,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+/**
+ * Tests IEM station catalog client.
+ * @author Gunnar Hillert
+ */
 class IemStationCatalogClientTests {
 
+	/**
+	 * Verifies that parses representative GeoJSON and optional fields.
+	 * @throws IOException if an I/O operation fails
+	 */
 	@Test
 	void parsesRepresentativeGeoJsonAndOptionalFields() throws IOException {
 		StationCatalogResult result = client().parse(fixture("iem-hi-dcp-catalog.json"), "HI_DCP");
@@ -32,6 +56,10 @@ class IemStationCatalogClientTests {
 		assertThat(result.stations().get(1).latitude()).isNull();
 	}
 
+	/**
+	 * Verifies that rejects malformed features individually.
+	 * @throws IOException if an I/O operation fails
+	 */
 	@Test
 	void rejectsMalformedFeaturesIndividually() throws IOException {
 		StationCatalogResult result = client().parse(
@@ -42,6 +70,10 @@ class IemStationCatalogClientTests {
 		assertThat(result.warnings()).hasSize(2);
 	}
 
+	/**
+	 * Creates a provider client for a test scenario.
+	 * @return the resulting client
+	 */
 	private IemStationCatalogClient client() {
 		ProviderRestClientFactory factory = mock(ProviderRestClientFactory.class);
 		when(factory.create(org.mockito.ArgumentMatchers.anyString())).thenReturn(mock(RestClient.class));
@@ -49,6 +81,12 @@ class IemStationCatalogClientTests {
 				new ProviderStatusRegistry(), Clock.systemUTC());
 	}
 
+	/**
+	 * Loads a test fixture from the classpath.
+	 * @param name the name
+	 * @return the resulting fixture
+	 * @throws IOException if an I/O operation fails
+	 */
 	private String fixture(String name) throws IOException {
 		return new ClassPathResource("fixtures/" + name).getContentAsString(StandardCharsets.UTF_8);
 	}

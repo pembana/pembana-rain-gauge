@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Gunnar Hillert
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.pembana.raingauge.observation;
 
 import java.math.BigDecimal;
@@ -15,12 +31,26 @@ import java.util.Map;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
+/**
+ * Parses HADS observation payloads.
+ * @author Gunnar Hillert
+ */
 @Component
 public class HadsObservationParser {
+
+	/** Creates the HADS observation parser. */
+	public HadsObservationParser() {
+	}
 
 	private static final DateTimeFormatter IEM_TIMESTAMP =
 			DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss");
 
+	/**
+	 * Parses precipitation observations from an IEM HADS response.
+	 * @param body the provider response body
+	 * @param requestedShefKey the requested SHEF variable key
+	 * @return the parsed result
+	 */
 	public ObservationParseResult parse(String body, String requestedShefKey) {
 		List<String> lines = body.lines().filter((line) -> !line.isBlank()).toList();
 		if (lines.isEmpty()) {
@@ -79,6 +109,11 @@ public class HadsObservationParser {
 		return new ObservationParseResult(observations, warnings, parsedRows, rejectedRows);
 	}
 
+	/**
+	 * Indexes provider response columns by normalized name.
+	 * @param header the header
+	 * @return the resulting index columns
+	 */
 	private Map<String, Integer> indexColumns(List<String> header) {
 		Map<String, Integer> columns = new HashMap<>();
 		for (int index = 0; index < header.size(); index++) {
@@ -87,6 +122,12 @@ public class HadsObservationParser {
 		return columns;
 	}
 
+	/**
+	 * Finds precipitation variable columns in a provider header.
+	 * @param header the header
+	 * @param requestedShefKey the requested SHEF variable key
+	 * @return the matching variables
+	 */
 	private List<VariableColumn> findVariables(List<String> header, String requestedShefKey) {
 		String normalizedRequested = normalizeShefKey(requestedShefKey);
 		List<VariableColumn> variables = new ArrayList<>();
@@ -100,12 +141,23 @@ public class HadsObservationParser {
 		return variables;
 	}
 
+	/**
+	 * Normalizes a SHEF variable key for comparison.
+	 * @param key the key
+	 * @return the resulting normalize SHEF key
+	 */
 	private String normalizeShefKey(String key) {
 		String normalized = key.strip().toUpperCase(Locale.ROOT);
 		return normalized.endsWith("ZZ") ? normalized.substring(0, normalized.length() - 2)
 				: normalized;
 	}
 
+	/**
+	 * Returns the first available column index for the candidate names.
+	 * @param columns the columns
+	 * @param names the names
+	 * @return the resulting first
+	 */
 	private @Nullable Integer first(Map<String, Integer> columns, String... names) {
 		for (String name : names) {
 			Integer column = columns.get(name);
@@ -116,6 +168,13 @@ public class HadsObservationParser {
 		return null;
 	}
 
+	/**
+	 * Returns a required field value from a parsed response row.
+	 * @param values the values
+	 * @param index the zero-based value index
+	 * @param field the field
+	 * @return the required field value
+	 */
 	private String required(List<String> values, int index, String field) {
 		String value = value(values, index);
 		if (value == null || value.isBlank()) {
@@ -124,10 +183,21 @@ public class HadsObservationParser {
 		return value;
 	}
 
+	/**
+	 * Returns this rainfall amount in the requested unit.
+	 * @param values the values
+	 * @param index the zero-based value index
+	 * @return the resulting value
+	 */
 	private @Nullable String value(List<String> values, @Nullable Integer index) {
 		return index != null && index >= 0 && index < values.size() ? values.get(index).strip() : null;
 	}
 
+	/**
+	 * Parses a required provider timestamp.
+	 * @param value the value
+	 * @return the resulting timestamp
+	 */
 	private Instant timestamp(String value) {
 		try {
 			return Instant.parse(value);
@@ -140,10 +210,20 @@ public class HadsObservationParser {
 		}
 	}
 
+	/**
+	 * Parses an optional provider timestamp.
+	 * @param value the value
+	 * @return the resulting timestamp or null
+	 */
 	private @Nullable Instant timestampOrNull(@Nullable String value) {
 		return value == null || value.isBlank() ? null : timestamp(value);
 	}
 
+	/**
+	 * Maps a provider qualifier to an observation quality.
+	 * @param qualifier the qualifier
+	 * @return the resulting quality
+	 */
 	private ObservationQuality quality(@Nullable String qualifier) {
 		if (qualifier == null || qualifier.isBlank() || qualifier.equalsIgnoreCase("Z")) {
 			return ObservationQuality.VALID;
@@ -154,6 +234,11 @@ public class HadsObservationParser {
 		return ObservationQuality.MALFORMED_QUALIFIER;
 	}
 
+	/**
+	 * Parses CSV line.
+	 * @param line the line
+	 * @return the parsed result
+	 */
 	private List<String> parseCsvLine(String line) {
 		List<String> values = new ArrayList<>();
 		StringBuilder current = new StringBuilder();
@@ -181,6 +266,13 @@ public class HadsObservationParser {
 		return values;
 	}
 
+	/**
+	 * Describes a variable column.
+	 * @param index the zero-based value index
+	 * @param sourceKey the source key
+	 * @param normalizedKey the normalized key
+	 * @author Gunnar Hillert
+	 */
 	private record VariableColumn(int index, String sourceKey, String normalizedKey) {
 	}
 

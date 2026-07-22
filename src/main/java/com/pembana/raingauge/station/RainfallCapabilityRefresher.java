@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Gunnar Hillert
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.pembana.raingauge.station;
 
 import java.util.List;
@@ -16,6 +32,10 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+/**
+ * Refreshes station rainfall capabilities in the background.
+ * @author Gunnar Hillert
+ */
 @Component
 public class RainfallCapabilityRefresher {
 
@@ -29,6 +49,12 @@ public class RainfallCapabilityRefresher {
 
 	private final AtomicBoolean running = new AtomicBoolean();
 
+	/**
+	 * Creates a new {@code RainfallCapabilityRefresher}.
+	 * @param stationRepository the station repository
+	 * @param capabilityService the capability service
+	 * @param properties the rainfall application properties
+	 */
 	public RainfallCapabilityRefresher(StationRepository stationRepository,
 			RainfallCapabilityService capabilityService, RainfallProperties properties) {
 		this.stationRepository = stationRepository;
@@ -36,16 +62,27 @@ public class RainfallCapabilityRefresher {
 		this.properties = properties;
 	}
 
+	/**
+	 * Starts capability discovery after the application is ready.
+	 * @param event the application event
+	 */
 	@EventListener
 	public void applicationReady(ApplicationReadyEvent event) {
 		refreshAsync();
 	}
 
+	/**
+	 * Starts capability discovery after a catalog refresh.
+	 * @param event the application event
+	 */
 	@EventListener
 	public void catalogRefreshed(StationCatalogRefreshedEvent event) {
 		refreshAsync();
 	}
 
+	/**
+	 * Runs the scheduled provider metadata refresh.
+	 */
 	@Scheduled(
 			fixedDelayString = "${hawaii.rainfall.catalog.capability-refresh-interval:6h}",
 			initialDelayString = "${hawaii.rainfall.catalog.capability-refresh-initial-delay:6h}")
@@ -53,6 +90,9 @@ public class RainfallCapabilityRefresher {
 		refreshAsync();
 	}
 
+	/**
+	 * Submits a rainfall-capability refresh without blocking the caller.
+	 */
 	public void refreshAsync() {
 		if (!this.running.compareAndSet(false, true)) {
 			return;
@@ -66,6 +106,10 @@ public class RainfallCapabilityRefresher {
 		});
 	}
 
+	/**
+	 * Refreshes rainfall capabilities for stations that have not been classified.
+	 * @return the capability-refresh summary
+	 */
 	CapabilityRefreshSummary refresh() {
 		List<Station> candidates = this.stationRepository
 				.findAllByEnabledTrueOrderByDisplayNameAsc().stream()
@@ -91,6 +135,11 @@ public class RainfallCapabilityRefresher {
 		}
 	}
 
+	/**
+	 * Discovers and persists the rainfall capability for one station.
+	 * @param station the station to process
+	 * @return the discovered rainfall capability
+	 */
 	private RainfallCapability refresh(Station station) {
 		RainfallCapabilityService.CapabilityDiscovery discovery =
 				this.capabilityService.discover(station);
@@ -99,6 +148,11 @@ public class RainfallCapabilityRefresher {
 		return discovery.capability();
 	}
 
+	/**
+	 * Summarizes completed capability-refresh tasks.
+	 * @param futures the futures
+	 * @return the resulting summarize
+	 */
 	private CapabilityRefreshSummary summarize(List<Future<RainfallCapability>> futures) {
 		int supported = 0;
 		int interval = 0;
@@ -124,6 +178,15 @@ public class RainfallCapabilityRefresher {
 		return new CapabilityRefreshSummary(futures.size(), supported, interval, silent, unknown);
 	}
 
+	/**
+	 * Describes a capability refresh summary.
+	 * @param checked the checked
+	 * @param supportedAccumulators the supported accumulators
+	 * @param intervalPrecipitation the interval precipitation
+	 * @param temporarilySilent the temporarily silent
+	 * @param unknown the unknown
+	 * @author Gunnar Hillert
+	 */
 	record CapabilityRefreshSummary(int checked, int supportedAccumulators,
 			int intervalPrecipitation, int temporarilySilent, int unknown) {
 	}

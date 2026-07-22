@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Gunnar Hillert
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.pembana.raingauge.dashboard;
 
 import java.math.BigDecimal;
@@ -28,6 +44,10 @@ import com.pembana.raingauge.station.client.ProviderException;
 import org.springframework.stereotype.Service;
 import org.springframework.cache.annotation.Cacheable;
 
+/**
+ * Provides dashboard operations.
+ * @author Gunnar Hillert
+ */
 @Service
 public class DashboardService {
 
@@ -45,6 +65,12 @@ public class DashboardService {
 
 	private final StationService stationService;
 
+	/**
+	 * Creates a new {@code DashboardService}.
+	 * @param rainfallService the rainfall service
+	 * @param dailySummaryClient the daily summary client
+	 * @param stationService the station service
+	 */
 	public DashboardService(RainfallService rainfallService,
 			IemDailySummaryClient dailySummaryClient, StationService stationService) {
 		this.rainfallService = rainfallService;
@@ -52,6 +78,13 @@ public class DashboardService {
 		this.stationService = stationService;
 	}
 
+	/**
+	 * Builds the page metadata from the configured site URL.
+	 * @param station the station to process
+	 * @param selectedWindow the selected window
+	 * @param unit the requested rainfall unit
+	 * @return the resulting build
+	 */
 	@Cacheable(cacheNames = "dashboard",
 			key = "#station.stationId + ':' + #selectedWindow.token() + ':' + #unit.token()")
 	public DashboardResponse build(Station station, RainfallWindow selectedWindow,
@@ -87,6 +120,11 @@ public class DashboardService {
 						selected.sourceResolution()), discrepancies, warnings);
 	}
 
+	/**
+	 * Builds dashboard summary values for standard rainfall windows.
+	 * @param results the results
+	 * @return the resulting summary
+	 */
 	private DashboardResponse.Summary summary(Map<RainfallWindow, RainfallResult> results) {
 		return new DashboardResponse.Summary(
 				view(results.get(RainfallWindow.ONE_HOUR)),
@@ -100,6 +138,11 @@ public class DashboardService {
 				view(results.get(RainfallWindow.YEAR_TO_DATE)));
 	}
 
+	/**
+	 * Maps a rainfall calculation to its dashboard view model.
+	 * @param result the result
+	 * @return the resulting view
+	 */
 	private DashboardResponse.Result view(RainfallResult result) {
 		RainfallAmount amount = result.amount();
 		return new DashboardResponse.Result(amount == null ? null : amount.value(result.unit()),
@@ -109,6 +152,12 @@ public class DashboardService {
 				result.warnings());
 	}
 
+	/**
+	 * Returns daily rainfall data for a station.
+	 * @param selected the selected
+	 * @param unit the requested rainfall unit
+	 * @return the resulting daily
+	 */
 	private List<DashboardResponse.DailyRainfall> daily(RainfallResult selected,
 			RainfallUnit unit) {
 		Map<LocalDate, BigDecimal> totals = new LinkedHashMap<>();
@@ -133,6 +182,13 @@ public class DashboardService {
 		return List.copyOf(daily);
 	}
 
+	/**
+	 * Builds rainfall chart series from calculated results.
+	 * @param selected the selected
+	 * @param daily the daily
+	 * @param unit the requested rainfall unit
+	 * @return the resulting charts
+	 */
 	private DashboardResponse.Charts charts(RainfallResult selected,
 			List<DashboardResponse.DailyRainfall> daily, RainfallUnit unit) {
 		List<DashboardResponse.ChartPoint> increments = new ArrayList<>();
@@ -154,6 +210,14 @@ public class DashboardService {
 		return new DashboardResponse.Charts(increments, dailyPoints, cumulative);
 	}
 
+	/**
+	 * Validates daily.
+	 * @param station the station to process
+	 * @param selected the selected
+	 * @param daily the daily
+	 * @param warnings the warnings
+	 * @return the resulting validate daily
+	 */
 	private List<DashboardResponse.SourceDiscrepancy> validateDaily(Station station,
 			RainfallResult selected, List<DashboardResponse.DailyRainfall> daily,
 			List<String> warnings) {
@@ -185,6 +249,12 @@ public class DashboardService {
 		return List.copyOf(discrepancies);
 	}
 
+	/**
+	 * Returns whether complete local day.
+	 * @param selected the selected
+	 * @param item the item
+	 * @return {@code true} if complete local day; otherwise {@code false}
+	 */
 	private boolean isCompleteLocalDay(RainfallResult selected,
 			DashboardResponse.DailyRainfall item) {
 		return item.status() == RainfallResultStatus.COMPLETE
@@ -193,6 +263,11 @@ public class DashboardService {
 						.atStartOfDay(HAWAII).toInstant());
 	}
 
+	/**
+	 * Formats a human-readable observation cadence.
+	 * @param result the result
+	 * @return the resulting cadence label
+	 */
 	private String cadenceLabel(RainfallResult result) {
 		long seconds = result.quality().expectedSamples() == 0 ? 0
 				: Duration.between(result.requestedStart(), result.requestedEnd()).toSeconds()

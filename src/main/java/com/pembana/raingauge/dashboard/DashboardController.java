@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Gunnar Hillert
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.pembana.raingauge.dashboard;
 
 import java.util.List;
@@ -16,6 +32,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+/**
+ * Handles dashboard HTTP requests.
+ * @author Gunnar Hillert
+ */
 @Controller
 public class DashboardController {
 
@@ -27,6 +47,13 @@ public class DashboardController {
 
 	private final ProviderStatusRegistry providerStatusRegistry;
 
+	/**
+	 * Creates a new {@code DashboardController}.
+	 * @param stationService the station service
+	 * @param dashboardService the dashboard service
+	 * @param properties the rainfall application properties
+	 * @param providerStatusRegistry the provider status registry
+	 */
 	public DashboardController(StationService stationService, DashboardService dashboardService,
 			RainfallProperties properties, ProviderStatusRegistry providerStatusRegistry) {
 		this.stationService = stationService;
@@ -35,6 +62,14 @@ public class DashboardController {
 		this.providerStatusRegistry = providerStatusRegistry;
 	}
 
+	/**
+	 * Renders the rainfall dashboard for the selected station and period.
+	 * @param station the station to process
+	 * @param period the period
+	 * @param unit the requested rainfall unit
+	 * @param model the MVC model to populate
+	 * @return the dashboard template name
+	 */
 	@GetMapping("/")
 	public String dashboard(@RequestParam(required = false) @Nullable String station,
 			@RequestParam(required = false) @Nullable String period,
@@ -67,6 +102,12 @@ public class DashboardController {
 		return "dashboard";
 	}
 
+	/**
+	 * Selects the requested station or the first available station.
+	 * @param stations the stations
+	 * @param requested the requested
+	 * @return the resulting select
+	 */
 	private @Nullable Station select(List<Station> stations, @Nullable String requested) {
 		if (stations.isEmpty()) {
 			return null;

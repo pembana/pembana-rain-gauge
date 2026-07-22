@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Gunnar Hillert
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.pembana.raingauge.station;
 
 import java.math.BigDecimal;
@@ -30,6 +46,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * Tests station service.
+ * @author Gunnar Hillert
+ */
 class StationServiceTests {
 
 	private static final Instant NOW = Instant.parse("2026-07-19T08:00:00Z");
@@ -44,6 +64,9 @@ class StationServiceTests {
 
 	private StationService service;
 
+	/**
+	 * Creates isolated station-service collaborators before each test.
+	 */
 	@BeforeEach
 	@SuppressWarnings("unchecked")
 	void setUp() {
@@ -60,6 +83,9 @@ class StationServiceTests {
 				transactionTemplate, this.eventPublisher, Clock.fixed(NOW, ZoneOffset.UTC));
 	}
 
+	/**
+	 * Verifies that empty database triggers catalog retrieval.
+	 */
 	@Test
 	void emptyDatabaseTriggersCatalogRetrieval() {
 		when(this.repository.count()).thenReturn(0L);
@@ -72,6 +98,9 @@ class StationServiceTests {
 		verify(this.eventPublisher).publishEvent(any(StationCatalogRefreshedEvent.class));
 	}
 
+	/**
+	 * Verifies that populated database skips bootstrap retrieval.
+	 */
 	@Test
 	void populatedDatabaseSkipsBootstrapRetrieval() {
 		when(this.repository.count()).thenReturn(1L);
@@ -80,6 +109,9 @@ class StationServiceTests {
 		verify(this.catalogClient, never()).fetchCompleteCatalog(any());
 	}
 
+	/**
+	 * Verifies that failed bootstrap permits startup by default.
+	 */
 	@Test
 	void failedBootstrapPermitsStartupByDefault() {
 		when(this.repository.count()).thenReturn(0L);
@@ -89,6 +121,9 @@ class StationServiceTests {
 		assertThat(this.service.initializeCatalogIfEmpty()).isFalse();
 	}
 
+	/**
+	 * Verifies that strict bootstrap fails only when database is empty.
+	 */
 	@Test
 	void strictBootstrapFailsOnlyWhenDatabaseIsEmpty() {
 		this.properties.getCatalog().setFailStartupWhenEmpty(true);
@@ -101,6 +136,9 @@ class StationServiceTests {
 				.hasMessageContaining("provider down");
 	}
 
+	/**
+	 * Verifies that refresh adds station and applies all configured display overrides.
+	 */
 	@Test
 	@SuppressWarnings("unchecked")
 	void refreshAddsStationAndAppliesAllConfiguredDisplayOverrides() {
@@ -124,6 +162,9 @@ class StationServiceTests {
 		assertThat(station.getPrecipitationKey()).isEqualTo("PCIRG");
 	}
 
+	/**
+	 * Verifies that refresh updates existing and retains absent station as unconfirmed.
+	 */
 	@Test
 	void refreshUpdatesExistingAndRetainsAbsentStationAsUnconfirmed() {
 		Station existing = new Station("HI_DCP", "WIHH1", "Old source name");
@@ -139,6 +180,9 @@ class StationServiceTests {
 		assertThat(absent.isCatalogConfirmed()).isFalse();
 	}
 
+	/**
+	 * Verifies that rainfall stations returns only repository confirmed accumulators.
+	 */
 	@Test
 	void rainfallStationsReturnsOnlyRepositoryConfirmedAccumulators() {
 		Station supported = new Station("HI_DCP", "WIHH1", "Supported");
@@ -149,10 +193,20 @@ class StationServiceTests {
 		assertThat(this.service.findRainfallStations()).containsExactly(supported);
 	}
 
+	/**
+	 * Creates a station-catalog result for a test scenario.
+	 * @param station the station to process
+	 * @return the resulting result
+	 */
 	private StationCatalogResult result(CatalogStation station) {
 		return new StationCatalogResult(List.of(station), List.of(), 0);
 	}
 
+	/**
+	 * Creates a station for a test scenario.
+	 * @param stationId the provider station identifier
+	 * @return the resulting station
+	 */
 	private CatalogStation station(String stationId) {
 		return new CatalogStation("HI_DCP", stationId, "Kailua-Kona 3SE - Waiaha",
 				new BigDecimal("19.6333"), new BigDecimal("-155.9489"),

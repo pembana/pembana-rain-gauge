@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Gunnar Hillert
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.pembana.raingauge.dashboard;
 
 import java.math.BigDecimal;
@@ -41,6 +57,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
+/**
+ * Tests dashboard MVC.
+ * @author Gunnar Hillert
+ */
 @AutoConfigureMockMvc
 @SpringBootTest(properties = {
 		"hawaii.rainfall.catalog.startup-enabled=false",
@@ -65,6 +85,9 @@ class DashboardMvcTests {
 	@MockitoBean
 	private IemStationCatalogClient catalogClient;
 
+	/**
+	 * Prepares the station fixtures used by each dashboard test.
+	 */
 	@BeforeEach
 	void setUp() {
 		this.repository.deleteAll();
@@ -93,6 +116,10 @@ class DashboardMvcTests {
 				List.of(), 0));
 	}
 
+	/**
+	 * Verifies that dashboard renders complete server page and selector.
+	 * @throws Exception if the operation cannot be completed
+	 */
 	@Test
 	void dashboardRendersCompleteServerPageAndSelector() throws Exception {
 		this.mockMvc.perform(get("/").queryParam("station", "WIHH1")
@@ -123,6 +150,10 @@ class DashboardMvcTests {
 				.andExpect(content().string(containsString("daily-rainfall-table")));
 	}
 
+	/**
+	 * Verifies that browser fallback favicon does not trigger basic authentication.
+	 * @throws Exception if the operation cannot be completed
+	 */
 	@Test
 	void browserFallbackFaviconDoesNotTriggerBasicAuthentication() throws Exception {
 		this.mockMvc.perform(get("/social-image.png"))
@@ -137,6 +168,10 @@ class DashboardMvcTests {
 				.andExpect(header().doesNotExist("WWW-Authenticate"));
 	}
 
+	/**
+	 * Verifies that dashboard API returns consistent aggregate shape.
+	 * @throws Exception if the operation cannot be completed
+	 */
 	@Test
 	void dashboardApiReturnsConsistentAggregateShape() throws Exception {
 		this.mockMvc.perform(get("/api/stations/WIHH1/dashboard")
@@ -149,6 +184,10 @@ class DashboardMvcTests {
 				.andExpect(jsonPath("$.charts.cumulative").isArray());
 	}
 
+	/**
+	 * Verifies that invalid period uses RFC 9457 problem detail.
+	 * @throws Exception if the operation cannot be completed
+	 */
 	@Test
 	void invalidPeriodUsesRfc9457ProblemDetail() throws Exception {
 		this.mockMvc.perform(get("/api/stations/WIHH1/dashboard").queryParam("period", "forever"))
@@ -158,6 +197,10 @@ class DashboardMvcTests {
 				.andExpect(jsonPath("$.type").value("https://pembana.com/problems/invalid-request"));
 	}
 
+	/**
+	 * Verifies that disabled station is rejected by public API.
+	 * @throws Exception if the operation cannot be completed
+	 */
 	@Test
 	void disabledStationIsRejectedByPublicApi() throws Exception {
 		Station disabled = station("OFFH1", "Disabled station", false);
@@ -168,6 +211,10 @@ class DashboardMvcTests {
 				.andExpect(jsonPath("$.title").value("Station not found"));
 	}
 
+	/**
+	 * Verifies that interval only station is excluded from rainfall choices but remains diagnosable.
+	 * @throws Exception if the operation cannot be completed
+	 */
 	@Test
 	void intervalOnlyStationIsExcludedFromRainfallChoicesButRemainsDiagnosable()
 			throws Exception {
@@ -193,6 +240,10 @@ class DashboardMvcTests {
 				.andExpect(content().string(containsString("HLRH1")));
 	}
 
+	/**
+	 * Verifies that empty catalog renders explicit warning.
+	 * @throws Exception if the operation cannot be completed
+	 */
 	@Test
 	void emptyCatalogRendersExplicitWarning() throws Exception {
 		this.repository.deleteAll();
@@ -202,6 +253,10 @@ class DashboardMvcTests {
 				.andExpect(content().string(containsString("Station catalog unavailable")));
 	}
 
+	/**
+	 * Verifies that jte escapes provider controlled station name.
+	 * @throws Exception if the operation cannot be completed
+	 */
 	@Test
 	void jteEscapesProviderControlledStationName() throws Exception {
 		this.repository.saveAndFlush(station("SAFEH1", "<script>alert('x')</script>", true));
@@ -213,6 +268,10 @@ class DashboardMvcTests {
 						containsString("<script>alert('x')</script>"))));
 	}
 
+	/**
+	 * Verifies that administrator refresh requires authentication and csrf.
+	 * @throws Exception if the operation cannot be completed
+	 */
 	@Test
 	void administratorRefreshRequiresAuthenticationAndCsrf() throws Exception {
 		this.mockMvc.perform(post("/admin/station-catalog/refresh").with(csrf()))
@@ -227,6 +286,13 @@ class DashboardMvcTests {
 				.andExpect(status().isOk());
 	}
 
+	/**
+	 * Creates a station for a test scenario.
+	 * @param stationId the provider station identifier
+	 * @param sourceName the source name
+	 * @param enabled the enabled
+	 * @return the resulting station
+	 */
 	private Station station(String stationId, String sourceName, boolean enabled) {
 		Station station = new Station("HI_DCP", stationId, sourceName);
 		station.updateSourceMetadata(sourceName, new BigDecimal("19.640000"),

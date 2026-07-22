@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Gunnar Hillert
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.pembana.raingauge.config;
 
 import java.net.URI;
@@ -13,15 +29,29 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * Configures public and administrative web security.
+ * @author Gunnar Hillert
+ */
 @Configuration(proxyBeanMethods = false)
 public class SecurityConfiguration {
 
 	private final RainfallProperties properties;
 
+	/**
+	 * Creates a new {@code SecurityConfiguration}.
+	 * @param properties the rainfall application properties
+	 */
 	SecurityConfiguration(RainfallProperties properties) {
 		this.properties = properties;
 	}
 
+	/**
+	 * Configures security for administrative endpoints.
+	 * @param http the HTTP
+	 * @return the resulting admin security filter chain
+	 * @throws Exception if the operation cannot be completed
+	 */
 	@Bean
 	@Order(1)
 	SecurityFilterChain adminSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -32,6 +62,12 @@ public class SecurityConfiguration {
 		return http.build();
 	}
 
+	/**
+	 * Configures security for public application endpoints.
+	 * @param http the HTTP
+	 * @return the resulting public security filter chain
+	 * @throws Exception if the operation cannot be completed
+	 */
 	@Bean
 	@Order(2)
 	SecurityFilterChain publicSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -47,6 +83,11 @@ public class SecurityConfiguration {
 		return http.build();
 	}
 
+	/**
+	 * Configures headers.
+	 * @param http the HTTP
+	 * @throws Exception if the operation cannot be completed
+	 */
 	private void configureHeaders(HttpSecurity http) throws Exception {
 		String tileImageSource = stationMapTileImageSource();
 		http.headers((headers) -> headers.contentSecurityPolicy(
@@ -58,6 +99,10 @@ public class SecurityConfiguration {
 							+ "frame-ancestors 'none'")));
 	}
 
+	/**
+	 * Builds the content-security-policy source for map tiles.
+	 * @return the resulting station map tile image source
+	 */
 	private String stationMapTileImageSource() {
 		String tileUrl = this.properties.getStationMap().getTileUrl();
 		if (tileUrl.startsWith("/")) {
@@ -84,6 +129,11 @@ public class SecurityConfiguration {
 		}
 	}
 
+	/**
+	 * Creates the configured administrator account.
+	 * @param properties the rainfall application properties
+	 * @return the resulting user details service
+	 */
 	@Bean
 	UserDetailsService userDetailsService(RainfallProperties properties) {
 		RainfallProperties.Administrator administrator = properties.getAdministrator();

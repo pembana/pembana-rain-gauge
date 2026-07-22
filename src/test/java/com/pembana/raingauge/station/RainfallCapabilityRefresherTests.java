@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Gunnar Hillert
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.pembana.raingauge.station;
 
 import java.util.List;
@@ -13,6 +29,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * Tests rainfall capability refresher.
+ * @author Gunnar Hillert
+ */
 class RainfallCapabilityRefresherTests {
 
 	private StationRepository repository;
@@ -21,6 +41,9 @@ class RainfallCapabilityRefresherTests {
 
 	private RainfallCapabilityRefresher refresher;
 
+	/**
+	 * Creates isolated refresher collaborators before each test.
+	 */
 	@BeforeEach
 	void setUp() {
 		this.repository = mock(StationRepository.class);
@@ -31,6 +54,9 @@ class RainfallCapabilityRefresherTests {
 				this.capabilityService, properties);
 	}
 
+	/**
+	 * Verifies that refresh discovers and persists unknown capabilities.
+	 */
 	@Test
 	void refreshDiscoversAndPersistsUnknownCapabilities() {
 		Station accumulator = new Station("HI_DCP", "RAINH1", "Accumulator");
@@ -56,6 +82,9 @@ class RainfallCapabilityRefresherTests {
 		verify(this.repository).save(interval);
 	}
 
+	/**
+	 * Verifies that refresh skips stations whose capability is already known.
+	 */
 	@Test
 	void refreshSkipsStationsWhoseCapabilityIsAlreadyKnown() {
 		Station known = new Station("HI_DCP", "WIHH1", "Known");

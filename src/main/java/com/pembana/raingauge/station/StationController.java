@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Gunnar Hillert
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.pembana.raingauge.station;
 
 import java.time.Clock;
@@ -20,6 +36,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
+/**
+ * Handles station HTTP requests.
+ * @author Gunnar Hillert
+ */
 @Controller
 public class StationController {
 
@@ -31,6 +51,13 @@ public class StationController {
 
 	private final Clock clock;
 
+	/**
+	 * Creates a new {@code StationController}.
+	 * @param stationService the station service
+	 * @param dashboardService the dashboard service
+	 * @param rainfallService the rainfall service
+	 * @param clock the clock used to obtain the current time
+	 */
 	public StationController(StationService stationService, DashboardService dashboardService,
 			RainfallService rainfallService, Clock clock) {
 		this.stationService = stationService;
@@ -39,6 +66,17 @@ public class StationController {
 		this.clock = clock;
 	}
 
+	/**
+	 * Returns the public station catalog.
+	 * @param query the query
+	 * @param island the island
+	 * @param online the online
+	 * @param capability the capability
+	 * @param enabled the enabled
+	 * @param recent the recent
+	 * @param model the MVC model to populate
+	 * @return the resulting stations
+	 */
 	@GetMapping("/stations")
 	public String stations(@RequestParam(required = false) @Nullable String query,
 			@RequestParam(required = false) @Nullable String island,
@@ -56,6 +94,15 @@ public class StationController {
 		return "stations";
 	}
 
+	/**
+	 * Creates a station for a test scenario.
+	 * @param stationId the provider station identifier
+	 * @param from the inclusive start of the requested interval
+	 * @param to the exclusive end of the requested interval
+	 * @param unit the requested rainfall unit
+	 * @param model the MVC model to populate
+	 * @return the resulting station
+	 */
 	@GetMapping("/stations/{stationId}")
 	public String station(@PathVariable String stationId,
 			@RequestParam(required = false) @Nullable String from,
@@ -83,6 +130,17 @@ public class StationController {
 		return "stationDetail";
 	}
 
+	/**
+	 * Determines whether matches.
+	 * @param station the station to process
+	 * @param query the query
+	 * @param island the island
+	 * @param online the online
+	 * @param capability the capability
+	 * @param enabled the enabled
+	 * @param recent the recent
+	 * @return {@code true} when matches; otherwise {@code false}
+	 */
 	private boolean matches(Station station, @Nullable String query, @Nullable String island,
 			@Nullable Boolean online, @Nullable RainfallCapability capability,
 			@Nullable Boolean enabled, @Nullable Boolean recent) {

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Gunnar Hillert
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.pembana.raingauge.observation.client;
 
 import java.nio.charset.StandardCharsets;
@@ -20,6 +36,10 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 
+/**
+ * Retrieves HADS observation data from its remote provider.
+ * @author Gunnar Hillert
+ */
 @Component
 public class HadsObservationClient {
 
@@ -35,6 +55,14 @@ public class HadsObservationClient {
 
 	private final Clock clock;
 
+	/**
+	 * Creates a new {@code HadsObservationClient}.
+	 * @param restClientFactory the rest client factory
+	 * @param parser the parser
+	 * @param properties the rainfall application properties
+	 * @param providerStatusRegistry the provider status registry
+	 * @param clock the clock used to obtain the current time
+	 */
 	public HadsObservationClient(ProviderRestClientFactory restClientFactory,
 			HadsObservationParser parser, RainfallProperties properties,
 			ProviderStatusRegistry providerStatusRegistry, Clock clock) {
@@ -45,6 +73,15 @@ public class HadsObservationClient {
 		this.clock = clock;
 	}
 
+	/**
+	 * Fetches HADS observations for the requested stations and interval.
+	 * @param stationIds the station ids
+	 * @param network the provider network identifier
+	 * @param shefKey the SHEF key
+	 * @param from the inclusive start of the requested interval
+	 * @param to the exclusive end of the requested interval
+	 * @return the retrieved provider data
+	 */
 	public ObservationBatch fetch(List<String> stationIds, String network, String shefKey,
 			Instant from, Instant to) {
 		long started = System.nanoTime();
@@ -66,6 +103,14 @@ public class HadsObservationClient {
 		}
 	}
 
+	/**
+	 * Retrieves with retry.
+	 * @param stationIds the station ids
+	 * @param network the provider network identifier
+	 * @param from the inclusive start of the requested interval
+	 * @param to the exclusive end of the requested interval
+	 * @return the retrieved provider data
+	 */
 	private String retrieveWithRetry(List<String> stationIds, String network, Instant from, Instant to) {
 		int attempts = this.properties.getProviders().getRetries() + 1;
 		for (int attempt = 1; attempt <= attempts; attempt++) {
@@ -99,6 +144,11 @@ public class HadsObservationClient {
 		throw new ProviderException("Unable to retrieve HADS observations");
 	}
 
+	/**
+	 * Returns whether retryable.
+	 * @param exception the exception to translate
+	 * @return {@code true} if retryable; otherwise {@code false}
+	 */
 	private boolean isRetryable(RestClientException exception) {
 		if (exception instanceof RestClientResponseException responseException) {
 			int status = responseException.getStatusCode().value();
@@ -107,6 +157,10 @@ public class HadsObservationClient {
 		return true;
 	}
 
+	/**
+	 * Waits for the configured retry backoff interval.
+	 * @param attempt the attempt
+	 */
 	private void backOff(int attempt) {
 		long multiplier = 1L << Math.min(attempt - 1, 8);
 		long millis = this.properties.getProviders().getRetryInitialBackoff().toMillis() * multiplier;

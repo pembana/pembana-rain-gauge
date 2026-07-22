@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Gunnar Hillert
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.pembana.raingauge.station;
 
 import java.time.Clock;
@@ -23,6 +39,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+/**
+ * Provides station operations.
+ * @author Gunnar Hillert
+ */
 @Service
 public class StationService {
 
@@ -40,6 +60,15 @@ public class StationService {
 
 	private final Clock clock;
 
+	/**
+	 * Creates a new {@code StationService}.
+	 * @param stationRepository the station repository
+	 * @param stationCatalogClient the station catalog client
+	 * @param properties the rainfall application properties
+	 * @param transactionTemplate the transaction template
+	 * @param eventPublisher the event publisher
+	 * @param clock the clock used to obtain the current time
+	 */
 	public StationService(StationRepository stationRepository,
 			IemStationCatalogClient stationCatalogClient, RainfallProperties properties,
 			TransactionTemplate transactionTemplate, ApplicationEventPublisher eventPublisher,
@@ -52,6 +81,10 @@ public class StationService {
 		this.clock = clock;
 	}
 
+	/**
+	 * Initializes the station catalog when no stations exist.
+	 * @return {@code true} when initialize catalog if empty; otherwise {@code false}
+	 */
 	public boolean initializeCatalogIfEmpty() {
 		if (this.stationRepository.count() > 0) {
 			logger.info("Station catalog bootstrap skipped because local records exist");
@@ -71,6 +104,10 @@ public class StationService {
 		}
 	}
 
+	/**
+	 * Retrieves and merges the complete remote station catalog.
+	 * @return the resulting refresh catalog
+	 */
 	public CatalogRefreshSummary refreshCatalog() {
 		String network = this.properties.getCatalog().getNetwork();
 		StationCatalogResult remote = this.stationCatalogClient.fetchCompleteCatalog(network);
@@ -90,6 +127,9 @@ public class StationService {
 		return summary;
 	}
 
+	/**
+	 * Runs the scheduled provider metadata refresh.
+	 */
 	@Scheduled(fixedDelayString = "${hawaii.rainfall.catalog.refresh-interval:24h}",
 			initialDelayString = "${hawaii.rainfall.catalog.refresh-initial-delay:24h}")
 	public void scheduledRefresh() {
@@ -101,6 +141,12 @@ public class StationService {
 		}
 	}
 
+	/**
+	 * Merges catalog.
+	 * @param remote the remote
+	 * @param refreshedAt the refreshed at
+	 * @return the resulting merge catalog
+	 */
 	private CatalogRefreshSummary mergeCatalog(StationCatalogResult remote, Instant refreshedAt) {
 		Map<String, Station> existing = new HashMap<>();
 		for (Station station : this.stationRepository.findAll()) {
@@ -141,27 +187,54 @@ public class StationService {
 				remote.warnings().size(), refreshedAt);
 	}
 
+	/**
+	 * Builds the stable network and station identifier key.
+	 * @param network the provider network identifier
+	 * @param stationId the provider station identifier
+	 * @return the resulting key
+	 */
 	private String key(String network, String stationId) {
 		return network.toUpperCase(Locale.ROOT) + ':' + stationId.toUpperCase(Locale.ROOT);
 	}
 
+	/**
+	 * Finds public stations.
+	 * @return the matching public stations
+	 */
 	public List<Station> findPublicStations() {
 		return this.stationRepository.findAllByEnabledTrueOrderByDisplayNameAsc();
 	}
 
+	/**
+	 * Finds rainfall stations.
+	 * @return the matching rainfall stations
+	 */
 	public List<Station> findRainfallStations() {
 		return this.stationRepository.findRainfallStations(
 				RainfallCapability.SUPPORTED_ACCUMULATOR);
 	}
 
+	/**
+	 * Finds all stations.
+	 * @return the matching all stations
+	 */
 	public List<Station> findAllStations() {
 		return this.stationRepository.findAllByOrderByDisplayNameAsc();
 	}
 
+	/**
+	 * Finds featured stations.
+	 * @return the matching featured stations
+	 */
 	public List<Station> findFeaturedStations() {
 		return this.stationRepository.findAllByFeaturedTrueAndEnabledTrueOrderByDisplayNameAsc();
 	}
 
+	/**
+	 * Returns the required public station.
+	 * @param stationId the provider station identifier
+	 * @return the required public station
+	 */
 	public Station requirePublicStation(String stationId) {
 		Station station = this.stationRepository.findByStationIdIgnoreCase(stationId)
 				.orElseThrow(() -> new StationNotFoundException(stationId));
@@ -171,6 +244,11 @@ public class StationService {
 		return station;
 	}
 
+	/**
+	 * Returns the required rainfall station.
+	 * @param stationId the provider station identifier
+	 * @return the required rainfall station
+	 */
 	public Station requireRainfallStation(String stationId) {
 		Station station = requirePublicStation(stationId);
 		if (station.getRainfallCapability() != RainfallCapability.SUPPORTED_ACCUMULATOR
@@ -180,15 +258,34 @@ public class StationService {
 		return station;
 	}
 
+	/**
+	 * Records latest observation.
+	 * @param station the station to process
+	 * @param observedAt the observed at
+	 */
 	public void recordLatestObservation(Station station, Instant observedAt) {
 		station.recordLatestObservation(observedAt);
 		this.transactionTemplate.executeWithoutResult((status) -> this.stationRepository.save(station));
 	}
 
+	/**
+	 * Counts persisted stations.
+	 * @return the number of persisted stations
+	 */
 	public long count() {
 		return this.stationRepository.count();
 	}
 
+	/**
+	 * Describes a catalog refresh summary.
+	 * @param added the added
+	 * @param updated the updated
+	 * @param unconfirmed the unconfirmed
+	 * @param rejected the rejected
+	 * @param warnings the warnings
+	 * @param refreshedAt the refreshed at
+	 * @author Gunnar Hillert
+	 */
 	public record CatalogRefreshSummary(int added, int updated, int unconfirmed, int rejected,
 			int warnings, Instant refreshedAt) {
 	}

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Gunnar Hillert
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.pembana.raingauge.dashboard;
 
 import java.util.ArrayList;
@@ -9,15 +25,30 @@ import com.pembana.raingauge.station.Station;
 
 import org.springframework.stereotype.Service;
 
+/**
+ * Provides comparison operations.
+ * @author Gunnar Hillert
+ */
 @Service
 public class ComparisonService {
 
 	private final DashboardService dashboardService;
 
+	/**
+	 * Creates a new {@code ComparisonService}.
+	 * @param dashboardService the dashboard service
+	 */
 	public ComparisonService(DashboardService dashboardService) {
 		this.dashboardService = dashboardService;
 	}
 
+	/**
+	 * Builds the multi-station rainfall comparison.
+	 * @param stations the stations
+	 * @param window the requested rainfall window
+	 * @param unit the requested rainfall unit
+	 * @return the resulting compare
+	 */
 	public ComparisonResponse compare(List<Station> stations, RainfallWindow window,
 			RainfallUnit unit) {
 		if (stations.size() > 8) {
@@ -33,6 +64,12 @@ public class ComparisonService {
 		return new ComparisonResponse(window.token(), unit.token(), results);
 	}
 
+	/**
+	 * Returns the total for the selected rainfall window.
+	 * @param dashboard the dashboard
+	 * @param window the requested rainfall window
+	 * @return the resulting selected total
+	 */
 	private DashboardResponse.Result selectedTotal(DashboardResponse dashboard,
 			RainfallWindow window) {
 		DashboardResponse.Summary summary = dashboard.summary();

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Gunnar Hillert
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.pembana.raingauge.observation.client;
 
 import java.io.IOException;
@@ -28,6 +44,10 @@ import org.springframework.web.client.RestClient;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+/**
+ * Tests HADS observation client.
+ * @author Gunnar Hillert
+ */
 class HadsObservationClientTests {
 
 	private static final Instant FROM = Instant.parse("2026-07-01T00:00:00Z");
@@ -42,6 +62,9 @@ class HadsObservationClientTests {
 
 	private HttpServer server;
 
+	/**
+	 * Stops the test HTTP server after each client test.
+	 */
 	@AfterEach
 	void stopServer() {
 		if (this.server != null) {
@@ -49,6 +72,10 @@ class HadsObservationClientTests {
 		}
 	}
 
+	/**
+	 * Verifies that sends UTC boundaries and parses successful response.
+	 * @throws Exception if the operation cannot be completed
+	 */
 	@Test
 	void sendsUtcBoundariesAndParsesSuccessfulResponse() throws Exception {
 		AtomicInteger requests = new AtomicInteger();
@@ -68,6 +95,10 @@ class HadsObservationClientTests {
 		assertThat(batch.rejectedRows()).isZero();
 	}
 
+	/**
+	 * Verifies that retries rate limit then succeeds.
+	 * @throws Exception if the operation cannot be completed
+	 */
 	@Test
 	void retriesRateLimitThenSucceeds() throws Exception {
 		AtomicInteger requests = new AtomicInteger();
@@ -86,6 +117,10 @@ class HadsObservationClientTests {
 		assertThat(batch.observations()).hasSize(2);
 	}
 
+	/**
+	 * Verifies that retries transient server error then succeeds.
+	 * @throws Exception if the operation cannot be completed
+	 */
 	@Test
 	void retriesTransientServerErrorThenSucceeds() throws Exception {
 		AtomicInteger requests = new AtomicInteger();
@@ -102,6 +137,10 @@ class HadsObservationClientTests {
 		assertThat(requests).hasValue(2);
 	}
 
+	/**
+	 * Verifies that does not retry permanent client error.
+	 * @throws Exception if the operation cannot be completed
+	 */
 	@Test
 	void doesNotRetryPermanentClientError() throws Exception {
 		AtomicInteger requests = new AtomicInteger();
@@ -117,6 +156,10 @@ class HadsObservationClientTests {
 		assertThat(requests).hasValue(1);
 	}
 
+	/**
+	 * Verifies that reports read timeout.
+	 * @throws Exception if the operation cannot be completed
+	 */
 	@Test
 	void reportsReadTimeout() throws Exception {
 		startServer((exchange) -> {
@@ -135,6 +178,10 @@ class HadsObservationClientTests {
 				.isInstanceOf(ProviderException.class);
 	}
 
+	/**
+	 * Verifies that empty response is not presented as a complete dataset.
+	 * @throws Exception if the operation cannot be completed
+	 */
 	@Test
 	void emptyResponseIsNotPresentedAsACompleteDataset() throws Exception {
 		startServer((exchange) -> respond(exchange, 200, ""));
@@ -145,6 +192,11 @@ class HadsObservationClientTests {
 				.hasMessageContaining("no response body");
 	}
 
+	/**
+	 * Starts the test HTTP server with the supplied handler.
+	 * @param handler the HTTP request handler
+	 * @throws IOException if an I/O operation fails
+	 */
 	private void startServer(HttpHandler handler) throws IOException {
 		this.server = HttpServer.create(
 				new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
@@ -152,6 +204,12 @@ class HadsObservationClientTests {
 		this.server.start();
 	}
 
+	/**
+	 * Creates a provider client for a test scenario.
+	 * @param retries the retries
+	 * @param readTimeout the read timeout
+	 * @return the resulting client
+	 */
 	private HadsObservationClient client(int retries, Duration readTimeout) {
 		RainfallProperties properties = new RainfallProperties();
 		properties.getProviders().setHadsBaseUrl("http://localhost:" + this.server.getAddress().getPort());
@@ -163,6 +221,13 @@ class HadsObservationClientTests {
 				new ProviderStatusRegistry(), Clock.fixed(TO, ZoneOffset.UTC));
 	}
 
+	/**
+	 * Writes a test HTTP response.
+	 * @param exchange the exchange
+	 * @param status the status
+	 * @param body the provider response body
+	 * @throws IOException if an I/O operation fails
+	 */
 	private static void respond(HttpExchange exchange, int status, String body) throws IOException {
 		byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
 		exchange.getResponseHeaders().add("Content-Type", "text/csv; charset=UTF-8");

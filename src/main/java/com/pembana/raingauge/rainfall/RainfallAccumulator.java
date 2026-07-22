@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Gunnar Hillert
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.pembana.raingauge.rainfall;
 
 import java.math.BigDecimal;
@@ -20,6 +36,10 @@ import com.pembana.raingauge.observation.PrecipitationObservation;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
 
+/**
+ * Provides rainfall accumulator behavior.
+ * @author Gunnar Hillert
+ */
 @Component
 public class RainfallAccumulator {
 
@@ -29,11 +49,26 @@ public class RainfallAccumulator {
 
 	private final Clock clock;
 
+	/**
+	 * Creates a new {@code RainfallAccumulator}.
+	 * @param properties the rainfall application properties
+	 * @param clock the clock used to obtain the current time
+	 */
 	public RainfallAccumulator(RainfallProperties properties, Clock clock) {
 		this.properties = properties;
 		this.clock = clock;
 	}
 
+	/**
+	 * Calculates rainfall for the requested interval.
+	 * @param source the source data
+	 * @param from the inclusive start of the requested interval
+	 * @param to the exclusive end of the requested interval
+	 * @param cadence the expected observation cadence
+	 * @param batch the source observation batch
+	 * @param unit the requested rainfall unit
+	 * @return the calculated rainfall result
+	 */
 	public RainfallResult calculate(List<PrecipitationObservation> source, Instant from,
 			Instant to, Duration cadence, ObservationBatch batch, RainfallUnit unit) {
 		Instant calculatedAt = this.clock.instant();
@@ -146,6 +181,18 @@ public class RainfallAccumulator {
 				batch.provider(), batch.fetchedAt());
 	}
 
+	/**
+	 * Creates an unavailable rainfall result with quality metadata.
+	 * @param from the inclusive start of the requested interval
+	 * @param to the exclusive end of the requested interval
+	 * @param calculatedAt the calculated at
+	 * @param batch the source observation batch
+	 * @param unit the requested rainfall unit
+	 * @param cadence the expected observation cadence
+	 * @param warnings the warnings
+	 * @param conflicts the conflicts
+	 * @return the resulting unavailable
+	 */
 	private RainfallResult unavailable(Instant from, Instant to, Instant calculatedAt,
 			ObservationBatch batch, RainfallUnit unit, Duration cadence, List<String> warnings,
 			int conflicts) {
@@ -160,6 +207,11 @@ public class RainfallAccumulator {
 				batch.fetchedAt());
 	}
 
+	/**
+	 * Deduplicates observations by timestamp and quality.
+	 * @param source the source data
+	 * @return the resulting deduplicate
+	 */
 	private Deduplicated deduplicate(List<PrecipitationObservation> source) {
 		Map<Instant, List<PrecipitationObservation>> grouped = new TreeMap<>();
 		for (PrecipitationObservation observation : source) {
@@ -189,10 +241,21 @@ public class RainfallAccumulator {
 		return new Deduplicated(List.copyOf(result), List.copyOf(warnings), conflicts);
 	}
 
+	/**
+	 * Returns the selection rank for an observation's quality.
+	 * @param observation the observation
+	 * @return the resulting quality rank
+	 */
 	private int qualityRank(PrecipitationObservation observation) {
 		return observation.quality() == ObservationQuality.VALID ? 0 : 1;
 	}
 
+	/**
+	 * Finds baseline.
+	 * @param observations the precipitation observations to process
+	 * @param from the inclusive start of the requested interval
+	 * @return the matching baseline
+	 */
 	private @Nullable PrecipitationObservation findBaseline(
 			List<PrecipitationObservation> observations, Instant from) {
 		PrecipitationObservation baseline = null;
@@ -207,6 +270,13 @@ public class RainfallAccumulator {
 		return baseline;
 	}
 
+	/**
+	 * Finds first valid in window.
+	 * @param observations the precipitation observations to process
+	 * @param from the inclusive start of the requested interval
+	 * @param to the exclusive end of the requested interval
+	 * @return the matching first valid in window
+	 */
 	private @Nullable PrecipitationObservation findFirstValidInWindow(
 			List<PrecipitationObservation> observations, Instant from, Instant to) {
 		for (PrecipitationObservation observation : observations) {
@@ -219,6 +289,13 @@ public class RainfallAccumulator {
 		return null;
 	}
 
+	/**
+	 * Finds the next valid observation before the interval ends.
+	 * @param observations the precipitation observations to process
+	 * @param start the start
+	 * @param to the exclusive end of the requested interval
+	 * @return the resulting next valid
+	 */
 	private @Nullable PrecipitationObservation nextValid(
 			List<PrecipitationObservation> observations, int start, Instant to) {
 		for (int index = start; index < observations.size(); index++) {
@@ -233,6 +310,12 @@ public class RainfallAccumulator {
 		return null;
 	}
 
+	/**
+	 * Calculates an accumulator delta across a recognized rollover.
+	 * @param previous the previous
+	 * @param current the current
+	 * @return the resulting rollover delta
+	 */
 	private @Nullable BigDecimal rolloverDelta(BigDecimal previous, BigDecimal current) {
 		BigDecimal maximum = this.properties.getReset().getRolloverMaximum();
 		BigDecimal rolloverFloor = maximum.multiply(new BigDecimal("0.95"));
@@ -243,6 +326,13 @@ public class RainfallAccumulator {
 		return null;
 	}
 
+	/**
+	 * Returns whether corroborated reset.
+	 * @param current the current
+	 * @param next the next
+	 * @param cadence the expected observation cadence
+	 * @return {@code true} if corroborated reset; otherwise {@code false}
+	 */
 	private boolean isCorroboratedReset(PrecipitationObservation current,
 			@Nullable PrecipitationObservation next, Duration cadence) {
 		return current.value().compareTo(this.properties.getReset().getNearZeroThreshold()) <= 0
@@ -252,6 +342,13 @@ public class RainfallAccumulator {
 						.compareTo(cadence.multipliedBy(2)) <= 0;
 	}
 
+	/**
+	 * Contains deduplicated observations and retransmission warnings.
+	 * @param observations the precipitation observations to process
+	 * @param warnings the warnings
+	 * @param conflicts the conflicts
+	 * @author Gunnar Hillert
+	 */
 	private record Deduplicated(List<PrecipitationObservation> observations,
 			List<String> warnings, int conflicts) {
 	}

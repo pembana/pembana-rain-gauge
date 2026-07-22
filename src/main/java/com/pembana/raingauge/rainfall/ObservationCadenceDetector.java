@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Gunnar Hillert
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.pembana.raingauge.rainfall;
 
 import java.time.Duration;
@@ -13,11 +29,24 @@ import com.pembana.raingauge.observation.PrecipitationObservation;
 
 import org.springframework.stereotype.Component;
 
+/**
+ * Provides observation cadence detector behavior.
+ * @author Gunnar Hillert
+ */
 @Component
 public class ObservationCadenceDetector {
 
+	/** Creates the observation-cadence detector. */
+	public ObservationCadenceDetector() {
+	}
+
 	private static final Duration DEFAULT_CADENCE = Duration.ofMinutes(15);
 
+	/**
+	 * Detects the dominant cadence between valid observations.
+	 * @param observations the precipitation observations to process
+	 * @return the detected observation cadence
+	 */
 	public Duration detect(List<PrecipitationObservation> observations) {
 		List<Instant> timestamps = observations.stream()
 				.filter((observation) -> observation.quality() == ObservationQuality.VALID)

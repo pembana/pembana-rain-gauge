@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 Gunnar Hillert
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.pembana.raingauge.rainfall;
 
 import java.time.Clock;
@@ -16,6 +32,10 @@ import com.pembana.raingauge.station.Station;
 
 import org.springframework.stereotype.Service;
 
+/**
+ * Provides rainfall operations.
+ * @author Gunnar Hillert
+ */
 @Service
 public class RainfallService {
 
@@ -31,6 +51,15 @@ public class RainfallService {
 
 	private final Clock clock;
 
+	/**
+	 * Creates a new {@code RainfallService}.
+	 * @param observationService the observation service
+	 * @param rainfallAccumulator the rainfall accumulator
+	 * @param cadenceDetector the cadence detector
+	 * @param capabilityService the capability service
+	 * @param properties the rainfall application properties
+	 * @param clock the clock used to obtain the current time
+	 */
 	public RainfallService(ObservationService observationService,
 			RainfallAccumulator rainfallAccumulator, ObservationCadenceDetector cadenceDetector,
 			RainfallCapabilityService capabilityService, RainfallProperties properties, Clock clock) {
@@ -42,11 +71,25 @@ public class RainfallService {
 		this.clock = clock;
 	}
 
+	/**
+	 * Calculates rainfall for the requested interval.
+	 * @param station the station to process
+	 * @param window the requested rainfall window
+	 * @param unit the requested rainfall unit
+	 * @return the calculated rainfall result
+	 */
 	public RainfallResult calculate(Station station, RainfallWindow window, RainfallUnit unit) {
 		RainfallWindow.TimeRange range = window.resolve(this.clock.instant());
 		return calculate(station, range.from(), range.to(), unit);
 	}
 
+	/**
+	 * Calculates all dashboard rainfall windows.
+	 * @param station the station to process
+	 * @param windows the windows
+	 * @param unit the requested rainfall unit
+	 * @return the calculated rainfall result
+	 */
 	public Map<RainfallWindow, RainfallResult> calculateWindows(Station station,
 			Set<RainfallWindow> windows, RainfallUnit unit) {
 		if (windows.isEmpty()) {
@@ -87,6 +130,14 @@ public class RainfallService {
 		return Map.copyOf(results);
 	}
 
+	/**
+	 * Calculates rainfall for the requested interval.
+	 * @param station the station to process
+	 * @param from the inclusive start of the requested interval
+	 * @param to the exclusive end of the requested interval
+	 * @param unit the requested rainfall unit
+	 * @return the calculated rainfall result
+	 */
 	public RainfallResult calculate(Station station, Instant from, Instant to, RainfallUnit unit) {
 		validateRange(from, to);
 		RainfallCapabilityService.CapabilityDiscovery capability =
@@ -104,6 +155,11 @@ public class RainfallService {
 				observations, unit);
 	}
 
+	/**
+	 * Validates range.
+	 * @param from the inclusive start of the requested interval
+	 * @param to the exclusive end of the requested interval
+	 */
 	private void validateRange(Instant from, Instant to) {
 		if (!from.isBefore(to)) {
 			throw new IllegalArgumentException("The rainfall range start must be before its end");
