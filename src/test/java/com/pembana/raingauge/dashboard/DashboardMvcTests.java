@@ -46,7 +46,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -95,9 +95,9 @@ class DashboardMvcTests {
 		waiaha.applyOverride(new StationOverride("HI82", "Waiaha", "Hawaiʻi", "North Kona",
 				true, true, null, "PCIRG", "fixture"));
 		this.repository.saveAndFlush(waiaha);
-		when(this.dailySummaryClient.fetch(anyString(), anyString(), any())).thenReturn(Map.of());
-		when(this.observationClient.fetch(anyList(), anyString(), anyString(), any(), any()))
-				.thenAnswer((invocation) -> {
+		given(this.dailySummaryClient.fetch(anyString(), anyString(), any())).willReturn(Map.of());
+		given(this.observationClient.fetch(anyList(), anyString(), anyString(), any(), any()))
+				.willAnswer((invocation) -> {
 					Instant from = invocation.getArgument(3);
 					Instant to = invocation.getArgument(4);
 					List<PrecipitationObservation> observations = List.of(
@@ -109,7 +109,7 @@ class DashboardMvcTests {
 					return new ObservationBatch(observations, List.of(), Instant.now(),
 							Duration.ZERO, false, false, "fixture", 0);
 				});
-		when(this.catalogClient.fetchCompleteCatalog("HI_DCP")).thenReturn(new StationCatalogResult(
+		given(this.catalogClient.fetchCompleteCatalog("HI_DCP")).willReturn(new StationCatalogResult(
 				List.of(new CatalogStation("HI_DCP", "WIHH1",
 						"Kailua-Kona 3SE - Waiaha", null, null, null, null, null, true,
 						"HI", "US", "Pacific/Honolulu", "fixture")),

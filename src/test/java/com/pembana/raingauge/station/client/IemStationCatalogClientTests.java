@@ -29,8 +29,8 @@ import com.pembana.raingauge.config.RainfallProperties;
 import com.pembana.raingauge.support.ProviderStatusRegistry;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests IEM station catalog client.
@@ -76,7 +76,7 @@ class IemStationCatalogClientTests {
 	 */
 	private IemStationCatalogClient client() {
 		ProviderRestClientFactory factory = mock(ProviderRestClientFactory.class);
-		when(factory.create(org.mockito.ArgumentMatchers.anyString())).thenReturn(mock(RestClient.class));
+		given(factory.create(org.mockito.ArgumentMatchers.anyString())).willReturn(mock(RestClient.class));
 		return new IemStationCatalogClient(factory, new RainfallProperties(),
 				new ProviderStatusRegistry(), Clock.systemUTC());
 	}

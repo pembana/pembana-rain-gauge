@@ -28,8 +28,8 @@ import com.pembana.raingauge.config.ProviderRestClientFactory;
 import com.pembana.raingauge.config.RainfallProperties;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests IEM daily summary client.
@@ -44,7 +44,7 @@ class IemDailySummaryClientTests {
 	@Test
 	void retainsAvailableDailyValueAndDoesNotTurnMissingValueIntoZero() throws IOException {
 		ProviderRestClientFactory factory = mock(ProviderRestClientFactory.class);
-		when(factory.create(org.mockito.ArgumentMatchers.anyString())).thenReturn(mock(RestClient.class));
+		given(factory.create(org.mockito.ArgumentMatchers.anyString())).willReturn(mock(RestClient.class));
 		IemDailySummaryClient client = new IemDailySummaryClient(factory, new RainfallProperties());
 		String fixture = new ClassPathResource("fixtures/iem-wihh1-daily.json")
 				.getContentAsString(StandardCharsets.UTF_8);

@@ -24,10 +24,10 @@ import org.junit.jupiter.api.Test;
 import com.pembana.raingauge.config.RainfallProperties;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests rainfall capability refresher.
@@ -61,12 +61,12 @@ class RainfallCapabilityRefresherTests {
 	void refreshDiscoversAndPersistsUnknownCapabilities() {
 		Station accumulator = new Station("HI_DCP", "RAINH1", "Accumulator");
 		Station interval = new Station("HI_DCP", "HLRH1", "Interval");
-		when(this.repository.findAllByEnabledTrueOrderByDisplayNameAsc())
-				.thenReturn(List.of(accumulator, interval));
-		when(this.capabilityService.discover(accumulator)).thenReturn(
+		given(this.repository.findAllByEnabledTrueOrderByDisplayNameAsc())
+				.willReturn(List.of(accumulator, interval));
+		given(this.capabilityService.discover(accumulator)).willReturn(
 				new RainfallCapabilityService.CapabilityDiscovery(
 						RainfallCapability.SUPPORTED_ACCUMULATOR, "PCIRG"));
-		when(this.capabilityService.discover(interval)).thenReturn(
+		given(this.capabilityService.discover(interval)).willReturn(
 				new RainfallCapabilityService.CapabilityDiscovery(
 						RainfallCapability.SUPPORTED_INTERVAL_PRECIPITATION, "PPHRZ"));
 
@@ -78,8 +78,8 @@ class RainfallCapabilityRefresherTests {
 		assertThat(accumulator.getPrecipitationKey()).isEqualTo("PCIRG");
 		assertThat(interval.getRainfallCapability())
 				.isEqualTo(RainfallCapability.SUPPORTED_INTERVAL_PRECIPITATION);
-		verify(this.repository).save(accumulator);
-		verify(this.repository).save(interval);
+		then(this.repository).should().save(accumulator);
+		then(this.repository).should().save(interval);
 	}
 
 	/**
@@ -89,14 +89,14 @@ class RainfallCapabilityRefresherTests {
 	void refreshSkipsStationsWhoseCapabilityIsAlreadyKnown() {
 		Station known = new Station("HI_DCP", "WIHH1", "Known");
 		known.updateCapability(RainfallCapability.SUPPORTED_ACCUMULATOR, "PCIRG");
-		when(this.repository.findAllByEnabledTrueOrderByDisplayNameAsc())
-				.thenReturn(List.of(known));
+		given(this.repository.findAllByEnabledTrueOrderByDisplayNameAsc())
+				.willReturn(List.of(known));
 
 		RainfallCapabilityRefresher.CapabilityRefreshSummary summary = this.refresher.refresh();
 
 		assertThat(summary.checked()).isZero();
-		verify(this.capabilityService, never()).discover(known);
-		verify(this.repository, never()).save(known);
+		then(this.capabilityService).should(never()).discover(known);
+		then(this.repository).should(never()).save(known);
 	}
 
 }

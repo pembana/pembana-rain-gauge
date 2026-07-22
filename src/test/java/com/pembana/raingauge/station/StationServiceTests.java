@@ -41,10 +41,10 @@ import com.pembana.raingauge.station.client.StationCatalogResult;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests station service.
@@ -75,7 +75,7 @@ class StationServiceTests {
 		this.eventPublisher = mock(ApplicationEventPublisher.class);
 		this.properties = new RainfallProperties();
 		TransactionTemplate transactionTemplate = mock(TransactionTemplate.class);
-		when(transactionTemplate.execute(any())).thenAnswer((invocation) -> {
+		given(transactionTemplate.execute(any())).willAnswer((invocation) -> {
 			TransactionCallback<Object> callback = invocation.getArgument(0);
 			return callback.doInTransaction(new SimpleTransactionStatus());
 		});
@@ -88,14 +88,14 @@ class StationServiceTests {
 	 */
 	@Test
 	void emptyDatabaseTriggersCatalogRetrieval() {
-		when(this.repository.count()).thenReturn(0L);
-		when(this.repository.findAll()).thenReturn(List.of());
-		when(this.catalogClient.fetchCompleteCatalog("HI_DCP")).thenReturn(result(station("WIHH1")));
+		given(this.repository.count()).willReturn(0L);
+		given(this.repository.findAll()).willReturn(List.of());
+		given(this.catalogClient.fetchCompleteCatalog("HI_DCP")).willReturn(result(station("WIHH1")));
 
 		assertThat(this.service.initializeCatalogIfEmpty()).isTrue();
-		verify(this.catalogClient).fetchCompleteCatalog("HI_DCP");
-		verify(this.repository).saveAll(any());
-		verify(this.eventPublisher).publishEvent(any(StationCatalogRefreshedEvent.class));
+		then(this.catalogClient).should().fetchCompleteCatalog("HI_DCP");
+		then(this.repository).should().saveAll(any());
+		then(this.eventPublisher).should().publishEvent(any(StationCatalogRefreshedEvent.class));
 	}
 
 	/**
@@ -103,10 +103,10 @@ class StationServiceTests {
 	 */
 	@Test
 	void populatedDatabaseSkipsBootstrapRetrieval() {
-		when(this.repository.count()).thenReturn(1L);
+		given(this.repository.count()).willReturn(1L);
 
 		assertThat(this.service.initializeCatalogIfEmpty()).isFalse();
-		verify(this.catalogClient, never()).fetchCompleteCatalog(any());
+		then(this.catalogClient).should(never()).fetchCompleteCatalog(any());
 	}
 
 	/**
@@ -114,9 +114,9 @@ class StationServiceTests {
 	 */
 	@Test
 	void failedBootstrapPermitsStartupByDefault() {
-		when(this.repository.count()).thenReturn(0L);
-		when(this.catalogClient.fetchCompleteCatalog("HI_DCP"))
-				.thenThrow(new ProviderException("provider down"));
+		given(this.repository.count()).willReturn(0L);
+		given(this.catalogClient.fetchCompleteCatalog("HI_DCP"))
+				.willThrow(new ProviderException("provider down"));
 
 		assertThat(this.service.initializeCatalogIfEmpty()).isFalse();
 	}
@@ -127,9 +127,9 @@ class StationServiceTests {
 	@Test
 	void strictBootstrapFailsOnlyWhenDatabaseIsEmpty() {
 		this.properties.getCatalog().setFailStartupWhenEmpty(true);
-		when(this.repository.count()).thenReturn(0L);
-		when(this.catalogClient.fetchCompleteCatalog("HI_DCP"))
-				.thenThrow(new ProviderException("provider down"));
+		given(this.repository.count()).willReturn(0L);
+		given(this.catalogClient.fetchCompleteCatalog("HI_DCP"))
+				.willThrow(new ProviderException("provider down"));
 
 		assertThatThrownBy(this.service::initializeCatalogIfEmpty)
 				.isInstanceOf(ProviderException.class)
@@ -144,13 +144,13 @@ class StationServiceTests {
 	void refreshAddsStationAndAppliesAllConfiguredDisplayOverrides() {
 		this.properties.getStationOverrides().put("WIHH1", new StationOverride("HI82", "Waiaha",
 				"Hawaiʻi", "North Kona", true, true, null, "PCIRG", "Featured station"));
-		when(this.repository.findAll()).thenReturn(List.of());
-		when(this.catalogClient.fetchCompleteCatalog("HI_DCP")).thenReturn(result(station("WIHH1")));
+		given(this.repository.findAll()).willReturn(List.of());
+		given(this.catalogClient.fetchCompleteCatalog("HI_DCP")).willReturn(result(station("WIHH1")));
 
 		StationService.CatalogRefreshSummary summary = this.service.refreshCatalog();
 
 		ArgumentCaptor<Collection<Station>> saved = ArgumentCaptor.forClass(Collection.class);
-		verify(this.repository).saveAll(saved.capture());
+		then(this.repository).should().saveAll(saved.capture());
 		Station station = saved.getValue().iterator().next();
 		assertThat(summary.added()).isEqualTo(1);
 		assertThat(station.getDisplayName()).isEqualTo("Waiaha");
@@ -169,8 +169,8 @@ class StationServiceTests {
 	void refreshUpdatesExistingAndRetainsAbsentStationAsUnconfirmed() {
 		Station existing = new Station("HI_DCP", "WIHH1", "Old source name");
 		Station absent = new Station("HI_DCP", "OLDH1", "Absent from this response");
-		when(this.repository.findAll()).thenReturn(List.of(existing, absent));
-		when(this.catalogClient.fetchCompleteCatalog("HI_DCP")).thenReturn(result(station("WIHH1")));
+		given(this.repository.findAll()).willReturn(List.of(existing, absent));
+		given(this.catalogClient.fetchCompleteCatalog("HI_DCP")).willReturn(result(station("WIHH1")));
 
 		StationService.CatalogRefreshSummary summary = this.service.refreshCatalog();
 
@@ -187,8 +187,8 @@ class StationServiceTests {
 	void rainfallStationsReturnsOnlyRepositoryConfirmedAccumulators() {
 		Station supported = new Station("HI_DCP", "WIHH1", "Supported");
 		supported.updateCapability(RainfallCapability.SUPPORTED_ACCUMULATOR, "PCIRG");
-		when(this.repository.findRainfallStations(RainfallCapability.SUPPORTED_ACCUMULATOR))
-				.thenReturn(List.of(supported));
+		given(this.repository.findRainfallStations(RainfallCapability.SUPPORTED_ACCUMULATOR))
+				.willReturn(List.of(supported));
 
 		assertThat(this.service.findRainfallStations()).containsExactly(supported);
 	}

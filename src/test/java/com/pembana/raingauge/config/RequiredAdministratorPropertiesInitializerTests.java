@@ -20,9 +20,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationContextException;
 import org.springframework.mock.env.MockEnvironment;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.catchThrowableOfType;
 
 /**
  * Tests required administrator properties initializer.
@@ -43,7 +43,8 @@ class RequiredAdministratorPropertiesInitializerTests {
 				.withProperty(USERNAME_PROPERTY, "administrator")
 				.withProperty(PASSWORD_PROPERTY, "{noop}secret");
 
-		assertDoesNotThrow(() -> RequiredAdministratorPropertiesInitializer.validate(environment));
+		assertThatCode(() -> RequiredAdministratorPropertiesInitializer.validate(environment))
+				.doesNotThrowAnyException();
 	}
 
 	/**
@@ -51,12 +52,12 @@ class RequiredAdministratorPropertiesInitializerTests {
 	 */
 	@Test
 	void rejectsMissingAdministratorPropertiesWithoutExposingValues() {
-		ApplicationContextException exception = assertThrows(ApplicationContextException.class,
+		ApplicationContextException exception = catchThrowableOfType(ApplicationContextException.class,
 				() -> RequiredAdministratorPropertiesInitializer.validate(new MockEnvironment()));
 
-		assertEquals("Required configuration properties are missing or blank: "
+		assertThat(exception.getMessage()).isEqualTo("Required configuration properties are missing or blank: "
 				+ "hawaii.rainfall.administrator.username, "
-				+ "hawaii.rainfall.administrator.password", exception.getMessage());
+				+ "hawaii.rainfall.administrator.password");
 	}
 
 	/**
@@ -68,11 +69,11 @@ class RequiredAdministratorPropertiesInitializerTests {
 				.withProperty(USERNAME_PROPERTY, "  ")
 				.withProperty(PASSWORD_PROPERTY, "{noop}secret");
 
-		ApplicationContextException exception = assertThrows(ApplicationContextException.class,
+		ApplicationContextException exception = catchThrowableOfType(ApplicationContextException.class,
 				() -> RequiredAdministratorPropertiesInitializer.validate(environment));
 
-		assertEquals("Required configuration properties are missing or blank: "
-				+ "hawaii.rainfall.administrator.username", exception.getMessage());
+		assertThat(exception.getMessage()).isEqualTo("Required configuration properties are missing or blank: "
+				+ "hawaii.rainfall.administrator.username");
 	}
 
 }

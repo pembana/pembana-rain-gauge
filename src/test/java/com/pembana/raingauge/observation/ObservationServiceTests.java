@@ -30,8 +30,8 @@ import com.pembana.raingauge.observation.client.HadsObservationClient;
 import com.pembana.raingauge.station.client.ProviderException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Tests observation service.
@@ -54,9 +54,9 @@ class ObservationServiceTests {
 				PrecipitationObservation.valid("WIHH1", FROM, "PCIRG", new BigDecimal("1.00"), 0),
 				PrecipitationObservation.valid("WIHH1", TO, "PCIRG", new BigDecimal("1.02"), 1)),
 				List.of(), TO, Duration.ZERO, false, false, "fixture", 0);
-		when(client.fetch(List.of("WIHH1"), "HI_DCP", "PCIRG", FROM, TO))
-				.thenReturn(successful)
-				.thenThrow(new ProviderException("provider unavailable"));
+		given(client.fetch(List.of("WIHH1"), "HI_DCP", "PCIRG", FROM, TO))
+				.willReturn(successful)
+				.willThrow(new ProviderException("provider unavailable"));
 		RainfallProperties properties = new RainfallProperties();
 		properties.getCache().setObservations(Duration.ofMillis(5));
 		properties.getCache().setStaleObservations(Duration.ofMinutes(1));
