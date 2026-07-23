@@ -161,9 +161,15 @@ body {
   display: grid;
   gap: var(--tblr-gutter-x, 1.5rem);
   grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-left: 0;
+  margin-right: 0;
+  width: 100%;
 }
 
 .summary-grid > [class*="col-"] {
+  min-width: 0;
+  padding-left: 0;
+  padding-right: 0;
   width: auto;
 }
 
@@ -174,7 +180,32 @@ body {
 
 .rainfall-summary-card .card:hover {
   box-shadow: 0 0.65rem 1.75rem rgba(8, 78, 105, 0.11);
-  transform: translateY(-2px);
+}
+
+.rainfall-summary-card > .card {
+  transform: none;
+}
+
+.quality-badge-trigger {
+  align-items: flex-start;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  display: inline-flex;
+  line-height: 1;
+  margin: 0;
+  padding: 0;
+}
+
+.quality-badge-trigger .quality-badge {
+  display: block;
+}
+
+.quality-badge-trigger:focus-visible {
+  border-radius: var(--tblr-border-radius-sm);
+  outline: 2px solid var(--tblr-primary);
+  outline-offset: 3px;
 }
 
 .rainfall-value {

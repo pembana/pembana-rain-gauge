@@ -1,5 +1,6 @@
 @import com.pembana.raingauge.dashboard.ComparisonView
 @import com.pembana.raingauge.dashboard.ComparisonResponse
+@import com.pembana.raingauge.dashboard.DashboardResponse
 @import com.pembana.raingauge.station.StationResponse
 @import com.pembana.raingauge.support.PageMetadata
 
@@ -30,9 +31,22 @@
         <div class="col-12"><article class="card"><div class="card-header"><h2 class="card-title">Cumulative rainfall</h2></div><div class="card-body"><div id="comparison-cumulative-chart" class="rainfall-chart large"></div></div></article></div>
         <div class="col-12"><article class="card"><div class="table-responsive"><table class="table table-vcenter card-table"><thead><tr><th>Station</th><th>Total</th><th>Status</th><th>Completeness</th><th>Latest observation</th></tr></thead><tbody>
           @for (ComparisonResponse.ComparisonStation station : view.comparison().stations())
-            <tr><td><a href="/stations/${station.station().stationId()}">${station.station().selectionLabel()}</a><div class="text-secondary">${station.station().island()} · ${station.station().region()}</div></td><td>${station.total().display()}</td><td>@template.components.qualityBadge(status = station.total().status())</td><td>${station.total().completeness()}%</td><td>${station.total().observationCutoff() == null ? "—" : station.total().observationCutoff().toString()}</td></tr>
+            <tr><td><a href="/stations/${station.station().stationId()}">${station.station().selectionLabel()}</a><div class="text-secondary">${station.station().island()} · ${station.station().region()}</div></td><td>${station.total().display()}</td><td><button type="button" class="quality-badge-trigger" data-bs-toggle="modal" data-bs-target="#quality-${station.station().stationId()}" aria-label="Show quality details for ${station.station().displayName()}">@template.components.qualityBadge(status = station.total().status())</button></td><td>${station.total().completeness()}%</td><td>${station.total().observationCutoff() == null ? "—" : station.total().observationCutoff().toString()}</td></tr>
           @endfor
         </tbody></table></div></article></div></div>
+        @for (ComparisonResponse.ComparisonStation station : view.comparison().stations())
+          <div class="modal fade" id="quality-${station.station().stationId()}" tabindex="-1" aria-labelledby="quality-title-${station.station().stationId()}" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"><div class="modal-content">
+              <div class="modal-header"><div><div class="page-pretitle">Rainfall quality checks</div><h2 class="modal-title" id="quality-title-${station.station().stationId()}">${station.station().selectionLabel()}</h2></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+              <div class="modal-body"><p class="text-secondary">Completeness measures observation count. The overall status also checks the baseline, time gaps, resets, duplicate conflicts, and outliers.</p><div class="list-group list-group-flush">
+                @for (DashboardResponse.QualityCondition condition : station.total().qualityConditions())
+                  <div class="list-group-item px-0"><div class="d-flex gap-3"><span class="badge ${condition.passed() ? "bg-green-lt text-green" : "bg-red-lt text-red"}">${condition.passed() ? "Passed" : "Failed"}</span><div><div class="fw-semibold">${condition.label()}</div><div class="text-secondary small mt-1">${condition.detail()}</div></div></div></div>
+                @endfor
+              </div></div>
+              <div class="modal-footer"><button type="button" class="btn" data-bs-dismiss="modal">Close</button></div>
+            </div></div>
+          </div>
+        @endfor
       @else
         <div class="card"><div class="card-body empty-state"><h2>Select stations to compare</h2><p class="text-secondary">The server-rendered form works without JavaScript.</p></div></div>
       @endif

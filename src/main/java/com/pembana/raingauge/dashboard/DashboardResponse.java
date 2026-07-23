@@ -122,6 +122,7 @@ public record DashboardResponse(
 	 * @param status the status
 	 * @param completeness the completeness
 	 * @param observationCutoff the observation cutoff
+	 * @param qualityConditions the quality conditions
 	 * @param warnings the warnings
 	 * @author Gunnar Hillert
 	 */
@@ -134,6 +135,7 @@ public record DashboardResponse(
 			RainfallResultStatus status,
 			BigDecimal completeness,
 			@Nullable Instant observationCutoff,
+			List<QualityCondition> qualityConditions,
 			List<String> warnings) {
 
 		/**
@@ -146,11 +148,23 @@ public record DashboardResponse(
 		 * @param status the status
 		 * @param completeness the completeness
 		 * @param observationCutoff the observation cutoff
+		 * @param qualityConditions the quality conditions
 		 * @param warnings the warnings
 		 */
 		public Result {
+			qualityConditions = List.copyOf(qualityConditions);
 			warnings = List.copyOf(warnings);
 		}
+	}
+
+	/**
+	 * Describes the outcome of one rainfall quality condition.
+	 * @param label the human-readable condition label
+	 * @param passed whether the condition passed
+	 * @param detail explanatory detail about the outcome
+	 * @author Gunnar Hillert
+	 */
+	public record QualityCondition(String label, boolean passed, String detail) {
 	}
 
 	/**

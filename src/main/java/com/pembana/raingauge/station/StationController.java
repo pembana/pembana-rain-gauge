@@ -114,7 +114,7 @@ public class StationController {
 		String error = null;
 		try {
 			dashboard = this.dashboardService.build(station, RainfallWindow.TWENTY_EIGHT_DAYS,
-					RainfallUnit.IMPERIAL);
+					RainfallUnit.fromToken(unit));
 			if (from != null && to != null && !from.isBlank() && !to.isBlank()) {
 				customResult = this.rainfallService.calculate(station,
 						LocalDateTime.parse(from).atZone(RainfallWindow.HAWAII).toInstant(),

@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -149,7 +150,67 @@ public class DashboardService {
 				(amount != null) ? amount.inches() : null, (amount != null) ? amount.millimeters() : null,
 				result.displayValue(), result.unit().symbol(), result.status(),
 				result.quality().completenessPercentage(), result.observationCutoff(),
-				result.warnings());
+				qualityConditions(result), result.warnings());
+	}
+
+	/**
+	 * Builds the individual checks that explain a rainfall quality status.
+	 * @param result the rainfall calculation
+	 * @return the quality conditions
+	 */
+	private List<DashboardResponse.QualityCondition> qualityConditions(RainfallResult result) {
+		String baselineWarning = warningStartingWith(result, "No valid accumulator baseline");
+		String gapWarning = warningStartingWith(result, "Native observations contain a gap");
+		String outlierWarning = warningStartingWith(result, "Unusually large positive increment");
+		return List.of(
+				condition("Starting baseline available", baselineWarning == null,
+						baselineWarning, "A valid reading exists at or before the period start."),
+				condition("Expected observation count",
+						result.quality().completenessPercentage().compareTo(BigDecimal.valueOf(100)) >= 0,
+						"Fewer valid observations were received than expected.",
+						"The expected number of valid observations was received."),
+				condition("No material observation gaps", gapWarning == null,
+						gapWarning, "No gap exceeded twice the expected observation cadence."),
+				condition("No unresolved accumulator resets",
+						result.quality().unresolvedResetCount() == 0,
+						result.quality().unresolvedResetCount() + " unresolved reset(s) were detected.",
+						"All accumulator changes were resolved."),
+				condition("No conflicting duplicate observations",
+						result.quality().conflictingObservationCount() == 0,
+						result.quality().conflictingObservationCount() + " conflicting duplicate(s) were detected.",
+						"No conflicting duplicate observations were detected."),
+				condition("No suspected rainfall outliers", outlierWarning == null,
+						outlierWarning, "No unusually large positive increment was detected."));
+	}
+
+	/**
+	 * Creates a displayable quality condition.
+	 * @param label the condition label
+	 * @param passed whether the condition passed
+	 * @param failureDetail detail shown when the condition failed
+	 * @param successDetail detail shown when the condition passed
+	 * @return the quality condition
+	 */
+	private DashboardResponse.QualityCondition condition(String label, boolean passed,
+			@Nullable String failureDetail, String successDetail) {
+		String detail = successDetail;
+		if (!passed) {
+			detail = (failureDetail != null) ? failureDetail : "Condition failed.";
+		}
+		return new DashboardResponse.QualityCondition(label, passed, detail);
+	}
+
+	/**
+	 * Finds the first calculation warning with the supplied prefix.
+	 * @param result the rainfall calculation
+	 * @param prefix the warning prefix
+	 * @return the warning, or {@code null} when none matches
+	 */
+	private @Nullable String warningStartingWith(RainfallResult result, String prefix) {
+		return result.warnings().stream()
+				.filter((warning) -> warning.startsWith(prefix))
+				.findFirst()
+				.orElse(null);
 	}
 
 	/**

@@ -15,7 +15,9 @@
       <h1 class="page-title">${view.station().selectionLabel()}</h1>
       <p class="text-secondary mb-0">${view.station().sourceName()}</p>
     </div></div>
-    <div class="page-body"><div class="container-xl">
+    <div class="page-body"><div class="container-xl dashboard-region" id="dashboard-region"
+      data-station-id="${view.station().stationId()}" data-period="28d" data-unit="${view.unit()}"
+      aria-live="polite" aria-busy="false">
       <div class="row row-cards">
         <div class="col-lg-4"><article class="card h-100"><div class="card-header"><h2 class="card-title">Station metadata</h2></div><div class="card-body">
           <dl class="quality-grid">

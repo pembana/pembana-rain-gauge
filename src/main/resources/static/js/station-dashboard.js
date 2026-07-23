@@ -72,6 +72,32 @@ function makeBadge(status) {
   return badge;
 }
 
+function updateQualityConditions(card, conditions = []) {
+  const list = card.querySelector('[data-quality-conditions]');
+  if (!list) return;
+  list.replaceChildren(...conditions.map((condition) => {
+    const item = document.createElement('div');
+    item.className = 'list-group-item px-0';
+    const row = document.createElement('div');
+    row.className = 'd-flex gap-3';
+    const outcome = document.createElement('span');
+    outcome.className = `badge ${condition.passed
+      ? 'bg-green-lt text-green' : 'bg-red-lt text-red'}`;
+    outcome.textContent = condition.passed ? 'Passed' : 'Failed';
+    const description = document.createElement('div');
+    const label = document.createElement('div');
+    label.className = 'fw-semibold';
+    label.textContent = condition.label;
+    const detail = document.createElement('div');
+    detail.className = 'text-secondary small mt-1';
+    detail.textContent = condition.detail;
+    description.append(label, detail);
+    row.append(outcome, description);
+    item.append(row);
+    return item;
+  }));
+}
+
 function formatHawaii(timestamp) {
   if (!timestamp) {
     return 'Unavailable';
@@ -161,7 +187,15 @@ export class StationDashboardController {
   }
 
   connect() {
-    if (!this.form || !this.stationSelector || !this.region) return;
+    if (!this.region) return;
+    window.addEventListener('resize', () => {
+      Object.values(this.charts).forEach((chart) => chart.resize());
+      this.stationMap?.invalidateSize({ pan: false });
+    });
+    if (!this.form || !this.stationSelector) {
+      if (this.region.dataset.stationId) this.load(this.region.dataset.stationId);
+      return;
+    }
     this.form.addEventListener('submit', (event) => {
       event.preventDefault();
       this.load(this.stationSelector.value, { push: true });
@@ -177,10 +211,6 @@ export class StationDashboardController {
     });
     this.connectStationMap();
     window.addEventListener('popstate', () => this.restoreFromLocation());
-    window.addEventListener('resize', () => {
-      Object.values(this.charts).forEach((chart) => chart.resize());
-      this.stationMap?.invalidateSize({ pan: false });
-    });
     this.load(this.stationSelector.value, { replace: true });
   }
 
@@ -344,6 +374,7 @@ export class StationDashboardController {
       putText(card, '[data-summary-completeness]', `${result.completeness}%`);
       const existing = card.querySelector('[data-quality-status]');
       existing?.replaceWith(makeBadge(result.status));
+      updateQualityConditions(card, result.qualityConditions);
     }
     const qualityStatus = summary.twentyEightDays?.status || 'UNAVAILABLE';
     const qualityBadge = this.region.querySelector('#quality-panel [data-quality-status]');
