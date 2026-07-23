@@ -296,7 +296,7 @@ export class StationDashboardController {
 
   async load(stationId, historyMode = {}) {
     const period = this.periodSelector?.value || this.region.dataset.period || '28d';
-    const unit = this.unitSelector?.value || this.region.dataset.unit || 'imperial';
+    const unit = this.unitSelector?.value || this.region.dataset.unit || 'metric';
     this.abortController?.abort();
     this.abortController = new AbortController();
     const sequence = ++this.requestSequence;
@@ -425,7 +425,7 @@ export class StationDashboardController {
     const parameters = new URLSearchParams(location.search);
     const station = parameters.get('station') || this.stationSelector.value;
     const period = parameters.get('period') || '28d';
-    const unit = parameters.get('unit') || 'imperial';
+    const unit = parameters.get('unit') || 'metric';
     if (this.periodSelector) this.periodSelector.value = period;
     if (this.unitSelector) this.unitSelector.value = unit;
     this.load(station);

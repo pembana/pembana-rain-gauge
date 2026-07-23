@@ -77,7 +77,7 @@ hawaii:
     dashboard:
       default-station: WIHH1
       default-period: 28d
-      default-unit: imperial
+      default-unit: metric
     site:
       base-url: ${RAINGAUGE_PUBLIC_BASE_URL:http://localhost:8080}
     station-map:

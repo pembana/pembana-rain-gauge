@@ -674,7 +674,7 @@ public class RainfallProperties {
 		private String defaultPeriod = "28d";
 
 		@NotBlank
-		private String defaultUnit = "imperial";
+		private String defaultUnit = "metric";
 
 		/**
 		 * Returns the default station.

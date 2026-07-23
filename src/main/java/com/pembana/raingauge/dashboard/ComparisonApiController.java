@@ -59,7 +59,7 @@ public class ComparisonApiController {
 	@GetMapping("/api/compare")
 	public ComparisonResponse compare(@RequestParam(name = "station") List<String> stationIds,
 			@RequestParam(defaultValue = "28d") String period,
-			@RequestParam(defaultValue = "imperial") String unit) {
+			@RequestParam(defaultValue = "metric") String unit) {
 		if (stationIds.isEmpty()) {
 			throw new IllegalArgumentException("At least one station must be selected");
 		}

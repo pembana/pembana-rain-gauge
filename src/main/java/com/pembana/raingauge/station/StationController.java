@@ -107,7 +107,7 @@ public class StationController {
 	public String station(@PathVariable String stationId,
 			@RequestParam(required = false) @Nullable String from,
 			@RequestParam(required = false) @Nullable String to,
-			@RequestParam(defaultValue = "imperial") String unit, Model model) {
+			@RequestParam(defaultValue = "metric") String unit, Model model) {
 		Station station = this.stationService.requirePublicStation(stationId);
 		DashboardResponse dashboard = null;
 		RainfallResult customResult = null;

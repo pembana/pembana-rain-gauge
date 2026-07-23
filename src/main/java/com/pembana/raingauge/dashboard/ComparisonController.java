@@ -64,7 +64,7 @@ public class ComparisonController {
 	public String compare(@RequestParam(name = "station", required = false)
 			@Nullable List<String> stationIds,
 			@RequestParam(defaultValue = "28d") String period,
-			@RequestParam(defaultValue = "imperial") String unit, Model model) {
+			@RequestParam(defaultValue = "metric") String unit, Model model) {
 		List<Station> available = this.stationService.findRainfallStations();
 		List<String> selectedIds = (stationIds != null) ? stationIds : List.of();
 		ComparisonResponse response = null;

@@ -88,7 +88,7 @@ public class DashboardApiController {
 	@GetMapping("/observations")
 	public DashboardResponse.Charts observations(@PathVariable String stationId,
 			@RequestParam(defaultValue = "28d") String period,
-			@RequestParam(defaultValue = "imperial") String unit) {
+			@RequestParam(defaultValue = "metric") String unit) {
 		return dashboard(stationId, period, unit).charts();
 	}
 
@@ -101,7 +101,7 @@ public class DashboardApiController {
 	@GetMapping("/quality-events")
 	public List<String> qualityEvents(@PathVariable String stationId,
 			@RequestParam(defaultValue = "28d") String period) {
-		return dashboard(stationId, period, "imperial").warnings();
+		return dashboard(stationId, period, "metric").warnings();
 	}
 
 	/**
@@ -114,7 +114,7 @@ public class DashboardApiController {
 	@GetMapping("/monthly")
 	public List<DashboardResponse.DailyRainfall> monthly(@PathVariable String stationId,
 			@RequestParam(defaultValue = "mtd") String period,
-			@RequestParam(defaultValue = "imperial") String unit) {
+			@RequestParam(defaultValue = "metric") String unit) {
 		return dashboard(stationId, period, unit).dailyRainfall();
 	}
 
