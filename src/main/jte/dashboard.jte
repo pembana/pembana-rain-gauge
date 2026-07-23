@@ -18,7 +18,7 @@
           <div class="col">
             <div class="page-pretitle">Hawaiʻi environmental data</div>
             <h1 class="page-title">Rainfall station dashboard</h1>
-            <p class="text-secondary mb-0">Totals calculated from native station observations—not graph pixels.</p>
+            <p class="text-secondary mb-0">Totals calculated from station observations.</p>
           </div>
           <div class="col-auto">
             <span class="provisional-pill">Provisional data</span>
