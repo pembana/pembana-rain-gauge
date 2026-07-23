@@ -18,6 +18,7 @@ package com.pembana.raingauge.observation.client;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
@@ -95,7 +96,7 @@ public class HadsObservationClient {
 						+ "rejected={} warnings={}", "IEM-HADS", stationIds, from, to, duration,
 					parsed.observations().size(), parsed.rejectedRows(), parsed.warnings().size());
 			return new ObservationBatch(parsed.observations(), parsed.warnings(), fetchedAt,
-					java.time.Duration.ZERO, false, false, "IEM HADS archive",
+					Duration.ZERO, false, false, "IEM HADS archive",
 					parsed.rejectedRows());
 		}
 		catch (RuntimeException ex) {

@@ -32,6 +32,8 @@ import com.pembana.raingauge.station.Station;
 @Service
 public class ComparisonService {
 
+	private static final int MAX_COMPARISON_STATIONS = 8;
+
 	private final DashboardService dashboardService;
 
 	/**
@@ -51,7 +53,7 @@ public class ComparisonService {
 	 */
 	public ComparisonResponse compare(List<Station> stations, RainfallWindow window,
 			RainfallUnit unit) {
-		if (stations.size() > 8) {
+		if (stations.size() > MAX_COMPARISON_STATIONS) {
 			throw new IllegalArgumentException("No more than eight stations can be compared");
 		}
 		List<ComparisonResponse.ComparisonStation> results = new ArrayList<>();

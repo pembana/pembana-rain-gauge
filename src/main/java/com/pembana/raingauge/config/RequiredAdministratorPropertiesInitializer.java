@@ -17,6 +17,7 @@
 package com.pembana.raingauge.config;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.springframework.context.ApplicationContextException;
 import org.springframework.context.ApplicationContextInitializer;
@@ -52,7 +53,7 @@ public final class RequiredAdministratorPropertiesInitializer
 	 * @param environment the environment containing application properties
 	 */
 	static void validate(Environment environment) {
-		List<String> missingProperties = List.of(USERNAME_PROPERTY, PASSWORD_PROPERTY).stream()
+		List<String> missingProperties = Stream.of(USERNAME_PROPERTY, PASSWORD_PROPERTY)
 				.filter((property) -> !hasText(environment, property))
 				.toList();
 		if (!missingProperties.isEmpty()) {

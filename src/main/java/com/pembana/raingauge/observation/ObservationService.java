@@ -17,6 +17,7 @@
 package com.pembana.raingauge.observation;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -113,7 +114,7 @@ public class ObservationService {
 	 * @return the resulting select cache
 	 */
 	private Cache<ObservationQuery, ObservationBatch> selectCache(Instant to) {
-		return to.isBefore(this.clock.instant().minusSeconds(86_400))
+		return to.isBefore(this.clock.instant().minus(Duration.ofDays(1)))
 				? this.historicalCache : this.recentCache;
 	}
 

@@ -16,6 +16,8 @@
 
 package com.pembana.raingauge.dashboard;
 
+import java.util.List;
+
 import org.jspecify.annotations.Nullable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -97,7 +99,7 @@ public class DashboardApiController {
 	 * @return the resulting quality events
 	 */
 	@GetMapping("/quality-events")
-	public java.util.List<String> qualityEvents(@PathVariable String stationId,
+	public List<String> qualityEvents(@PathVariable String stationId,
 			@RequestParam(defaultValue = "28d") String period) {
 		return dashboard(stationId, period, "imperial").warnings();
 	}
@@ -110,7 +112,7 @@ public class DashboardApiController {
 	 * @return the resulting monthly
 	 */
 	@GetMapping("/monthly")
-	public java.util.List<DashboardResponse.DailyRainfall> monthly(@PathVariable String stationId,
+	public List<DashboardResponse.DailyRainfall> monthly(@PathVariable String stationId,
 			@RequestParam(defaultValue = "mtd") String period,
 			@RequestParam(defaultValue = "imperial") String unit) {
 		return dashboard(stationId, period, unit).dailyRainfall();

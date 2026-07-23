@@ -174,7 +174,9 @@ public class RainfallCapabilityRefresher {
 				unknown++;
 			}
 			catch (ExecutionException ex) {
-				logger.warn("Rainfall capability refresh failed: {}", ex.getCause().getMessage());
+				Throwable cause = ex.getCause();
+				logger.warn("Rainfall capability refresh failed: {}",
+						(cause != null) ? cause.getMessage() : ex.getMessage());
 				unknown++;
 			}
 		}

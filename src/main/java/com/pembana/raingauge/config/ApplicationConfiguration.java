@@ -17,6 +17,7 @@
 package com.pembana.raingauge.config;
 
 import java.time.Clock;
+import java.time.Duration;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.cache.CacheManager;
@@ -65,7 +66,7 @@ public class ApplicationConfiguration {
 	 * @param expiration the expiration
 	 */
 	private void register(CaffeineCacheManager cacheManager, String name,
-			java.time.Duration expiration) {
+			Duration expiration) {
 		cacheManager.registerCustomCache(name, Caffeine.newBuilder()
 				.maximumSize(2_000)
 				.expireAfterWrite(expiration)
