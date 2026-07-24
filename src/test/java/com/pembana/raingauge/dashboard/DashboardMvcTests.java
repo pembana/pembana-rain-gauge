@@ -19,6 +19,7 @@ package com.pembana.raingauge.dashboard;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -47,6 +48,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.reset;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -212,29 +214,48 @@ class DashboardMvcTests {
 	}
 
 	/**
-	 * Verifies that interval only station is excluded from rainfall choices but remains diagnosable.
+	 * Verifies that a fixed-duration interval station is available for public totals.
 	 * @throws Exception if the operation cannot be completed
 	 */
 	@Test
-	void intervalOnlyStationIsExcludedFromRainfallChoicesButRemainsDiagnosable()
+	void fixedDurationIntervalStationIsAvailableForPublicTotals()
 			throws Exception {
 		Station intervalOnly = station("HLRH1", "Helemano 11 Reservoir", true);
 		intervalOnly.updateCapability(RainfallCapability.SUPPORTED_INTERVAL_PRECIPITATION,
 				"PPHRZ");
 		this.repository.saveAndFlush(intervalOnly);
+		reset(this.observationClient);
+		given(this.observationClient.fetch(anyList(), anyString(), anyString(), any(), any()))
+				.willAnswer((invocation) -> {
+					String shefKey = invocation.getArgument(2);
+					Instant from = invocation.getArgument(3);
+					Instant to = invocation.getArgument(4);
+					List<PrecipitationObservation> observations = new ArrayList<>();
+					Instant intervalEnd = to;
+					int sourceOrder = 0;
+					while (intervalEnd.isAfter(from)) {
+						observations.add(PrecipitationObservation.valid("HLRH1", intervalEnd,
+								shefKey, new BigDecimal("0.01"), sourceOrder++));
+						intervalEnd = intervalEnd.minus(Duration.ofHours(1));
+					}
+					return new ObservationBatch(observations, List.of(), Instant.now(),
+							Duration.ZERO, false, false, "fixture", 0);
+				});
 
 		this.mockMvc.perform(get("/"))
 				.andExpect(status().isOk())
-				.andExpect(content().string(org.hamcrest.Matchers.not(containsString("HLRH1"))));
+				.andExpect(content().string(containsString("HLRH1")));
 		this.mockMvc.perform(get("/compare"))
 				.andExpect(status().isOk())
-				.andExpect(content().string(org.hamcrest.Matchers.not(containsString("HLRH1"))));
+				.andExpect(content().string(containsString("HLRH1")));
 		this.mockMvc.perform(get("/api/stations"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$[?(@.stationId == 'HLRH1')]").isEmpty());
-		this.mockMvc.perform(get("/api/stations/HLRH1/dashboard"))
-				.andExpect(status().isUnprocessableContent())
-				.andExpect(jsonPath("$.title").value("Rainfall data unsupported"));
+				.andExpect(jsonPath("$[?(@.stationId == 'HLRH1')]").isNotEmpty());
+		this.mockMvc.perform(get("/api/stations/HLRH1/dashboard")
+				.queryParam("period", "24h").queryParam("unit", "metric"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.station.stationId").value("HLRH1"))
+				.andExpect(jsonPath("$.summary.twentyFourHours.display").value("6.1 mm"));
 		this.mockMvc.perform(get("/stations"))
 				.andExpect(status().isOk())
 				.andExpect(content().string(containsString("HLRH1")));

@@ -28,6 +28,9 @@ import org.springframework.stereotype.Service;
 import com.pembana.raingauge.config.RainfallProperties;
 import com.pembana.raingauge.observation.ObservationBatch;
 import com.pembana.raingauge.observation.ObservationService;
+import com.pembana.raingauge.observation.shef.ShefPrecipitationCode;
+import com.pembana.raingauge.rainfall.cumulative.CumulativeRainfallCalculator;
+import com.pembana.raingauge.rainfall.interval.IntervalRainfallCalculator;
 import com.pembana.raingauge.station.RainfallCapability;
 import com.pembana.raingauge.station.RainfallCapabilityService;
 import com.pembana.raingauge.station.Station;
@@ -41,7 +44,9 @@ public class RainfallService {
 
 	private final ObservationService observationService;
 
-	private final RainfallAccumulator rainfallAccumulator;
+	private final CumulativeRainfallCalculator cumulativeCalculator;
+
+	private final IntervalRainfallCalculator intervalCalculator;
 
 	private final ObservationCadenceDetector cadenceDetector;
 
@@ -54,17 +59,20 @@ public class RainfallService {
 	/**
 	 * Creates a new {@code RainfallService}.
 	 * @param observationService the observation service
-	 * @param rainfallAccumulator the rainfall accumulator
+	 * @param cumulativeCalculator the cumulative rainfall calculator
+	 * @param intervalCalculator the interval rainfall calculator
 	 * @param cadenceDetector the cadence detector
 	 * @param capabilityService the capability service
 	 * @param properties the rainfall application properties
 	 * @param clock the clock used to obtain the current time
 	 */
 	public RainfallService(ObservationService observationService,
-			RainfallAccumulator rainfallAccumulator, ObservationCadenceDetector cadenceDetector,
+			CumulativeRainfallCalculator cumulativeCalculator,
+			IntervalRainfallCalculator intervalCalculator, ObservationCadenceDetector cadenceDetector,
 			RainfallCapabilityService capabilityService, RainfallProperties properties, Clock clock) {
 		this.observationService = observationService;
-		this.rainfallAccumulator = rainfallAccumulator;
+		this.cumulativeCalculator = cumulativeCalculator;
+		this.intervalCalculator = intervalCalculator;
 		this.cadenceDetector = cadenceDetector;
 		this.capabilityService = capabilityService;
 		this.properties = properties;
@@ -113,19 +121,23 @@ public class RainfallService {
 		RainfallCapabilityService.CapabilityDiscovery capability =
 				this.capabilityService.discover(station);
 		station.updateCapability(capability.capability(), capability.precipitationKey());
-		if (capability.capability() != RainfallCapability.SUPPORTED_ACCUMULATOR
-				|| capability.precipitationKey() == null) {
+		if (!isSupported(capability)) {
 			throw new UnsupportedRainfallStationException(station.getStationId());
 		}
+		String precipitationKey = capability.precipitationKey();
+		if (precipitationKey == null) {
+			throw new IllegalStateException("A supported rainfall capability requires a SHEF key");
+		}
+		Instant queryFrom = (capability.capability() == RainfallCapability.SUPPORTED_ACCUMULATOR)
+				? earliest.minus(this.properties.getQuery().getBaselineLookback()) : earliest;
 		ObservationBatch observations = this.observationService.observations(station.getStationId(),
-				station.getNetwork(), capability.precipitationKey(),
-				earliest.minus(this.properties.getQuery().getBaselineLookback()), latest);
-		Duration cadence = this.cadenceDetector.detect(observations.observations());
+				station.getNetwork(), precipitationKey, queryFrom, latest);
+		Duration observationPeriod = observationPeriod(capability, observations);
 		Map<RainfallWindow, RainfallResult> results = new EnumMap<>(RainfallWindow.class);
 		for (Map.Entry<RainfallWindow, RainfallWindow.TimeRange> entry : ranges.entrySet()) {
 			RainfallWindow.TimeRange range = entry.getValue();
-			results.put(entry.getKey(), this.rainfallAccumulator.calculate(observations.observations(),
-					range.from(), range.to(), cadence, observations, unit));
+			results.put(entry.getKey(), calculate(capability.capability(), observations,
+					range.from(), range.to(), observationPeriod, unit));
 		}
 		return Map.copyOf(results);
 	}
@@ -143,16 +155,78 @@ public class RainfallService {
 		RainfallCapabilityService.CapabilityDiscovery capability =
 				this.capabilityService.discover(station);
 		station.updateCapability(capability.capability(), capability.precipitationKey());
-		if (capability.capability() != RainfallCapability.SUPPORTED_ACCUMULATOR
-				|| capability.precipitationKey() == null) {
+		if (!isSupported(capability)) {
 			throw new UnsupportedRainfallStationException(station.getStationId());
 		}
-		Instant queryFrom = from.minus(this.properties.getQuery().getBaselineLookback());
+		String precipitationKey = capability.precipitationKey();
+		if (precipitationKey == null) {
+			throw new IllegalStateException("A supported rainfall capability requires a SHEF key");
+		}
+		Instant queryFrom = (capability.capability() == RainfallCapability.SUPPORTED_ACCUMULATOR)
+				? from.minus(this.properties.getQuery().getBaselineLookback()) : from;
 		ObservationBatch observations = this.observationService.observations(station.getStationId(),
-				station.getNetwork(), capability.precipitationKey(), queryFrom, to);
-		Duration cadence = this.cadenceDetector.detect(observations.observations());
-		return this.rainfallAccumulator.calculate(observations.observations(), from, to, cadence,
-				observations, unit);
+				station.getNetwork(), precipitationKey, queryFrom, to);
+		Duration observationPeriod = observationPeriod(capability, observations);
+		return calculate(capability.capability(), observations, from, to, observationPeriod, unit);
+	}
+
+	/**
+	 * Determines the cadence or fixed duration needed by a rainfall calculator.
+	 * @param capability the discovered rainfall capability
+	 * @param observations the source observations
+	 * @return the observation cadence or fixed interval
+	 */
+	private Duration observationPeriod(
+			RainfallCapabilityService.CapabilityDiscovery capability,
+			ObservationBatch observations) {
+		if (capability.capability() == RainfallCapability.SUPPORTED_ACCUMULATOR) {
+			return this.cadenceDetector.detect(observations.observations());
+		}
+		String precipitationKey = capability.precipitationKey();
+		if (precipitationKey == null) {
+			throw new IllegalStateException("An interval capability requires a SHEF key");
+		}
+		return ShefPrecipitationCode.fixedInterval(precipitationKey)
+				.orElseThrow(() -> new IllegalStateException(
+						"Supported interval capability has an unsupported SHEF duration: "
+								+ precipitationKey));
+	}
+
+	/**
+	 * Delegates a rainfall calculation to the calculator matching the station's
+	 * observation semantics.
+	 * @param capability the rainfall capability
+	 * @param observations the source observation batch
+	 * @param from the inclusive start of the requested interval
+	 * @param to the exclusive end of the requested interval
+	 * @param observationPeriod the cumulative cadence or interval duration
+	 * @param unit the requested rainfall unit
+	 * @return the calculated rainfall result
+	 */
+	private RainfallResult calculate(RainfallCapability capability,
+			ObservationBatch observations, Instant from, Instant to, Duration observationPeriod,
+			RainfallUnit unit) {
+		return switch (capability) {
+			case SUPPORTED_ACCUMULATOR -> this.cumulativeCalculator.calculate(
+					observations.observations(), from, to, observationPeriod, observations, unit);
+			case SUPPORTED_INTERVAL_PRECIPITATION -> this.intervalCalculator.calculate(
+					observations.observations(), from, to, observationPeriod, observations, unit);
+			default -> throw new IllegalArgumentException(
+					"Unsupported rainfall capability " + capability);
+		};
+	}
+
+	/**
+	 * Determines whether the discovered capability can produce public rainfall
+	 * totals.
+	 * @param discovery the discovered rainfall capability
+	 * @return {@code true} when the capability and key are supported
+	 */
+	private boolean isSupported(RainfallCapabilityService.CapabilityDiscovery discovery) {
+		return discovery.precipitationKey() != null
+				&& (discovery.capability() == RainfallCapability.SUPPORTED_ACCUMULATOR
+						|| discovery.capability()
+								== RainfallCapability.SUPPORTED_INTERVAL_PRECIPITATION);
 	}
 
 	/**

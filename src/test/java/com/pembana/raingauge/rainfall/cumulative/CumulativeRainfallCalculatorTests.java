@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.pembana.raingauge.rainfall;
+package com.pembana.raingauge.rainfall.cumulative;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -30,14 +30,18 @@ import com.pembana.raingauge.config.RainfallProperties;
 import com.pembana.raingauge.observation.ObservationBatch;
 import com.pembana.raingauge.observation.ObservationQuality;
 import com.pembana.raingauge.observation.PrecipitationObservation;
+import com.pembana.raingauge.rainfall.RainfallIncrement;
+import com.pembana.raingauge.rainfall.RainfallResult;
+import com.pembana.raingauge.rainfall.RainfallResultStatus;
+import com.pembana.raingauge.rainfall.RainfallUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests rainfall accumulator.
+ * Tests cumulative rainfall calculation.
  * @author Gunnar Hillert
  */
-class RainfallAccumulatorTests {
+class CumulativeRainfallCalculatorTests {
 
 	private static final Instant START = Instant.parse("2026-07-01T00:00:00Z");
 
@@ -295,10 +299,11 @@ class RainfallAccumulatorTests {
 			Instant to, Instant calculatedAt) {
 		RainfallProperties properties = new RainfallProperties();
 		Clock clock = Clock.fixed(calculatedAt, ZoneOffset.UTC);
-		RainfallAccumulator accumulator = new RainfallAccumulator(properties, clock);
+		CumulativeRainfallCalculator calculator =
+				new CumulativeRainfallCalculator(properties, clock);
 		ObservationBatch batch = new ObservationBatch(observations, List.of(), calculatedAt,
 				Duration.ZERO, false, false, "fixture", 0);
-		return accumulator.calculate(observations, from, to, Duration.ofHours(1), batch,
+		return calculator.calculate(observations, from, to, Duration.ofHours(1), batch,
 				RainfallUnit.IMPERIAL);
 	}
 

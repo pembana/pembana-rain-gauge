@@ -22,6 +22,7 @@ import java.util.Set;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
+import com.pembana.raingauge.observation.shef.ShefPrecipitationCode;
 import com.pembana.raingauge.station.client.IemStationVariableClient;
 import com.pembana.raingauge.station.client.ProviderException;
 
@@ -63,11 +64,24 @@ public class RainfallCapabilityService {
 			}
 			String interval = variables.stream()
 					.filter((variable) -> variable.startsWith("PP"))
-					.min(Comparator.naturalOrder())
+					.map(this::normalize)
+					.filter((variable) -> ShefPrecipitationCode.fixedInterval(variable).isPresent())
+					.min(Comparator
+							.comparing((String variable) ->
+									ShefPrecipitationCode.fixedInterval(variable).orElseThrow())
+							.thenComparing(Comparator.naturalOrder()))
 					.orElse(null);
 			if (interval != null) {
 				return new CapabilityDiscovery(RainfallCapability.SUPPORTED_INTERVAL_PRECIPITATION,
-						normalize(interval));
+						interval);
+			}
+			String unsupportedInterval = variables.stream()
+					.filter((variable) -> variable.startsWith("PP"))
+					.min(Comparator.naturalOrder())
+					.orElse(null);
+			if (unsupportedInterval != null) {
+				return new CapabilityDiscovery(RainfallCapability.UNSUPPORTED,
+						normalize(unsupportedInterval));
 			}
 			return new CapabilityDiscovery(RainfallCapability.TEMPORARILY_SILENT, null);
 		}

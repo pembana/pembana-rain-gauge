@@ -18,6 +18,7 @@ package com.pembana.raingauge.station;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -213,8 +214,9 @@ public class StationService {
 	 * @return the matching rainfall stations
 	 */
 	public List<Station> findRainfallStations() {
-		return this.stationRepository.findRainfallStations(
-				RainfallCapability.SUPPORTED_ACCUMULATOR);
+		return this.stationRepository.findRainfallStations(EnumSet.of(
+				RainfallCapability.SUPPORTED_ACCUMULATOR,
+				RainfallCapability.SUPPORTED_INTERVAL_PRECIPITATION));
 	}
 
 	/**
@@ -254,7 +256,9 @@ public class StationService {
 	 */
 	public Station requireRainfallStation(String stationId) {
 		Station station = requirePublicStation(stationId);
-		if (station.getRainfallCapability() != RainfallCapability.SUPPORTED_ACCUMULATOR
+		if ((station.getRainfallCapability() != RainfallCapability.SUPPORTED_ACCUMULATOR
+				&& station.getRainfallCapability()
+						!= RainfallCapability.SUPPORTED_INTERVAL_PRECIPITATION)
 				|| station.getPrecipitationKey() == null) {
 			throw new UnsupportedRainfallStationException(stationId);
 		}

@@ -22,6 +22,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -181,16 +182,20 @@ class StationServiceTests {
 	}
 
 	/**
-	 * Verifies that rainfall stations returns only repository confirmed accumulators.
+	 * Verifies that rainfall stations returns all supported precipitation semantics.
 	 */
 	@Test
-	void rainfallStationsReturnsOnlyRepositoryConfirmedAccumulators() {
+	void rainfallStationsReturnsAllSupportedPrecipitationSemantics() {
 		Station supported = new Station("HI_DCP", "WIHH1", "Supported");
 		supported.updateCapability(RainfallCapability.SUPPORTED_ACCUMULATOR, "PCIRG");
-		given(this.repository.findRainfallStations(RainfallCapability.SUPPORTED_ACCUMULATOR))
-				.willReturn(List.of(supported));
+		Station interval = new Station("HI_DCP", "HLRH1", "Interval");
+		interval.updateCapability(RainfallCapability.SUPPORTED_INTERVAL_PRECIPITATION, "PPHRZ");
+		given(this.repository.findRainfallStations(EnumSet.of(
+				RainfallCapability.SUPPORTED_ACCUMULATOR,
+				RainfallCapability.SUPPORTED_INTERVAL_PRECIPITATION)))
+				.willReturn(List.of(interval, supported));
 
-		assertThat(this.service.findRainfallStations()).containsExactly(supported);
+		assertThat(this.service.findRainfallStations()).containsExactly(interval, supported);
 	}
 
 	/**

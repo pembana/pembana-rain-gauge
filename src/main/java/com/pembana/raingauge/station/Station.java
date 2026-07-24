@@ -32,6 +32,8 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import org.jspecify.annotations.Nullable;
 
+import com.pembana.raingauge.observation.shef.ShefPrecipitationCode;
+
 /**
  * Represents a rainfall monitoring station and its provider metadata.
  * @author Gunnar Hillert
@@ -211,9 +213,15 @@ public class Station {
 		}
 		if (override.precipitationKey() != null) {
 			this.precipitationKey = override.precipitationKey();
-			this.rainfallCapability = override.precipitationKey().startsWith("PC")
-					? RainfallCapability.SUPPORTED_ACCUMULATOR
-					: RainfallCapability.PRECIPITATION_TYPE_UNKNOWN;
+			if (override.precipitationKey().startsWith("PC")) {
+				this.rainfallCapability = RainfallCapability.SUPPORTED_ACCUMULATOR;
+			}
+			else if (ShefPrecipitationCode.fixedInterval(override.precipitationKey()).isPresent()) {
+				this.rainfallCapability = RainfallCapability.SUPPORTED_INTERVAL_PRECIPITATION;
+			}
+			else {
+				this.rainfallCapability = RainfallCapability.PRECIPITATION_TYPE_UNKNOWN;
+			}
 		}
 		if (override.note() != null) {
 			this.overrideNote = override.note();

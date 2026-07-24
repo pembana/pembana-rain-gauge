@@ -18,6 +18,7 @@ package com.pembana.raingauge.station;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -53,17 +54,18 @@ public interface StationRepository extends JpaRepository<Station, UUID> {
 
 	/**
 	 * Finds rainfall stations.
-	 * @param capability the capability
+	 * @param capabilities the supported capabilities
 	 * @return the matching rainfall stations
 	 */
 	@Query("""
 			select station from Station station
 			where station.enabled = true
-			and station.rainfallCapability = :capability
+			and station.rainfallCapability in :capabilities
 			and station.precipitationKey is not null
 			order by station.displayName
 			""")
-	List<Station> findRainfallStations(@Param("capability") RainfallCapability capability);
+	List<Station> findRainfallStations(
+			@Param("capabilities") Set<RainfallCapability> capabilities);
 
 	/**
 	 * Finds all by featured true and enabled true order by display name asc.

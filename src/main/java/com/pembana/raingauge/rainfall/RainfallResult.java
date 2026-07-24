@@ -25,6 +25,7 @@ import org.jspecify.annotations.Nullable;
 /**
  * Describes a rainfall result.
  * @param amount the amount
+ * @param method the rainfall calculation method
  * @param unit the requested rainfall unit
  * @param nativeUnit the native unit
  * @param displayScale the display scale
@@ -45,6 +46,7 @@ import org.jspecify.annotations.Nullable;
  */
 public record RainfallResult(
 		@Nullable RainfallAmount amount,
+		RainfallMethod method,
 		RainfallUnit unit,
 		String nativeUnit,
 		int displayScale,
@@ -65,6 +67,7 @@ public record RainfallResult(
 	/**
 	 * Creates a new {@code RainfallResult}.
 	 * @param amount the amount
+	 * @param method the rainfall calculation method
 	 * @param unit the requested rainfall unit
 	 * @param nativeUnit the native unit
 	 * @param displayScale the display scale

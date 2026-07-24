@@ -17,18 +17,15 @@
 package com.pembana.raingauge.rainfall;
 
 /**
- * Signals unsupported rainfall station.
+ * Identifies how a rainfall total was calculated.
  * @author Gunnar Hillert
  */
-public class UnsupportedRainfallStationException extends RuntimeException {
+public enum RainfallMethod {
 
-	/**
-	 * Creates a new {@code UnsupportedRainfallStationException}.
-	 * @param stationId the provider station identifier
-	 */
-	public UnsupportedRainfallStationException(String stationId) {
-		super("Station " + stationId
-				+ " does not currently have a supported precipitation variable");
-	}
+	/** Consecutive cumulative readings were differenced. */
+	CUMULATIVE,
+
+	/** Non-overlapping interval amounts were summed. */
+	INTERVAL
 
 }

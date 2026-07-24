@@ -14,21 +14,11 @@
  * limitations under the License.
  */
 
-package com.pembana.raingauge.rainfall;
-
 /**
- * Signals unsupported rainfall station.
+ * Rainfall calculations for fixed-duration interval precipitation observations.
  * @author Gunnar Hillert
  */
-public class UnsupportedRainfallStationException extends RuntimeException {
+@NullMarked
+package com.pembana.raingauge.rainfall.interval;
 
-	/**
-	 * Creates a new {@code UnsupportedRainfallStationException}.
-	 * @param stationId the provider station identifier
-	 */
-	public UnsupportedRainfallStationException(String stationId) {
-		super("Station " + stationId
-				+ " does not currently have a supported precipitation variable");
-	}
-
-}
+import org.jspecify.annotations.NullMarked;

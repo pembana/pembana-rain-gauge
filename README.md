@@ -48,6 +48,14 @@ For example, `10.00 → 10.02 → 10.05` produces `0.05 in`, exactly `1.270 mm`,
 A corroborated sequence `10.00 → 10.05 → 0.00 → 0.03` produces `0.08 in`. An unresolved negative
 change is not counted as rainfall and makes the result partial.
 
+Fixed-duration `PP…` observations are interval amounts ending at their timestamp. The duration
+character in the expanded SHEF key determines the interval, such as `C` for 15 minutes or `H` for
+one hour. The application selects the shortest advertised fixed-duration series, sums only complete
+non-overlapping intervals inside `[from, to)`, and never prorates an interval crossing a requested
+boundary. Overlapping rolling reports are excluded rather than double-counted. Variable, seasonal,
+calendar-month, previous-7-a.m., and unknown durations remain unsupported because their boundaries
+cannot be recovered from the IEM variable key alone.
+
 ## Status and numerical policy
 
 Every displayed total is classified as `COMPLETE`, `PARTIAL`, `STALE`, `CONFLICTING`, or
@@ -73,7 +81,8 @@ MVC/API controller ──> StationService ──> StationRepository (JpaReposito
 DashboardService ──> RainfallService ──> ObservationService ──> HadsObservationClient
                            │                     │
                            │                     └──> Caffeine (raw responses; no persistence)
-                           └──> RainfallAccumulator
+                           ├──> CumulativeRainfallCalculator
+                           └──> IntervalRainfallCalculator
 ```
 
 Remote DTOs, public response records, and the single JPA `Station` entity are separate concerns;
@@ -240,8 +249,8 @@ never put raw credentials in it.
 
 ## Known limitations
 
-- Accumulator rainfall (`PC…`, including WIHH1 `PCIRG`) is calculated. Interval-precipitation
-  variables (`PP…`) are discovered and classified but are not yet used for public totals.
+- Accumulator rainfall (`PC…`) and fixed-duration interval precipitation (`PP…`) are calculated.
+  PP codes with variable or calendar-dependent durations remain diagnostic-only.
 - Runtime capability discovery combines explicit overrides and recent IEM variables; NOAA HADS
   metadata was used to verify the featured station and is retained as a fixture, but there is not
   yet a general NOAA metadata scraper for every station.

@@ -52,6 +52,24 @@ class HadsObservationParserTests {
 	}
 
 	/**
+	 * Verifies that interval precipitation is selected from a representative wide
+	 * response.
+	 * @throws IOException if an I/O operation fails
+	 */
+	@Test
+	void parsesIntervalPrecipitationFromWideResponse() throws IOException {
+		ObservationParseResult result = this.parser.parse(fixture("iem-wihh1-hads.csv"),
+				"PPHRG");
+
+		assertThat(result.observations()).hasSize(2);
+		assertThat(result.observations()).extracting(PrecipitationObservation::shefKey)
+				.containsOnly("PPHRG");
+		assertThat(result.observations()).extracting(PrecipitationObservation::value)
+				.containsExactly(new java.math.BigDecimal("0.0"),
+						new java.math.BigDecimal("0.03"));
+	}
+
+	/**
 	 * Verifies that validates header names rather than positions.
 	 * @throws IOException if an I/O operation fails
 	 */

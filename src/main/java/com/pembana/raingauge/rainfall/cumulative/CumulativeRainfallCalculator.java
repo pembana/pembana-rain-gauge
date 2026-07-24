@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.pembana.raingauge.rainfall;
+package com.pembana.raingauge.rainfall.cumulative;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -22,11 +22,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Component;
@@ -35,13 +31,21 @@ import com.pembana.raingauge.config.RainfallProperties;
 import com.pembana.raingauge.observation.ObservationBatch;
 import com.pembana.raingauge.observation.ObservationQuality;
 import com.pembana.raingauge.observation.PrecipitationObservation;
+import com.pembana.raingauge.rainfall.PrecipitationObservationDeduplicator;
+import com.pembana.raingauge.rainfall.RainfallAmount;
+import com.pembana.raingauge.rainfall.RainfallDataQuality;
+import com.pembana.raingauge.rainfall.RainfallIncrement;
+import com.pembana.raingauge.rainfall.RainfallMethod;
+import com.pembana.raingauge.rainfall.RainfallResult;
+import com.pembana.raingauge.rainfall.RainfallResultStatus;
+import com.pembana.raingauge.rainfall.RainfallUnit;
 
 /**
- * Provides rainfall accumulator behavior.
+ * Calculates rainfall totals from cumulative precipitation observations.
  * @author Gunnar Hillert
  */
 @Component
-public class RainfallAccumulator {
+public class CumulativeRainfallCalculator {
 
 	private static final BigDecimal ONE_HUNDRED = new BigDecimal("100");
 
@@ -50,11 +54,11 @@ public class RainfallAccumulator {
 	private final Clock clock;
 
 	/**
-	 * Creates a new {@code RainfallAccumulator}.
+	 * Creates a new {@code CumulativeRainfallCalculator}.
 	 * @param properties the rainfall application properties
 	 * @param clock the clock used to obtain the current time
 	 */
-	public RainfallAccumulator(RainfallProperties properties, Clock clock) {
+	public CumulativeRainfallCalculator(RainfallProperties properties, Clock clock) {
 		this.properties = properties;
 		this.clock = clock;
 	}
@@ -72,7 +76,8 @@ public class RainfallAccumulator {
 	public RainfallResult calculate(List<PrecipitationObservation> source, Instant from,
 			Instant to, Duration cadence, ObservationBatch batch, RainfallUnit unit) {
 		Instant calculatedAt = this.clock.instant();
-		Deduplicated deduplicated = deduplicate(source);
+		PrecipitationObservationDeduplicator.Result deduplicated =
+				PrecipitationObservationDeduplicator.deduplicate(source);
 		List<String> warnings = new ArrayList<>(batch.warnings());
 		warnings.addAll(deduplicated.warnings());
 		List<PrecipitationObservation> observations = deduplicated.observations();
@@ -179,7 +184,7 @@ public class RainfallAccumulator {
 		RainfallDataQuality quality = new RainfallDataQuality(expected, received, completeness,
 				longestGap, first, last, unresolvedResets, recognizedResets, deduplicated.conflicts(),
 				batch.warnings().size(), sourceAge, batch.staleCache());
-		return new RainfallResult(new RainfallAmount(total), unit, "in",
+		return new RainfallResult(new RainfallAmount(total), RainfallMethod.CUMULATIVE, unit, "in",
 				(unit == RainfallUnit.IMPERIAL) ? 2 : 1, new BigDecimal("0.01"), from, to,
 				(provisionalBaseline) ? baseline.validAt() : from, last, last, calculatedAt, status,
 				warnings, quality, increments,
@@ -206,53 +211,11 @@ public class RainfallAccumulator {
 		RainfallDataQuality quality = new RainfallDataQuality(expected, 0, BigDecimal.ZERO,
 				Duration.ZERO, null, null, 0, 0, conflicts, batch.warnings().size(),
 				Duration.ZERO, batch.staleCache());
-		return new RainfallResult(null, unit, "in", (unit == RainfallUnit.IMPERIAL) ? 2 : 1,
+		return new RainfallResult(null, RainfallMethod.CUMULATIVE, unit, "in",
+				(unit == RainfallUnit.IMPERIAL) ? 2 : 1,
 				new BigDecimal("0.01"), from, to, null, null, null, calculatedAt,
 				RainfallResultStatus.UNAVAILABLE, warnings, quality, List.of(), batch.provider(),
 				batch.fetchedAt());
-	}
-
-	/**
-	 * Deduplicates observations by timestamp and quality.
-	 * @param source the source data
-	 * @return the resulting deduplicate
-	 */
-	private Deduplicated deduplicate(List<PrecipitationObservation> source) {
-		Map<Instant, List<PrecipitationObservation>> grouped = new TreeMap<>();
-		for (PrecipitationObservation observation : source) {
-			grouped.computeIfAbsent(observation.validAt(), (ignored) -> new ArrayList<>())
-					.add(observation);
-		}
-		List<PrecipitationObservation> result = new ArrayList<>();
-		List<String> warnings = new ArrayList<>();
-		int conflicts = 0;
-		for (Map.Entry<Instant, List<PrecipitationObservation>> entry : grouped.entrySet()) {
-			Map<BigDecimal, List<PrecipitationObservation>> byValue = new LinkedHashMap<>();
-			for (PrecipitationObservation observation : entry.getValue()) {
-				byValue.computeIfAbsent(observation.value().stripTrailingZeros(),
-						(ignored) -> new ArrayList<>()).add(observation);
-			}
-			if (byValue.size() > 1) {
-				conflicts++;
-				warnings.add("Conflicting retransmissions at " + entry.getKey());
-			}
-			PrecipitationObservation selected = entry.getValue().stream()
-					.sorted(Comparator.comparingInt(this::qualityRank)
-							.thenComparingInt(PrecipitationObservation::sourceOrder))
-					.findFirst()
-					.orElseThrow();
-			result.add(selected);
-		}
-		return new Deduplicated(List.copyOf(result), List.copyOf(warnings), conflicts);
-	}
-
-	/**
-	 * Returns the selection rank for an observation's quality.
-	 * @param observation the observation
-	 * @return the resulting quality rank
-	 */
-	private int qualityRank(PrecipitationObservation observation) {
-		return (observation.quality() == ObservationQuality.VALID) ? 0 : 1;
 	}
 
 	/**
@@ -345,17 +308,6 @@ public class RainfallAccumulator {
 				&& next.value().subtract(current.value()).signum() >= 0
 				&& Duration.between(current.validAt(), next.validAt())
 						.compareTo(cadence.multipliedBy(2)) <= 0;
-	}
-
-	/**
-	 * Contains deduplicated observations and retransmission warnings.
-	 * @param observations the precipitation observations to process
-	 * @param warnings the warnings
-	 * @param conflicts the conflicts
-	 * @author Gunnar Hillert
-	 */
-	private record Deduplicated(List<PrecipitationObservation> observations,
-			List<String> warnings, int conflicts) {
 	}
 
 }

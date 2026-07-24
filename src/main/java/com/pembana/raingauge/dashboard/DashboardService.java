@@ -18,6 +18,7 @@ package com.pembana.raingauge.dashboard;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.ZoneId;
@@ -35,6 +36,7 @@ import org.springframework.stereotype.Service;
 import com.pembana.raingauge.observation.client.IemDailySummaryClient;
 import com.pembana.raingauge.rainfall.RainfallAmount;
 import com.pembana.raingauge.rainfall.RainfallIncrement;
+import com.pembana.raingauge.rainfall.RainfallMethod;
 import com.pembana.raingauge.rainfall.RainfallResult;
 import com.pembana.raingauge.rainfall.RainfallResultStatus;
 import com.pembana.raingauge.rainfall.RainfallService;
@@ -159,6 +161,9 @@ public class DashboardService {
 	 * @return the quality conditions
 	 */
 	private List<DashboardResponse.QualityCondition> qualityConditions(RainfallResult result) {
+		if (result.method() == RainfallMethod.INTERVAL) {
+			return intervalQualityConditions(result);
+		}
 		String baselineWarning = warningStartingWith(result, "No valid accumulator baseline");
 		String gapWarning = warningStartingWith(result, "Native observations contain a gap");
 		String outlierWarning = warningStartingWith(result, "Unusually large positive increment");
@@ -181,6 +186,51 @@ public class DashboardService {
 						"No conflicting duplicate observations were detected."),
 				condition("No suspected rainfall outliers", outlierWarning == null,
 						outlierWarning, "No unusually large positive increment was detected."));
+	}
+
+	/**
+	 * Builds quality checks specific to fixed-duration interval precipitation.
+	 * @param result the interval rainfall calculation
+	 * @return the interval quality conditions
+	 */
+	private List<DashboardResponse.QualityCondition> intervalQualityConditions(
+			RainfallResult result) {
+		String boundaryWarning = warningStartingWith(result,
+				"Requested range is not fully covered");
+		if (boundaryWarning == null) {
+			boundaryWarning = warningStartingWith(result,
+					"An interval crossing the requested start");
+		}
+		String gapWarning = warningStartingWith(result,
+				"Interval observations leave an uncovered gap");
+		String overlapWarning = warningStartingWith(result,
+				"Overlapping precipitation interval");
+		String negativeWarning = warningStartingWith(result,
+				"Negative interval precipitation");
+		String outlierWarning = warningStartingWith(result,
+				"Unusually large interval precipitation");
+		return List.of(
+				condition("Requested boundary covered by complete intervals",
+						boundaryWarning == null, boundaryWarning,
+						"No interval needed to be divided at the requested boundary."),
+				condition("Expected interval count",
+						result.quality().completenessPercentage()
+								.compareTo(BigDecimal.valueOf(100)) >= 0,
+						"Fewer complete intervals were received than expected.",
+						"The expected number of complete intervals was received."),
+				condition("No material interval gaps", gapWarning == null,
+						gapWarning, "The selected intervals provide continuous coverage."),
+				condition("No overlapping intervals", overlapWarning == null,
+						overlapWarning, "No overlapping interval was detected."),
+				condition("No invalid negative amounts", negativeWarning == null,
+						negativeWarning, "No negative interval amount was detected."),
+				condition("No conflicting duplicate observations",
+						result.quality().conflictingObservationCount() == 0,
+						result.quality().conflictingObservationCount()
+								+ " conflicting duplicate(s) were detected.",
+						"No conflicting duplicate observations were detected."),
+				condition("No suspected rainfall outliers", outlierWarning == null,
+						outlierWarning, "No unusually large interval amount was detected."));
 	}
 
 	/**
@@ -223,7 +273,9 @@ public class DashboardService {
 			RainfallUnit unit) {
 		Map<LocalDate, BigDecimal> totals = new LinkedHashMap<>();
 		for (RainfallIncrement increment : selected.increments()) {
-			LocalDate date = increment.at().atZone(HAWAII).toLocalDate();
+			Instant attributionTime = (selected.method() == RainfallMethod.INTERVAL)
+					? increment.at().minusNanos(1) : increment.at();
+			LocalDate date = attributionTime.atZone(HAWAII).toLocalDate();
 			totals.merge(date, increment.inches(), BigDecimal::add);
 		}
 		LocalDate firstDate = selected.requestedStart().atZone(HAWAII).toLocalDate();

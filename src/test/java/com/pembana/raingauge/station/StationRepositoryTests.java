@@ -17,6 +17,7 @@
 package com.pembana.raingauge.station;
 
 import java.time.Instant;
+import java.util.EnumSet;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -64,7 +65,8 @@ class StationRepositoryTests {
 				.extracting(Station::getId)
 				.isEqualTo(loaded.getId());
 		assertThat(this.repository.findRainfallStations(
-				RainfallCapability.SUPPORTED_ACCUMULATOR))
+				EnumSet.of(RainfallCapability.SUPPORTED_ACCUMULATOR,
+						RainfallCapability.SUPPORTED_INTERVAL_PRECIPITATION)))
 				.singleElement()
 				.extracting(Station::getStationId)
 				.isEqualTo("WIHH1");
@@ -85,17 +87,20 @@ class StationRepositoryTests {
 	}
 
 	/**
-	 * Verifies that unsupported rainfall station is excluded from rainfall selector query.
+	 * Verifies that interval rainfall station is included in rainfall selector query.
 	 */
 	@Test
-	void unsupportedRainfallStationIsExcludedFromRainfallSelectorQuery() {
+	void intervalRainfallStationIsIncludedInRainfallSelectorQuery() {
 		Station station = new Station("HI_DCP", "HLRH1", "Interval-only station");
 		station.updateCapability(RainfallCapability.SUPPORTED_INTERVAL_PRECIPITATION, "PPHRZ");
 		this.repository.saveAndFlush(station);
 
 		assertThat(this.repository.findRainfallStations(
-				RainfallCapability.SUPPORTED_ACCUMULATOR))
-				.isEmpty();
+				EnumSet.of(RainfallCapability.SUPPORTED_ACCUMULATOR,
+						RainfallCapability.SUPPORTED_INTERVAL_PRECIPITATION)))
+				.singleElement()
+				.extracting(Station::getStationId)
+				.isEqualTo("HLRH1");
 		assertThat(this.repository.findAllByEnabledTrueOrderByDisplayNameAsc())
 				.singleElement()
 				.extracting(Station::getStationId)
