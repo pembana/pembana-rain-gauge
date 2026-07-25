@@ -28,7 +28,6 @@
 	<properties>
 		<java.version>26</java.version>
 		<jte.version>3.2.4</jte.version>
-		<testcontainers.version>1.21.4</testcontainers.version>
 		<checkstyle.version>10.26.1</checkstyle.version>
 		<maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
 		<spring-javaformat-checkstyle.version>0.0.47</spring-javaformat-checkstyle.version>
@@ -120,27 +119,15 @@
 		</dependency>
 		<dependency>
 			<groupId>org.testcontainers</groupId>
-			<artifactId>junit-jupiter</artifactId>
+			<artifactId>testcontainers-junit-jupiter</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.testcontainers</groupId>
-			<artifactId>postgresql</artifactId>
+			<artifactId>testcontainers-postgresql</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.testcontainers</groupId>
-				<artifactId>testcontainers-bom</artifactId>
-				<version>${testcontainers.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
 
 	<build>
 		<plugins>
