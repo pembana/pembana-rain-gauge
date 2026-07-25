@@ -1,5 +1,4 @@
 name: KAMAL Deploy
-
 on:
   workflow_dispatch:
 jobs:
@@ -13,8 +12,8 @@ jobs:
       KAMAL_PROXY_HOST: ${{ vars.KAMAL_PROXY_HOST }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
-      - uses: webfactory/ssh-agent@v0.9.1
+        uses: actions/checkout@v7
+      - uses: webfactory/ssh-agent@v0.10.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       - name: Set up Ruby
