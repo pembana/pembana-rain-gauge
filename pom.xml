@@ -28,7 +28,7 @@
 	<properties>
 		<java.version>26</java.version>
 		<jte.version>3.2.4</jte.version>
-		<checkstyle.version>10.26.1</checkstyle.version>
+		<checkstyle.version>13.8.0</checkstyle.version>
 		<maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
 		<spring-javaformat-checkstyle.version>0.0.47</spring-javaformat-checkstyle.version>
 		<exec-maven-plugin.version>3.6.3</exec-maven-plugin.version>
