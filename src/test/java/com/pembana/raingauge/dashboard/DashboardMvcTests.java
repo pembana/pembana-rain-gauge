@@ -316,9 +316,9 @@ class DashboardMvcTests {
 	 */
 	private Station station(String stationId, String sourceName, boolean enabled) {
 		Station station = new Station("HI_DCP", stationId, sourceName);
-		station.updateSourceMetadata(sourceName, new BigDecimal("19.640000"),
-				new BigDecimal("-155.980000"), null, true, null, null, "HI", "US",
-				"Pacific/Honolulu", "fixture", Instant.now());
+		station.updateSourceMetadata(new Station.SourceMetadata(sourceName,
+				new BigDecimal("19.640000"), new BigDecimal("-155.980000"), null, true, null,
+				null, "HI", "US", "Pacific/Honolulu", "fixture"), Instant.now());
 		if (!enabled) {
 			station.applyOverride(new StationOverride(null, null, null, null, false, false,
 					"disabled for test", null, null));

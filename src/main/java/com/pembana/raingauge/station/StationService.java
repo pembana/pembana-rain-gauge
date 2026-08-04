@@ -119,9 +119,6 @@ public class StationService {
 		Instant refreshedAt = this.clock.instant();
 		CatalogRefreshSummary summary = this.transactionTemplate.execute((status) ->
 				mergeCatalog(remote, refreshedAt));
-		if (summary == null) {
-			throw new IllegalStateException("Catalog merge did not produce a summary");
-		}
 		logger.info("Station catalog refreshed added={} updated={} unconfirmed={} rejected={} warnings={}",
 				summary.added(), summary.updated(), summary.unconfirmed(), summary.rejected(),
 				summary.warnings());
@@ -170,10 +167,7 @@ public class StationService {
 			else {
 				updated++;
 			}
-			station.updateSourceMetadata(source.sourceName(), source.latitude(), source.longitude(),
-					source.elevation(), source.online(), source.archiveBegin(), source.archiveEnd(),
-					source.state(), source.country(), source.timeZone(), source.sourceMetadata(),
-					refreshedAt);
+			station.updateSourceMetadata(sourceMetadata(source), refreshedAt);
 			StationOverride override = this.properties.getStationOverrides().get(source.stationId());
 			if (override != null) {
 				station.applyOverride(override);
@@ -199,6 +193,12 @@ public class StationService {
 	 */
 	private String key(String network, String stationId) {
 		return network.toUpperCase(Locale.ROOT) + ':' + stationId.toUpperCase(Locale.ROOT);
+	}
+
+	private Station.SourceMetadata sourceMetadata(CatalogStation source) {
+		return new Station.SourceMetadata(source.sourceName(), source.latitude(), source.longitude(),
+				source.elevation(), source.online(), source.archiveBegin(), source.archiveEnd(),
+				source.state(), source.country(), source.timeZone(), source.sourceMetadata());
 	}
 
 	/**

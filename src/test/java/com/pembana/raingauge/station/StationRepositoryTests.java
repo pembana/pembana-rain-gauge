@@ -54,8 +54,9 @@ class StationRepositoryTests {
 	@Test
 	void flywayCreatesSchemaAndRepositoryPersistsEntityOnH2() {
 		Station station = new Station("HI_DCP", "WIHH1", "Kailua-Kona 3SE - Waiaha");
-		station.updateSourceMetadata("Kailua-Kona 3SE - Waiaha", null, null, null, true,
-				null, null, "HI", "US", "Pacific/Honolulu", "fixture", Instant.now());
+		station.updateSourceMetadata(new Station.SourceMetadata("Kailua-Kona 3SE - Waiaha", null,
+				null, null, true, null, null, "HI", "US", "Pacific/Honolulu", "fixture"),
+				Instant.now());
 		station.applyOverride(new StationOverride("HI82", "Waiaha", "Hawaiʻi", "North Kona",
 				true, true, null, "PCIRG", null));
 

@@ -45,7 +45,7 @@ public class Station {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
-	private UUID id;
+	private @Nullable UUID id;
 
 	@Column(nullable = false, length = 32)
 	private String network;
@@ -150,36 +150,22 @@ public class Station {
 
 	/**
 	 * Updates source metadata.
-	 * @param sourceName the source name
-	 * @param latitude the latitude
-	 * @param longitude the longitude
-	 * @param elevation the elevation
-	 * @param sourceOnline the source online
-	 * @param archiveBegin the archive begin
-	 * @param archiveEnd the archive end
-	 * @param state the state
-	 * @param country the country
-	 * @param timeZone the time zone
-	 * @param sourceMetadata the source metadata
+	 * @param metadata the source metadata
 	 * @param refreshedAt the refreshed at
 	 */
-	public void updateSourceMetadata(String sourceName, @Nullable BigDecimal latitude,
-			@Nullable BigDecimal longitude, @Nullable BigDecimal elevation, boolean sourceOnline,
-			@Nullable LocalDate archiveBegin, @Nullable LocalDate archiveEnd, @Nullable String state,
-			@Nullable String country, @Nullable String timeZone, @Nullable String sourceMetadata,
-			Instant refreshedAt) {
-		this.sourceName = sourceName;
-		this.displayName = sourceName;
-		this.latitude = latitude;
-		this.longitude = longitude;
-		this.elevation = elevation;
-		this.sourceOnline = sourceOnline;
-		this.archiveBegin = archiveBegin;
-		this.archiveEnd = archiveEnd;
-		this.state = state;
-		this.country = country;
-		this.timeZone = timeZone;
-		this.sourceMetadata = sourceMetadata;
+	public void updateSourceMetadata(SourceMetadata metadata, Instant refreshedAt) {
+		this.sourceName = metadata.sourceName();
+		this.displayName = metadata.sourceName();
+		this.latitude = metadata.latitude();
+		this.longitude = metadata.longitude();
+		this.elevation = metadata.elevation();
+		this.sourceOnline = metadata.sourceOnline();
+		this.archiveBegin = metadata.archiveBegin();
+		this.archiveEnd = metadata.archiveEnd();
+		this.state = metadata.state();
+		this.country = metadata.country();
+		this.timeZone = metadata.timeZone();
+		this.sourceMetadata = metadata.sourceMetadata();
 		this.catalogConfirmed = true;
 		this.catalogLastSeenAt = refreshedAt;
 		this.catalogRefreshedAt = refreshedAt;
@@ -193,8 +179,9 @@ public class Station {
 		if (override.alias() != null) {
 			this.alias = override.alias();
 		}
-		if (override.preferredName() != null) {
-			this.displayName = override.preferredName();
+		String preferredName = override.preferredName();
+		if (preferredName != null) {
+			this.displayName = preferredName;
 		}
 		if (override.island() != null) {
 			this.island = override.island();
@@ -202,24 +189,24 @@ public class Station {
 		if (override.region() != null) {
 			this.region = override.region();
 		}
-		Boolean enabled = override.enabled();
-		if (enabled != null) {
-			this.enabled = enabled;
+		Boolean overrideEnabled = override.enabled();
+		if (overrideEnabled != null) {
+			this.enabled = overrideEnabled;
 		}
-		Boolean featured = override.featured();
-		if (featured != null) {
-			this.featured = featured;
+		Boolean overrideFeatured = override.featured();
+		if (overrideFeatured != null) {
+			this.featured = overrideFeatured;
 		}
 		if (override.disabledReason() != null) {
 			this.disabledReason = override.disabledReason();
 		}
-		String precipitationKey = override.precipitationKey();
-		if (precipitationKey != null) {
-			this.precipitationKey = precipitationKey;
-			if (precipitationKey.startsWith("PC")) {
+		String overridePrecipitationKey = override.precipitationKey();
+		if (overridePrecipitationKey != null) {
+			this.precipitationKey = overridePrecipitationKey;
+			if (overridePrecipitationKey.startsWith("PC")) {
 				this.rainfallCapability = RainfallCapability.SUPPORTED_ACCUMULATOR;
 			}
-			else if (ShefPrecipitationCode.fixedInterval(precipitationKey).isPresent()) {
+			else if (ShefPrecipitationCode.fixedInterval(overridePrecipitationKey).isPresent()) {
 				this.rainfallCapability = RainfallCapability.SUPPORTED_INTERVAL_PRECIPITATION;
 			}
 			else {
@@ -264,7 +251,7 @@ public class Station {
 	 * Returns the ID.
 	 * @return the ID
 	 */
-	public UUID getId() {
+	public @Nullable UUID getId() {
 		return this.id;
 	}
 
@@ -482,6 +469,34 @@ public class Station {
 	 */
 	public @Nullable Instant getCatalogRefreshedAt() {
 		return this.catalogRefreshedAt;
+	}
+
+	/**
+	 * Describes source-supplied station metadata.
+	 * @param sourceName the source name
+	 * @param latitude the latitude
+	 * @param longitude the longitude
+	 * @param elevation the elevation
+	 * @param sourceOnline the source online
+	 * @param archiveBegin the archive begin
+	 * @param archiveEnd the archive end
+	 * @param state the state
+	 * @param country the country
+	 * @param timeZone the time zone
+	 * @param sourceMetadata the source metadata
+	 */
+	public record SourceMetadata(
+			String sourceName,
+			@Nullable BigDecimal latitude,
+			@Nullable BigDecimal longitude,
+			@Nullable BigDecimal elevation,
+			boolean sourceOnline,
+			@Nullable LocalDate archiveBegin,
+			@Nullable LocalDate archiveEnd,
+			@Nullable String state,
+			@Nullable String country,
+			@Nullable String timeZone,
+			@Nullable String sourceMetadata) {
 	}
 
 }
