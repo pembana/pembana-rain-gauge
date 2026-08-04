@@ -34,6 +34,9 @@ import com.pembana.raingauge.observation.PrecipitationObservation;
  */
 public final class PrecipitationObservationDeduplicator {
 
+	/**
+	 * Prevents instantiation of this utility class.
+	 */
 	private PrecipitationObservationDeduplicator() {
 	}
 

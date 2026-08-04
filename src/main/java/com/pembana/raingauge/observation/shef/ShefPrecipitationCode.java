@@ -43,6 +43,9 @@ public final class ShefPrecipitationCode {
 			Map.entry('D', Duration.ofDays(1)),
 			Map.entry('W', Duration.ofDays(7)));
 
+	/**
+	 * Prevents instantiation of this utility class.
+	 */
 	private ShefPrecipitationCode() {
 	}
 

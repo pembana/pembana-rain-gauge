@@ -195,6 +195,11 @@ public class StationService {
 		return network.toUpperCase(Locale.ROOT) + ':' + stationId.toUpperCase(Locale.ROOT);
 	}
 
+	/**
+	 * Maps a catalog station's provider metadata to the station entity value object.
+	 * @param source the catalog station
+	 * @return the source metadata
+	 */
 	private Station.SourceMetadata sourceMetadata(CatalogStation source) {
 		return new Station.SourceMetadata(source.sourceName(), source.latitude(), source.longitude(),
 				source.elevation(), source.online(), source.archiveBegin(), source.archiveEnd(),
