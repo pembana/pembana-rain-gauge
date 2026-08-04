@@ -49,9 +49,10 @@ public class AboutDataController {
 	@GetMapping("/about-data")
 	public String aboutData(Model model) {
 		BuildProperties build = this.buildProperties.getIfAvailable();
+		String applicationVersion = (build != null) ? build.getVersion() : null;
 		Instant buildTime = (build != null) ? build.getTime() : null;
 		model.addAttribute("view", new AboutDataView(
-				(build != null) ? build.getVersion() : "development",
+				(applicationVersion != null) ? applicationVersion : "development",
 				(buildTime != null) ? buildTime.toString() : "local build"));
 		return "aboutData";
 	}

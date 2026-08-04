@@ -100,8 +100,9 @@ public class DashboardService {
 		if (selected == null) {
 			throw new IllegalStateException("The selected rainfall result was not calculated");
 		}
-		if (selected.observationCutoff() != null) {
-			this.stationService.recordLatestObservation(station, selected.observationCutoff());
+		Instant observationCutoff = selected.observationCutoff();
+		if (observationCutoff != null) {
+			this.stationService.recordLatestObservation(station, observationCutoff);
 		}
 		List<DashboardResponse.DailyRainfall> daily = daily(selected, unit);
 		DashboardResponse.Charts charts = charts(selected, daily, unit);
