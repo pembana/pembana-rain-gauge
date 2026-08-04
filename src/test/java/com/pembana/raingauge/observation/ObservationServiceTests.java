@@ -45,10 +45,9 @@ class ObservationServiceTests {
 
 	/**
 	 * Verifies that falls back to a stale successful response when the provider fails.
-	 * @throws Exception if the operation cannot be completed
 	 */
 	@Test
-	void fallsBackToAStaleSuccessfulResponseWhenTheProviderFails() throws Exception {
+	void fallsBackToAStaleSuccessfulResponseWhenTheProviderFails() {
 		HadsObservationClient client = mock(HadsObservationClient.class);
 		ObservationBatch successful = new ObservationBatch(List.of(
 				PrecipitationObservation.valid("WIHH1", FROM, "PCIRG", new BigDecimal("1.00"), 0),
@@ -58,14 +57,13 @@ class ObservationServiceTests {
 				.willReturn(successful)
 				.willThrow(new ProviderException("provider unavailable"));
 		RainfallProperties properties = new RainfallProperties();
-		properties.getCache().setObservations(Duration.ofMillis(5));
+		properties.getCache().setObservations(Duration.ZERO);
 		properties.getCache().setStaleObservations(Duration.ofMinutes(1));
 		ObservationService service = new ObservationService(client, properties,
 				Clock.fixed(TO, ZoneOffset.UTC));
 
 		assertThat(service.observations("WIHH1", "HI_DCP", "PCIRG", FROM, TO).staleCache())
 				.isFalse();
-		Thread.sleep(20);
 		ObservationBatch fallback = service.observations("WIHH1", "HI_DCP", "PCIRG", FROM, TO);
 
 		assertThat(fallback.staleCache()).isTrue();

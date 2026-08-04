@@ -169,7 +169,7 @@ public class RainfallCapabilityRefresher {
 					default -> unknown++;
 				}
 			}
-			catch (InterruptedException ex) {
+			catch (InterruptedException _) {
 				Thread.currentThread().interrupt();
 				unknown++;
 			}
