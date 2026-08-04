@@ -42,7 +42,7 @@ public class ApiExceptionHandler {
 	 */
 	@ExceptionHandler(StationNotFoundException.class)
 	ProblemDetail stationNotFound(StationNotFoundException exception) {
-		return problem(HttpStatus.NOT_FOUND, "Station not found", exception.getMessage(),
+		return problem(HttpStatus.NOT_FOUND, "Station not found", detail(exception),
 				"station-not-found");
 	}
 
@@ -54,7 +54,7 @@ public class ApiExceptionHandler {
 	@ExceptionHandler(UnsupportedRainfallStationException.class)
 	ProblemDetail unsupported(UnsupportedRainfallStationException exception) {
 		return problem(HttpStatus.UNPROCESSABLE_CONTENT, "Rainfall data unsupported",
-				exception.getMessage(), "rainfall-unsupported");
+				detail(exception), "rainfall-unsupported");
 	}
 
 	/**
@@ -64,7 +64,7 @@ public class ApiExceptionHandler {
 	 */
 	@ExceptionHandler(IllegalArgumentException.class)
 	ProblemDetail invalid(IllegalArgumentException exception) {
-		return problem(HttpStatus.BAD_REQUEST, "Invalid request", exception.getMessage(),
+		return problem(HttpStatus.BAD_REQUEST, "Invalid request", detail(exception),
 				"invalid-request");
 	}
 
@@ -76,7 +76,17 @@ public class ApiExceptionHandler {
 	@ExceptionHandler(ProviderException.class)
 	ProblemDetail provider(ProviderException exception) {
 		return problem(HttpStatus.SERVICE_UNAVAILABLE, "Observation provider unavailable",
-				exception.getMessage(), "provider-unavailable");
+				detail(exception), "provider-unavailable");
+	}
+
+	/**
+	 * Returns a non-null detail message for an exception response.
+	 * @param exception the exception to describe
+	 * @return the exception message, or a generic fallback
+	 */
+	private String detail(RuntimeException exception) {
+		String detail = exception.getMessage();
+		return (detail != null) ? detail : "The request could not be completed";
 	}
 
 	/**

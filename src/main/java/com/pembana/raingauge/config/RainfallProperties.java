@@ -866,10 +866,10 @@ public class RainfallProperties {
 	public static class Administrator {
 
 		@NotBlank
-		private String username;
+		private String username = "";
 
 		@NotBlank
-		private String password;
+		private String password = "";
 
 		/**
 		 * Returns the username.

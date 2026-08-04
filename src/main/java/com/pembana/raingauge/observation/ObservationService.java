@@ -24,6 +24,7 @@ import java.util.Map;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import com.pembana.raingauge.config.RainfallProperties;
@@ -122,9 +123,9 @@ public class ObservationService {
 	 * Finds a cached observation batch covering the requested interval.
 	 * @param cache the cache
 	 * @param requested the requested
-	 * @return the matching covering
+	 * @return the matching covering, or {@code null} if the cache has no suitable batch
 	 */
-	private ObservationBatch findCovering(Cache<ObservationQuery, ObservationBatch> cache,
+	private @Nullable ObservationBatch findCovering(Cache<ObservationQuery, ObservationBatch> cache,
 			ObservationQuery requested) {
 		ObservationBatch exact = cache.getIfPresent(requested);
 		if (exact != null) {

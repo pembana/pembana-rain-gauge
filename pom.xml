@@ -33,6 +33,7 @@
 		<checkstyle.version>10.26.1</checkstyle.version>
     <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
 		<maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
+    <nullability-maven-plugin.version>0.4.2</nullability-maven-plugin.version>
 		<spring-javaformat-checkstyle.version>0.0.47</spring-javaformat-checkstyle.version>
 		<exec-maven-plugin.version>3.6.3</exec-maven-plugin.version>
 		<argLine/>
@@ -234,6 +235,19 @@
 					</execution>
 				</executions>
 			</plugin>
+      <plugin>
+        <groupId>am.ik.maven</groupId>
+        <artifactId>nullability-maven-plugin</artifactId>
+        <version>${nullability-maven-plugin.version}</version>
+        <extensions>true</extensions>
+        <executions>
+          <execution>
+            <goals>
+              <goal>configure</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
 		</plugins>
 	</build>
   <profiles>

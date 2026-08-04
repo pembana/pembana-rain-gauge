@@ -45,9 +45,9 @@ public class ProviderStatusRegistry {
 	/**
 	 * Records a failed station-catalog request.
 	 * @param at the time at which the provider operation completed
-	 * @param message the detail message
+	 * @param message the optional detail message
 	 */
-	public void catalogFailed(Instant at, String message) {
+	public void catalogFailed(Instant at, @Nullable String message) {
 		this.catalog.set(ProviderState.failed(at, message, this.catalog.get().lastSuccess()));
 	}
 
@@ -63,9 +63,9 @@ public class ProviderStatusRegistry {
 	/**
 	 * Records a failed observation request.
 	 * @param at the time at which the provider operation completed
-	 * @param message the detail message
+	 * @param message the optional detail message
 	 */
-	public void observationsFailed(Instant at, String message) {
+	public void observationsFailed(Instant at, @Nullable String message) {
 		this.observations.set(ProviderState.failed(at, message, this.observations.get().lastSuccess()));
 	}
 
@@ -124,11 +124,12 @@ public class ProviderStatusRegistry {
 		/**
 		 * Creates a failed provider state while retaining prior success metadata.
 		 * @param at the time at which the provider operation completed
-		 * @param message the detail message
+		 * @param message the optional detail message
 		 * @param lastSuccess the last success
 		 * @return the resulting failed
 		 */
-		static ProviderState failed(Instant at, String message, @Nullable Instant lastSuccess) {
+		static ProviderState failed(Instant at, @Nullable String message,
+				@Nullable Instant lastSuccess) {
 			return new ProviderState(true, false, at, lastSuccess, null, message);
 		}
 	}

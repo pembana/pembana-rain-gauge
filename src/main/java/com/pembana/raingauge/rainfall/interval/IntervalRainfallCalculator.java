@@ -409,7 +409,9 @@ public class IntervalRainfallCalculator {
 		 * @return {@code true} if boundary coverage is incomplete; otherwise {@code false}
 		 */
 		boolean hasIncompleteBoundaryCoverage(CalculationRequest request) {
-			return !this.coveredStart.equals(request.from()) || !this.coveredEnd.equals(request.to());
+			Instant start = this.coveredStart;
+			Instant end = this.coveredEnd;
+			return start == null || end == null || !start.equals(request.from()) || !end.equals(request.to());
 		}
 
 		/**

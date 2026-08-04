@@ -131,15 +131,30 @@ public class DashboardService {
 	 */
 	private DashboardResponse.Summary summary(Map<RainfallWindow, RainfallResult> results) {
 		return new DashboardResponse.Summary(
-				view(results.get(RainfallWindow.ONE_HOUR)),
-				view(results.get(RainfallWindow.THREE_HOURS)),
-				view(results.get(RainfallWindow.SIX_HOURS)),
-				view(results.get(RainfallWindow.TWELVE_HOURS)),
-				view(results.get(RainfallWindow.TWENTY_FOUR_HOURS)),
-				view(results.get(RainfallWindow.SEVEN_DAYS)),
-				view(results.get(RainfallWindow.TWENTY_EIGHT_DAYS)),
-				view(results.get(RainfallWindow.MONTH_TO_DATE)),
-				view(results.get(RainfallWindow.YEAR_TO_DATE)));
+				view(requiredResult(results, RainfallWindow.ONE_HOUR)),
+				view(requiredResult(results, RainfallWindow.THREE_HOURS)),
+				view(requiredResult(results, RainfallWindow.SIX_HOURS)),
+				view(requiredResult(results, RainfallWindow.TWELVE_HOURS)),
+				view(requiredResult(results, RainfallWindow.TWENTY_FOUR_HOURS)),
+				view(requiredResult(results, RainfallWindow.SEVEN_DAYS)),
+				view(requiredResult(results, RainfallWindow.TWENTY_EIGHT_DAYS)),
+				view(requiredResult(results, RainfallWindow.MONTH_TO_DATE)),
+				view(requiredResult(results, RainfallWindow.YEAR_TO_DATE)));
+	}
+
+	/**
+	 * Returns a summary calculation that must be present for every standard window.
+	 * @param results the calculated results
+	 * @param window the required rainfall window
+	 * @return the calculation for the requested window
+	 */
+	private RainfallResult requiredResult(Map<RainfallWindow, RainfallResult> results,
+			RainfallWindow window) {
+		RainfallResult result = results.get(window);
+		if (result == null) {
+			throw new IllegalStateException("The " + window + " rainfall result was not calculated");
+		}
+		return result;
 	}
 
 	/**
