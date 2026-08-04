@@ -81,141 +81,170 @@ public class CumulativeRainfallCalculator {
 		List<String> warnings = new ArrayList<>(batch.warnings());
 		warnings.addAll(deduplicated.warnings());
 		List<PrecipitationObservation> observations = deduplicated.observations();
-		PrecipitationObservation baseline = findBaseline(observations, from);
-		boolean provisionalBaseline = false;
+		CalculationRequest request = new CalculationRequest(from, to, cadence, batch, unit);
+		BaselineSelection selection = selectBaseline(observations, request, warnings);
+		PrecipitationObservation baseline = selection.observation();
 		if (baseline == null) {
-			baseline = findFirstValidInWindow(observations, from, to);
-			if (baseline == null) {
-				warnings.add("No valid accumulator observations were available in the requested range");
-				return unavailable(from, to, calculatedAt, batch, unit, cadence, warnings,
-						deduplicated.conflicts());
-			}
-			provisionalBaseline = true;
-			warnings.add("No valid accumulator baseline was available at or before the requested "
-					+ "start; the total begins at " + baseline.validAt()
-					+ " and may exclude earlier rainfall");
+			warnings.add("No valid accumulator observations were available in the requested range");
+			return unavailable(request, calculatedAt, warnings, deduplicated.conflicts());
 		}
-
-		BigDecimal total = BigDecimal.ZERO;
-		List<RainfallIncrement> increments = new ArrayList<>();
-		PrecipitationObservation previous = baseline;
-		Duration longestGap = Duration.ZERO;
-		int unresolvedResets = 0;
-		int recognizedResets = 0;
-		boolean outlier = false;
-		for (int index = 0; index < observations.size(); index++) {
-			PrecipitationObservation current = observations.get(index);
-			if (!current.validAt().isAfter(baseline.validAt()) || !current.validAt().isBefore(to)
-					|| current.quality() != ObservationQuality.VALID) {
-				continue;
-			}
-			Duration gap = Duration.between(previous.validAt(), current.validAt());
-			if (gap.compareTo(longestGap) > 0 && current.validAt().isAfter(from)) {
-				longestGap = gap;
-			}
-			BigDecimal delta = current.value().subtract(previous.value());
-			String qualityFlag = null;
-			if (delta.signum() < 0) {
-				PrecipitationObservation next = nextValid(observations, index + 1, to);
-				BigDecimal rollover = rolloverDelta(previous.value(), current.value());
-				if (rollover != null) {
-					delta = rollover;
-					recognizedResets++;
-					qualityFlag = "rollover";
-					warnings.add("Accumulator rollover recognized at " + current.validAt());
-				}
-				else if (isCorroboratedReset(current, next, cadence)) {
-					delta = current.value();
-					recognizedResets++;
-					qualityFlag = "reset";
-					warnings.add("Accumulator reset recognized at " + current.validAt());
-				}
-				else {
-					unresolvedResets++;
-					warnings.add("Unresolved negative accumulator change at " + current.validAt());
-					previous = current;
-					continue;
-				}
-			}
-			if (delta.compareTo(this.properties.getReset().getSuspectedOutlierIncrement()) > 0) {
-				qualityFlag = "suspected-outlier";
-				outlier = true;
-				warnings.add("Unusually large positive increment at " + current.validAt());
-			}
-			if (current.validAt().isAfter(from)) {
-				total = total.add(delta);
-				increments.add(new RainfallIncrement(current.validAt(), delta, total, qualityFlag));
-			}
-			previous = current;
-		}
-
-		List<PrecipitationObservation> inWindow = observations.stream()
-				.filter((observation) -> !observation.validAt().isBefore(from)
-						&& observation.validAt().isBefore(to)
-						&& observation.quality() == ObservationQuality.VALID)
-				.toList();
-		Instant first = inWindow.isEmpty() ? null : inWindow.getFirst().validAt();
-		Instant last = inWindow.isEmpty() ? baseline.validAt() : inWindow.getLast().validAt();
-		long expected = Math.max(1, Duration.between(from, to).toSeconds()
-				/ Math.max(1, cadence.toSeconds()));
-		long received = inWindow.size();
-		BigDecimal completeness = BigDecimal.valueOf(Math.min(received, expected))
-				.multiply(ONE_HUNDRED)
-				.divide(BigDecimal.valueOf(expected), 1, RoundingMode.HALF_UP);
-		boolean materialGap = longestGap.compareTo(cadence.multipliedBy(2)) > 0;
-		if (materialGap) {
-			warnings.add("Native observations contain a gap of " + longestGap.toMinutes() + " minutes");
-		}
-		Duration sourceAge = Duration.between(last, calculatedAt);
-		boolean stale = sourceAge.compareTo(cadence.multipliedBy(2)) > 0;
-		RainfallResultStatus status;
-		if (deduplicated.conflicts() > 0) {
-			status = RainfallResultStatus.CONFLICTING;
-		}
-		else if (provisionalBaseline || unresolvedResets > 0 || materialGap || outlier) {
-			status = RainfallResultStatus.PARTIAL;
-		}
-		else if (batch.staleCache() || stale) {
-			status = RainfallResultStatus.STALE;
-		}
-		else {
-			status = RainfallResultStatus.COMPLETE;
-		}
-		RainfallDataQuality quality = new RainfallDataQuality(expected, received, completeness,
-				longestGap, first, last, unresolvedResets, recognizedResets, deduplicated.conflicts(),
-				batch.warnings().size(), sourceAge, batch.staleCache());
-		return new RainfallResult(new RainfallAmount(total), RainfallMethod.CUMULATIVE, unit, "in",
-				(unit == RainfallUnit.IMPERIAL) ? 2 : 1, new BigDecimal("0.01"), from, to,
-				(provisionalBaseline) ? baseline.validAt() : from, last, last, calculatedAt, status,
-				warnings, quality, increments,
-				batch.provider(), batch.fetchedAt());
+		Accumulation accumulation = accumulate(observations, baseline, request, warnings);
+		return completeResult(request, baseline, selection.provisional(), calculatedAt, deduplicated,
+				warnings, accumulation);
 	}
 
 	/**
 	 * Creates an unavailable rainfall result with quality metadata.
-	 * @param from the inclusive start of the requested interval
-	 * @param to the exclusive end of the requested interval
+	 * @param request the requested calculation
 	 * @param calculatedAt the calculated at
-	 * @param batch the source observation batch
-	 * @param unit the requested rainfall unit
-	 * @param cadence the expected observation cadence
 	 * @param warnings the warnings
 	 * @param conflicts the conflicts
 	 * @return the resulting unavailable
 	 */
-	private RainfallResult unavailable(Instant from, Instant to, Instant calculatedAt,
-			ObservationBatch batch, RainfallUnit unit, Duration cadence, List<String> warnings,
-			int conflicts) {
-		long expected = Math.max(1, Duration.between(from, to).toSeconds()
-				/ Math.max(1, cadence.toSeconds()));
+	private RainfallResult unavailable(CalculationRequest request, Instant calculatedAt,
+			List<String> warnings, int conflicts) {
+		long expected = request.expectedSamples();
 		RainfallDataQuality quality = new RainfallDataQuality(expected, 0, BigDecimal.ZERO,
-				Duration.ZERO, null, null, 0, 0, conflicts, batch.warnings().size(),
-				Duration.ZERO, batch.staleCache());
-		return new RainfallResult(null, RainfallMethod.CUMULATIVE, unit, "in",
-				(unit == RainfallUnit.IMPERIAL) ? 2 : 1,
-				new BigDecimal("0.01"), from, to, null, null, null, calculatedAt,
-				RainfallResultStatus.UNAVAILABLE, warnings, quality, List.of(), batch.provider(),
-				batch.fetchedAt());
+				Duration.ZERO, null, null, 0, 0, conflicts, request.batch().warnings().size(),
+				Duration.ZERO, request.batch().staleCache());
+		return new RainfallResult(null, RainfallMethod.CUMULATIVE, request.unit(), "in",
+				(request.unit() == RainfallUnit.IMPERIAL) ? 2 : 1,
+				new BigDecimal("0.01"), request.from(), request.to(), null, null, null, calculatedAt,
+				RainfallResultStatus.UNAVAILABLE, warnings, quality, List.of(), request.batch().provider(),
+				request.batch().fetchedAt());
+	}
+
+	private BaselineSelection selectBaseline(List<PrecipitationObservation> observations,
+			CalculationRequest request, List<String> warnings) {
+		PrecipitationObservation baseline = findBaseline(observations, request.from());
+		if (baseline != null) {
+			return new BaselineSelection(baseline, false);
+		}
+		PrecipitationObservation provisional = findFirstValidInWindow(observations, request.from(),
+				request.to());
+		if (provisional != null) {
+			warnings.add("No valid accumulator baseline was available at or before the requested "
+					+ "start; the total begins at " + provisional.validAt()
+					+ " and may exclude earlier rainfall");
+		}
+		return new BaselineSelection(provisional, provisional != null);
+	}
+
+	private Accumulation accumulate(List<PrecipitationObservation> observations,
+			PrecipitationObservation baseline, CalculationRequest request, List<String> warnings) {
+		Accumulation accumulation = new Accumulation(baseline);
+		for (int index = 0; index < observations.size(); index++) {
+			PrecipitationObservation current = observations.get(index);
+			if (isEligibleIncrement(current, baseline, request)) {
+				processIncrement(observations, index, current, request, warnings, accumulation);
+			}
+		}
+		return accumulation;
+	}
+
+	private boolean isEligibleIncrement(PrecipitationObservation observation,
+			PrecipitationObservation baseline, CalculationRequest request) {
+		return observation.validAt().isAfter(baseline.validAt())
+				&& observation.validAt().isBefore(request.to())
+				&& observation.quality() == ObservationQuality.VALID;
+	}
+
+	private void processIncrement(List<PrecipitationObservation> observations, int index,
+			PrecipitationObservation current, CalculationRequest request, List<String> warnings,
+			Accumulation accumulation) {
+		accumulation.recordGap(current, request.from());
+		BigDecimal delta = current.value().subtract(accumulation.previous().value());
+		String qualityFlag = null;
+		if (delta.signum() < 0) {
+			NegativeDeltaResolution resolution = resolveNegativeDelta(accumulation.previous(), current,
+					nextValid(observations, index + 1, request.to()), request.cadence());
+			if (resolution == null) {
+				accumulation.recordUnresolvedReset(current);
+				warnings.add("Unresolved negative accumulator change at " + current.validAt());
+				return;
+			}
+			delta = resolution.delta();
+			qualityFlag = resolution.qualityFlag();
+			accumulation.recordRecognizedReset();
+			warnings.add("Accumulator " + qualityFlag + " recognized at " + current.validAt());
+		}
+		if (delta.compareTo(this.properties.getReset().getSuspectedOutlierIncrement()) > 0) {
+			qualityFlag = "suspected-outlier";
+			accumulation.recordOutlier();
+			warnings.add("Unusually large positive increment at " + current.validAt());
+		}
+		accumulation.add(current, delta, qualityFlag, request.from());
+	}
+
+	private @Nullable NegativeDeltaResolution resolveNegativeDelta(
+			PrecipitationObservation previous, PrecipitationObservation current,
+			@Nullable PrecipitationObservation next, Duration cadence) {
+		BigDecimal rollover = rolloverDelta(previous.value(), current.value());
+		if (rollover != null) {
+			return new NegativeDeltaResolution(rollover, "rollover");
+		}
+		if (isCorroboratedReset(current, next, cadence)) {
+			return new NegativeDeltaResolution(current.value(), "reset");
+		}
+		return null;
+	}
+
+	private RainfallResult completeResult(CalculationRequest request,
+			PrecipitationObservation baseline, boolean provisionalBaseline, Instant calculatedAt,
+			PrecipitationObservationDeduplicator.Result deduplicated, List<String> warnings,
+			Accumulation accumulation) {
+		List<PrecipitationObservation> inWindow = validObservationsInWindow(
+				deduplicated.observations(), request);
+		Instant first = inWindow.isEmpty() ? null : inWindow.getFirst().validAt();
+		Instant last = inWindow.isEmpty() ? baseline.validAt() : inWindow.getLast().validAt();
+		long expected = request.expectedSamples();
+		long received = inWindow.size();
+		BigDecimal completeness = BigDecimal.valueOf(Math.min(received, expected))
+				.multiply(ONE_HUNDRED)
+				.divide(BigDecimal.valueOf(expected), 1, RoundingMode.HALF_UP);
+		boolean materialGap = accumulation.longestGap().compareTo(request.cadence().multipliedBy(2)) > 0;
+		if (materialGap) {
+			warnings.add("Native observations contain a gap of "
+					+ accumulation.longestGap().toMinutes() + " minutes");
+		}
+		Duration sourceAge = Duration.between(last, calculatedAt);
+		boolean stale = sourceAge.compareTo(request.cadence().multipliedBy(2)) > 0;
+		RainfallResultStatus status = status(deduplicated.conflicts(), provisionalBaseline,
+				accumulation, materialGap, request.batch().staleCache(), stale);
+		RainfallDataQuality quality = new RainfallDataQuality(expected, received, completeness,
+				accumulation.longestGap(), first, last, accumulation.unresolvedResets(),
+				accumulation.recognizedResets(), deduplicated.conflicts(),
+				request.batch().warnings().size(), sourceAge, request.batch().staleCache());
+		return new RainfallResult(new RainfallAmount(accumulation.total()), RainfallMethod.CUMULATIVE,
+				request.unit(), "in", (request.unit() == RainfallUnit.IMPERIAL) ? 2 : 1,
+				new BigDecimal("0.01"), request.from(), request.to(),
+				(provisionalBaseline) ? baseline.validAt() : request.from(), last, last, calculatedAt,
+				status, warnings, quality, accumulation.increments(), request.batch().provider(),
+				request.batch().fetchedAt());
+	}
+
+	private List<PrecipitationObservation> validObservationsInWindow(
+			List<PrecipitationObservation> observations, CalculationRequest request) {
+		return observations.stream()
+				.filter((observation) -> !observation.validAt().isBefore(request.from())
+						&& observation.validAt().isBefore(request.to())
+						&& observation.quality() == ObservationQuality.VALID)
+				.toList();
+	}
+
+	private RainfallResultStatus status(int conflicts, boolean provisionalBaseline,
+			Accumulation accumulation, boolean materialGap, boolean staleCache, boolean stale) {
+		if (conflicts > 0) {
+			return RainfallResultStatus.CONFLICTING;
+		}
+		if (provisionalBaseline || accumulation.unresolvedResets() > 0 || materialGap
+				|| accumulation.hasOutlier()) {
+			return RainfallResultStatus.PARTIAL;
+		}
+		if (staleCache || stale) {
+			return RainfallResultStatus.STALE;
+		}
+		return RainfallResultStatus.COMPLETE;
 	}
 
 	/**
@@ -308,6 +337,102 @@ public class CumulativeRainfallCalculator {
 				&& next.value().subtract(current.value()).signum() >= 0
 				&& Duration.between(current.validAt(), next.validAt())
 						.compareTo(cadence.multipliedBy(2)) <= 0;
+	}
+
+	private record CalculationRequest(Instant from, Instant to, Duration cadence,
+			ObservationBatch batch, RainfallUnit unit) {
+
+		private long expectedSamples() {
+			return Math.max(1, Duration.between(this.from, this.to).toSeconds()
+					/ Math.max(1, this.cadence.toSeconds()));
+		}
+
+	}
+
+	private record BaselineSelection(@Nullable PrecipitationObservation observation,
+			boolean provisional) {
+	}
+
+	private record NegativeDeltaResolution(BigDecimal delta, String qualityFlag) {
+	}
+
+	private static final class Accumulation {
+
+		private PrecipitationObservation previous;
+
+		private BigDecimal total = BigDecimal.ZERO;
+
+		private final List<RainfallIncrement> increments = new ArrayList<>();
+
+		private Duration longestGap = Duration.ZERO;
+
+		private int unresolvedResets;
+
+		private int recognizedResets;
+
+		private boolean outlier;
+
+		Accumulation(PrecipitationObservation baseline) {
+			this.previous = baseline;
+		}
+
+		void recordGap(PrecipitationObservation current, Instant from) {
+			Duration gap = Duration.between(this.previous.validAt(), current.validAt());
+			if (gap.compareTo(this.longestGap) > 0 && current.validAt().isAfter(from)) {
+				this.longestGap = gap;
+			}
+		}
+
+		void recordUnresolvedReset(PrecipitationObservation current) {
+			this.unresolvedResets++;
+			this.previous = current;
+		}
+
+		void recordRecognizedReset() {
+			this.recognizedResets++;
+		}
+
+		void recordOutlier() {
+			this.outlier = true;
+		}
+
+		void add(PrecipitationObservation current, BigDecimal delta, @Nullable String qualityFlag,
+				Instant from) {
+			if (current.validAt().isAfter(from)) {
+				this.total = this.total.add(delta);
+				this.increments.add(new RainfallIncrement(current.validAt(), delta, this.total, qualityFlag));
+			}
+			this.previous = current;
+		}
+
+		PrecipitationObservation previous() {
+			return this.previous;
+		}
+
+		BigDecimal total() {
+			return this.total;
+		}
+
+		List<RainfallIncrement> increments() {
+			return this.increments;
+		}
+
+		Duration longestGap() {
+			return this.longestGap;
+		}
+
+		int unresolvedResets() {
+			return this.unresolvedResets;
+		}
+
+		int recognizedResets() {
+			return this.recognizedResets;
+		}
+
+		boolean hasOutlier() {
+			return this.outlier;
+		}
+
 	}
 
 }

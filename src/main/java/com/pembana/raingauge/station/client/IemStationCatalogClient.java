@@ -212,19 +212,19 @@ public class IemStationCatalogClient {
 		if (!(propertiesValue instanceof Map<?, ?> propertiesObject)) {
 			throw new IllegalArgumentException("properties were missing");
 		}
-		Map<String, Object> properties = (Map<String, Object>) propertiesObject;
-		String stationId = requiredString(properties, "sid").toUpperCase();
+		Map<String, Object> typedProperties = (Map<String, Object>) propertiesObject;
+		String stationId = requiredString(typedProperties, "sid").toUpperCase();
 		if (!STATION_ID.matcher(stationId).matches()) {
 			throw new IllegalArgumentException("station ID was invalid");
 		}
-		String network = nullableString(properties.get("network"));
+		String network = nullableString(typedProperties.get("network"));
 		if (network == null) {
 			network = expectedNetwork;
 		}
 		if (!expectedNetwork.equals(network)) {
 			throw new IllegalArgumentException("station belonged to an unexpected network");
 		}
-		String sourceName = requiredString(properties, "sname");
+		String sourceName = requiredString(typedProperties, "sname");
 		BigDecimal longitude = null;
 		BigDecimal latitude = null;
 		Object geometryValue = feature.get("geometry");
@@ -236,10 +236,10 @@ public class IemStationCatalogClient {
 			}
 		}
 		return new CatalogStation(network, stationId, sourceName, latitude, longitude,
-				decimal(properties.get("elevation")), date(properties.get("archive_begin")),
-				date(properties.get("archive_end")), booleanValue(properties.get("online")),
-				nullableString(properties.get("state")), nullableString(properties.get("country")),
-				nullableString(properties.get("tzname")), properties.toString());
+				decimal(typedProperties.get("elevation")), date(typedProperties.get("archive_begin")),
+				date(typedProperties.get("archive_end")), booleanValue(typedProperties.get("online")),
+				nullableString(typedProperties.get("state")), nullableString(typedProperties.get("country")),
+				nullableString(typedProperties.get("tzname")), typedProperties.toString());
 	}
 
 	/**
@@ -279,6 +279,8 @@ public class IemStationCatalogClient {
 				return new BigDecimal(string);
 			}
 			catch (NumberFormatException ex) {
+				logger.warn("Ignoring non-numeric station catalog value '{}': {}", string,
+						ex.getMessage());
 				return null;
 			}
 		}
@@ -298,7 +300,7 @@ public class IemStationCatalogClient {
 		try {
 			return LocalDate.parse(text);
 		}
-		catch (DateTimeParseException ex) {
+		catch (DateTimeParseException _) {
 			return null;
 		}
 	}
