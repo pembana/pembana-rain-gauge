@@ -6,7 +6,12 @@
 	<module name="SuppressWarningsFilter"/>
 	<module name="io.spring.javaformat.checkstyle.SpringChecks">
 		<property name="projectRootPackage" value="com.pembana"/>
-		<property name="excludes"
-			value="io.spring.javaformat.checkstyle.check.SpringHeaderCheck"/>
+    <property name="excludes" value="io.spring.javaformat.checkstyle.check.SpringCatchCheck" />
+		<property name="excludes" value="io.spring.javaformat.checkstyle.check.SpringHeaderCheck"/>
 	</module>
+  <module name="TreeWalker">
+    <module name="CatchParameterName">
+      <property name="format" value="^(?:_|[a-z][a-zA-Z0-9]+)$"/>
+    </module>
+  </module>
 </module>
