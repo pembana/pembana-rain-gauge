@@ -18,6 +18,7 @@ package com.pembana.raingauge.station;
 
 import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
@@ -153,12 +154,13 @@ public class StationController {
 				return false;
 			}
 		}
+		Instant latestObservationAt = station.getLatestObservationAt();
 		return (island == null || island.isBlank() || island.equals(station.getIsland()))
 				&& (online == null || online == station.isSourceOnline())
 				&& (capability == null || capability == station.getRainfallCapability())
 				&& (enabled == null || enabled == station.isEnabled())
-				&& (recent == null || recent == (station.getLatestObservationAt() != null
-						&& station.getLatestObservationAt().isAfter(
+				&& (recent == null || recent == (latestObservationAt != null
+						&& latestObservationAt.isAfter(
 								this.clock.instant().minus(Duration.ofHours(24)))));
 	}
 

@@ -339,7 +339,8 @@ public class DashboardService {
 		List<DashboardResponse.SourceDiscrepancy> discrepancies = new ArrayList<>();
 		try {
 			for (DashboardResponse.DailyRainfall item : daily) {
-				if (!isCompleteLocalDay(selected, item) || item.inches() == null) {
+				BigDecimal inches = item.inches();
+				if (!isCompleteLocalDay(selected, item) || inches == null) {
 					continue;
 				}
 				YearMonth month = YearMonth.from(item.date());
@@ -347,13 +348,13 @@ public class DashboardService {
 						(ignored) -> this.dailySummaryClient.fetch(station.getNetwork(),
 								station.getStationId(), month));
 				BigDecimal validationValue = validation.get(item.date());
-				if (validationValue != null && item.inches().compareTo(validationValue) != 0) {
-					BigDecimal difference = item.inches().subtract(validationValue);
+				if (validationValue != null && inches.compareTo(validationValue) != 0) {
+					BigDecimal difference = inches.subtract(validationValue);
 					discrepancies.add(new DashboardResponse.SourceDiscrepancy(item.date(),
-							item.inches(), validationValue, difference, "IEM daily API"));
+							inches, validationValue, difference, "IEM daily API"));
 					warnings.add("Daily validation differs on " + item.date()
 							+ ": raw observations "
-							+ item.inches().toPlainString() + " in; IEM daily API "
+							+ inches.toPlainString() + " in; IEM daily API "
 							+ validationValue.toPlainString() + " in");
 				}
 			}

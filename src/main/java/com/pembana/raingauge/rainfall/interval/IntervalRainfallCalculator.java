@@ -149,7 +149,7 @@ public class IntervalRainfallCalculator {
 			warnings.add("An interval crossing the requested start was excluded because it "
 					+ "cannot be divided without estimating rainfall");
 		}
-		if (increments.isEmpty()) {
+		if (increments.isEmpty() || coveredStart == null || coveredEnd == null) {
 			warnings.add("No complete interval precipitation observations were available in "
 					+ "the requested range");
 			return unavailable(from, to, calculatedAt, batch, unit, interval, warnings,

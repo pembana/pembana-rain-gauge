@@ -202,21 +202,24 @@ public class Station {
 		if (override.region() != null) {
 			this.region = override.region();
 		}
-		if (override.enabled() != null) {
-			this.enabled = override.enabled();
+		Boolean enabled = override.enabled();
+		if (enabled != null) {
+			this.enabled = enabled;
 		}
-		if (override.featured() != null) {
-			this.featured = override.featured();
+		Boolean featured = override.featured();
+		if (featured != null) {
+			this.featured = featured;
 		}
 		if (override.disabledReason() != null) {
 			this.disabledReason = override.disabledReason();
 		}
-		if (override.precipitationKey() != null) {
-			this.precipitationKey = override.precipitationKey();
-			if (override.precipitationKey().startsWith("PC")) {
+		String precipitationKey = override.precipitationKey();
+		if (precipitationKey != null) {
+			this.precipitationKey = precipitationKey;
+			if (precipitationKey.startsWith("PC")) {
 				this.rainfallCapability = RainfallCapability.SUPPORTED_ACCUMULATOR;
 			}
-			else if (ShefPrecipitationCode.fixedInterval(override.precipitationKey()).isPresent()) {
+			else if (ShefPrecipitationCode.fixedInterval(precipitationKey).isPresent()) {
 				this.rainfallCapability = RainfallCapability.SUPPORTED_INTERVAL_PRECIPITATION;
 			}
 			else {

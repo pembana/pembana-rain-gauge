@@ -16,6 +16,8 @@
 
 package com.pembana.raingauge.dashboard;
 
+import java.time.Instant;
+
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.stereotype.Controller;
@@ -47,9 +49,10 @@ public class AboutDataController {
 	@GetMapping("/about-data")
 	public String aboutData(Model model) {
 		BuildProperties build = this.buildProperties.getIfAvailable();
+		Instant buildTime = (build != null) ? build.getTime() : null;
 		model.addAttribute("view", new AboutDataView(
 				(build != null) ? build.getVersion() : "development",
-				(build == null || build.getTime() == null) ? "local build" : build.getTime().toString()));
+				(buildTime != null) ? buildTime.toString() : "local build"));
 		return "aboutData";
 	}
 

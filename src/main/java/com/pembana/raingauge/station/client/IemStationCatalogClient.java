@@ -309,7 +309,7 @@ public class IemStationCatalogClient {
 	 * @return {@code true} when boolean value; otherwise {@code false}
 	 */
 	private boolean booleanValue(@Nullable Object value) {
-		return value instanceof Boolean booleanValue && booleanValue;
+		return value instanceof Boolean booleanValue && Boolean.TRUE.equals(booleanValue);
 	}
 
 }
