@@ -2,6 +2,7 @@
 
 image:https://github.com/pembana/pembana-rain-gauge/workflows/Java%20CI%20with%20Maven/badge.svg[CI Pembana,link=https://github.com/pembana/pembana-rain-gauge/actions]
 image:.github/badges/jacoco.svg[Coverage,link=https://github.com/pembana/pembana-rain-gauge/actions]
+image:https://img.shields.io/badge/License-Apache_2.0-blue.svg[License,link=https://opensource.org/licenses/Apache-2.0]
 
 Pembana Rain Gauge is a Java 26 / https://spring.io/projects/spring-boot[Spring Boot] 4.1 application for exploring near-real-time and
 historical rainfall at Hawaiʻi HADS/DCP stations. *Pembana* is the primary brand; *Rain Gauge*
