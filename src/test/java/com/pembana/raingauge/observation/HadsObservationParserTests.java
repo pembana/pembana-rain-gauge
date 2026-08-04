@@ -115,9 +115,10 @@ class HadsObservationParserTests {
 	 */
 	@Test
 	void preservesQualifierQualityWhenSupplied() {
-		String response = "station,utc_valid,PCIRG,qualifier\n"
-				+ "WIHH1,2026-07-01 00:00:00,1.00,A\n"
-				+ "WIHH1,2026-07-01 00:15:00,1.01,invalid";
+		String response = """
+				station,utc_valid,PCIRG,qualifier
+				WIHH1,2026-07-01 00:00:00,1.00,A
+				WIHH1,2026-07-01 00:15:00,1.01,invalid""";
 
 		ObservationParseResult result = this.parser.parse(response, "PCIRG");
 

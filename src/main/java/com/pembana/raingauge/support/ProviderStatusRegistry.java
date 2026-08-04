@@ -29,10 +29,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class ProviderStatusRegistry {
 
-	/** Creates the provider-status registry. */
-	public ProviderStatusRegistry() {
-	}
-
 	private final AtomicReference<ProviderState> catalog = new AtomicReference<>(ProviderState.unknown());
 
 	private final AtomicReference<ProviderState> observations = new AtomicReference<>(ProviderState.unknown());

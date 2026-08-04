@@ -32,10 +32,6 @@ import org.springframework.util.StringUtils;
 public final class RequiredAdministratorPropertiesInitializer
 		implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
-	/** Creates the administrator-property initializer. */
-	public RequiredAdministratorPropertiesInitializer() {
-	}
-
 	static final String USERNAME_PROPERTY = "hawaii.rainfall.administrator.username";
 
 	static final String PASSWORD_PROPERTY = "hawaii.rainfall.administrator.password";
@@ -69,6 +65,7 @@ public final class RequiredAdministratorPropertiesInitializer
 	 * @param property the property
 	 * @return {@code true} when has text; otherwise {@code false}
 	 */
+	@SuppressWarnings("java:S7467") // Spring Checkstyle requires the unused exception to be named.
 	private static boolean hasText(Environment environment, String property) {
 		try {
 			return StringUtils.hasText(environment.getProperty(property));

@@ -30,7 +30,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Tests station repository.
  * @author Gunnar Hillert
  */
-@SpringBootTest(properties = "hawaii.rainfall.catalog.startup-enabled=false")
+@SpringBootTest(properties = {
+		"hawaii.rainfall.catalog.startup-enabled=false",
+		"hawaii.rainfall.administrator.username=administrator",
+		"hawaii.rainfall.administrator.password={noop}test-password"
+})
 class StationRepositoryTests {
 
 	@Autowired

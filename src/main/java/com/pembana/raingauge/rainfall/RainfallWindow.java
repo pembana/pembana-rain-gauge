@@ -19,6 +19,7 @@ package com.pembana.raingauge.rainfall;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -114,10 +115,10 @@ public enum RainfallWindow {
 			case TWENTY_EIGHT_DAYS -> from = localNow.minusHours(28 * 24L);
 			case MONTH_TO_DATE, CALENDAR_MONTH -> from = localNow.toLocalDate()
 					.withDayOfMonth(1).atStartOfDay(HAWAII);
-			case YEAR_TO_DATE -> from = LocalDate.of(localNow.getYear(), 1, 1).atStartOfDay(HAWAII);
+			case YEAR_TO_DATE -> from = LocalDate.of(localNow.getYear(), Month.JANUARY, 1).atStartOfDay(HAWAII);
 			case PREVIOUS_CALENDAR_YEAR -> {
-				from = LocalDate.of(localNow.getYear() - 1, 1, 1).atStartOfDay(HAWAII);
-				to = LocalDate.of(localNow.getYear(), 1, 1).atStartOfDay(HAWAII);
+				from = LocalDate.of(localNow.getYear() - 1, Month.JANUARY, 1).atStartOfDay(HAWAII);
+				to = LocalDate.of(localNow.getYear(), Month.JANUARY, 1).atStartOfDay(HAWAII);
 			}
 			default -> throw new IllegalStateException("Unhandled rainfall window " + this);
 		}

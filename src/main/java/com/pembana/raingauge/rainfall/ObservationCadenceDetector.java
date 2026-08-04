@@ -36,10 +36,6 @@ import com.pembana.raingauge.observation.PrecipitationObservation;
 @Component
 public class ObservationCadenceDetector {
 
-	/** Creates the observation-cadence detector. */
-	public ObservationCadenceDetector() {
-	}
-
 	private static final Duration DEFAULT_CADENCE = Duration.ofMinutes(15);
 
 	/**

@@ -35,10 +35,6 @@ import com.pembana.raingauge.station.client.ProviderException;
 @RestControllerAdvice(annotations = RestController.class)
 public class ApiExceptionHandler {
 
-	/** Creates the API exception handler. */
-	public ApiExceptionHandler() {
-	}
-
 	/**
 	 * Creates a problem response for an unknown station.
 	 * @param exception the exception to translate

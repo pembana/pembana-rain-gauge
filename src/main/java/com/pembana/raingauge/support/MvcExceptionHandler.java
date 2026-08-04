@@ -31,10 +31,6 @@ import com.pembana.raingauge.station.StationNotFoundException;
 @ControllerAdvice
 public class MvcExceptionHandler {
 
-	/** Creates the MVC exception handler. */
-	public MvcExceptionHandler() {
-	}
-
 	/**
 	 * Renders the not-found page for an unknown station.
 	 * @param exception the exception to translate

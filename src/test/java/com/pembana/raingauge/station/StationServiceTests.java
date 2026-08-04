@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.EnumSet;
@@ -215,7 +216,7 @@ class StationServiceTests {
 	private CatalogStation station(String stationId) {
 		return new CatalogStation("HI_DCP", stationId, "Kailua-Kona 3SE - Waiaha",
 				new BigDecimal("19.6333"), new BigDecimal("-155.9489"),
-				new BigDecimal("470.335"), LocalDate.of(2012, 3, 20), null, true,
+				new BigDecimal("470.335"), LocalDate.of(2012, Month.MARCH, 20), null, true,
 				"HI", "US", "Pacific/Honolulu", "fixture");
 	}
 

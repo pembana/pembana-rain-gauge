@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.Month;
 import java.time.YearMonth;
 
 import org.junit.jupiter.api.Test;
@@ -51,8 +52,8 @@ class RainfallWindowTests {
 		RainfallWindow.TimeRange range = RainfallWindow.MONTH_TO_DATE
 				.resolve(Instant.parse("2026-07-18T19:00:00Z"));
 
-		assertThat(range.localFrom().toLocalDate()).isEqualTo(LocalDate.of(2026, 7, 1));
-		assertThat(range.localFrom().getOffset().toString()).isEqualTo("-10:00");
+		assertThat(range.localFrom().toLocalDate()).isEqualTo(LocalDate.of(2026, Month.JULY, 1));
+		assertThat(range.localFrom().getOffset()).hasToString("-10:00");
 		assertThat(range.from()).isEqualTo(Instant.parse("2026-07-01T10:00:00Z"));
 	}
 
@@ -61,10 +62,10 @@ class RainfallWindowTests {
 	 */
 	@Test
 	void calendarMonthHandlesLeapDay() {
-		RainfallWindow.TimeRange range = RainfallWindow.calendarMonth(YearMonth.of(2024, 2));
+		RainfallWindow.TimeRange range = RainfallWindow.calendarMonth(YearMonth.of(2024, Month.FEBRUARY));
 
-		assertThat(range.localFrom().toLocalDate()).isEqualTo(LocalDate.of(2024, 2, 1));
-		assertThat(range.localTo().toLocalDate()).isEqualTo(LocalDate.of(2024, 3, 1));
+		assertThat(range.localFrom().toLocalDate()).isEqualTo(LocalDate.of(2024, Month.FEBRUARY, 1));
+		assertThat(range.localTo().toLocalDate()).isEqualTo(LocalDate.of(2024, Month.MARCH, 1));
 		assertThat(range.duration()).isEqualTo(Duration.ofDays(29));
 	}
 
@@ -76,8 +77,8 @@ class RainfallWindowTests {
 		RainfallWindow.TimeRange range = RainfallWindow.PREVIOUS_CALENDAR_YEAR
 				.resolve(Instant.parse("2026-07-18T19:00:00Z"));
 
-		assertThat(range.localFrom().toLocalDate()).isEqualTo(LocalDate.of(2025, 1, 1));
-		assertThat(range.localTo().toLocalDate()).isEqualTo(LocalDate.of(2026, 1, 1));
+		assertThat(range.localFrom().toLocalDate()).isEqualTo(LocalDate.of(2025, Month.JANUARY, 1));
+		assertThat(range.localTo().toLocalDate()).isEqualTo(LocalDate.of(2026, Month.JANUARY, 1));
 	}
 
 	/**

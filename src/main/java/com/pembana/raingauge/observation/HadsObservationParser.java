@@ -38,10 +38,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class HadsObservationParser {
 
-	/** Creates the HADS observation parser. */
-	public HadsObservationParser() {
-	}
-
 	private static final DateTimeFormatter IEM_TIMESTAMP =
 			DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss");
 
@@ -208,7 +204,8 @@ public class HadsObservationParser {
 				return LocalDateTime.parse(value, IEM_TIMESTAMP).toInstant(ZoneOffset.UTC);
 			}
 			catch (DateTimeParseException nested) {
-				throw new IllegalArgumentException("timestamp was invalid", nested);
+				ex.addSuppressed(nested);
+				throw new IllegalArgumentException("timestamp was invalid", ex);
 			}
 		}
 	}
@@ -246,12 +243,14 @@ public class HadsObservationParser {
 		List<String> values = new ArrayList<>();
 		StringBuilder current = new StringBuilder();
 		boolean quoted = false;
-		for (int index = 0; index < line.length(); index++) {
+		int index = 0;
+		while (index < line.length()) {
 			char character = line.charAt(index);
 			if (character == '"') {
 				if (quoted && index + 1 < line.length() && line.charAt(index + 1) == '"') {
 					current.append('"');
-					index++;
+					index += 2;
+					continue;
 				}
 				else {
 					quoted = !quoted;
@@ -264,6 +263,7 @@ public class HadsObservationParser {
 			else {
 				current.append(character);
 			}
+			index++;
 		}
 		if (quoted) {
 			throw new IllegalArgumentException("unterminated quoted CSV field");

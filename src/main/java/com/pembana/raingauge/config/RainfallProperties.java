@@ -40,10 +40,6 @@ import com.pembana.raingauge.station.StationOverride;
 @ConfigurationProperties("hawaii.rainfall")
 public class RainfallProperties {
 
-	/** Creates the rainfall configuration properties. */
-	public RainfallProperties() {
-	}
-
 	@Valid
 	private final Catalog catalog = new Catalog();
 
@@ -158,10 +154,6 @@ public class RainfallProperties {
 	 * @author Gunnar Hillert
 	 */
 	public static class Catalog {
-
-		/** Creates the catalog configuration properties. */
-		public Catalog() {
-		}
 
 		@NotBlank
 		private String network = "HI_DCP";
@@ -321,10 +313,6 @@ public class RainfallProperties {
 	 * @author Gunnar Hillert
 	 */
 	public static class Providers {
-
-		/** Creates the provider configuration properties. */
-		public Providers() {
-		}
 
 		@NotBlank
 		private String iemBaseUrl = "https://mesonet.agron.iastate.edu";
@@ -487,10 +475,6 @@ public class RainfallProperties {
 	 */
 	public static class Cache {
 
-		/** Creates the cache configuration properties. */
-		public Cache() {
-		}
-
 		@NotNull
 		private Duration observations = Duration.ofMinutes(5);
 
@@ -613,10 +597,6 @@ public class RainfallProperties {
 	 */
 	public static class Query {
 
-		/** Creates the query configuration properties. */
-		public Query() {
-		}
-
 		@NotNull
 		private Duration maximumRange = Duration.ofDays(366);
 
@@ -662,10 +642,6 @@ public class RainfallProperties {
 	 * @author Gunnar Hillert
 	 */
 	public static class Dashboard {
-
-		/** Creates the dashboard configuration properties. */
-		public Dashboard() {
-		}
 
 		@NotBlank
 		private String defaultStation = "WIHH1";
@@ -732,10 +708,6 @@ public class RainfallProperties {
 	 */
 	public static class StationMap {
 
-		/** Creates the station-map configuration properties. */
-		public StationMap() {
-		}
-
 		@NotBlank
 		private String tileUrl = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
@@ -801,10 +773,6 @@ public class RainfallProperties {
 	 */
 	public static class Site {
 
-		/** Creates the site configuration properties. */
-		public Site() {
-		}
-
 		@NotNull
 		private URI baseUrl = URI.create("http://localhost:8080");
 
@@ -831,10 +799,6 @@ public class RainfallProperties {
 	 * @author Gunnar Hillert
 	 */
 	public static class Reset {
-
-		/** Creates the accumulator-reset configuration properties. */
-		public Reset() {
-		}
 
 		@NotNull
 		private BigDecimal nearZeroThreshold = new BigDecimal("0.05");
@@ -901,15 +865,11 @@ public class RainfallProperties {
 	 */
 	public static class Administrator {
 
-		/** Creates the administrator configuration properties. */
-		public Administrator() {
-		}
+		@NotBlank
+		private String username;
 
 		@NotBlank
-		private String username = "admin";
-
-		@NotBlank
-		private String password = "{noop}change-me";
+		private String password;
 
 		/**
 		 * Returns the username.

@@ -32,10 +32,6 @@ import org.springframework.context.annotation.Configuration;
 @Configuration(proxyBeanMethods = false)
 public class ApplicationConfiguration {
 
-	/** Creates the application configuration. */
-	public ApplicationConfiguration() {
-	}
-
 	/**
 	 * Creates the system clock used by application services.
 	 * @return the resulting clock

@@ -19,6 +19,7 @@ package com.pembana.raingauge.config;
 import java.net.URI;
 import java.util.Locale;
 
+import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -50,27 +51,25 @@ public class SecurityConfiguration {
 	 * Configures security for administrative endpoints.
 	 * @param http the HTTP
 	 * @return the resulting admin security filter chain
-	 * @throws Exception if the operation cannot be completed
 	 */
 	@Bean
 	@Order(1)
-	SecurityFilterChain adminSecurityFilterChain(HttpSecurity http) throws Exception {
+	SecurityFilterChain adminSecurityFilterChain(HttpSecurity http) {
 		http.securityMatcher("/admin/**")
 			.authorizeHttpRequests((requests) -> requests.anyRequest().hasRole("ADMIN"))
 			.httpBasic(Customizer.withDefaults());
 		configureHeaders(http);
-		return http.build();
+		return buildSecurityFilterChain(http);
 	}
 
 	/**
 	 * Configures security for public application endpoints.
 	 * @param http the HTTP
 	 * @return the resulting public security filter chain
-	 * @throws Exception if the operation cannot be completed
 	 */
 	@Bean
 	@Order(2)
-	SecurityFilterChain publicSecurityFilterChain(HttpSecurity http) throws Exception {
+	SecurityFilterChain publicSecurityFilterChain(HttpSecurity http) {
 		http.authorizeHttpRequests((requests) -> requests
 				.requestMatchers("/", "/stations", "/stations/**", "/compare", "/about-data",
 						"/api/stations/**", "/api/compare", "/actuator/health")
@@ -80,15 +79,28 @@ public class SecurityConfiguration {
 				.permitAll()
 				.anyRequest().denyAll());
 		configureHeaders(http);
-		return http.build();
+		return buildSecurityFilterChain(http);
+	}
+
+	/**
+	 * Builds a configured security filter chain.
+	 * @param http the HTTP security builder
+	 * @return the resulting security filter chain
+	 */
+	private SecurityFilterChain buildSecurityFilterChain(HttpSecurity http) {
+		try {
+			return http.build();
+		}
+		catch (Exception ex) {
+			throw new BeanInitializationException("Unable to build security filter chain", ex);
+		}
 	}
 
 	/**
 	 * Configures headers.
 	 * @param http the HTTP
-	 * @throws Exception if the operation cannot be completed
 	 */
-	private void configureHeaders(HttpSecurity http) throws Exception {
+	private void configureHeaders(HttpSecurity http) {
 		String tileImageSource = stationMapTileImageSource();
 		http.headers((headers) -> headers.contentSecurityPolicy(
 					(policy) -> policy.policyDirectives(

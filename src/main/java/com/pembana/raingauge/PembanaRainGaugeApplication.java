@@ -35,10 +35,6 @@ import com.pembana.raingauge.config.RequiredAdministratorPropertiesInitializer;
 @EnableConfigurationProperties(RainfallProperties.class)
 public class PembanaRainGaugeApplication {
 
-	/** Creates the application bootstrap configuration. */
-	public PembanaRainGaugeApplication() {
-	}
-
 	/**
 	 * Starts the Pembana Rain Gauge application.
 	 * @param args the command-line arguments

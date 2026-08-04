@@ -19,6 +19,7 @@ package com.pembana.raingauge.observation.client;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.Month;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.ClassPathResource;
@@ -49,9 +50,9 @@ class IemDailySummaryClientTests {
 		String fixture = new ClassPathResource("fixtures/iem-wihh1-daily.json")
 				.getContentAsString(StandardCharsets.UTF_8);
 
-		assertThat(client.parse(fixture)).containsEntry(LocalDate.of(2026, 7, 1),
+		assertThat(client.parse(fixture)).containsEntry(LocalDate.of(2026, Month.JULY, 1),
 				new java.math.BigDecimal("0.01"));
-		assertThat(client.parse(fixture)).doesNotContainKey(LocalDate.of(2026, 7, 2));
+		assertThat(client.parse(fixture)).doesNotContainKey(LocalDate.of(2026, Month.JULY, 2));
 	}
 
 }
