@@ -39,7 +39,7 @@ public class PembanaRainGaugeApplication {
 	 * Starts the Pembana Rain Gauge application.
 	 * @param args the command-line arguments
 	 */
-	public static void main(String[] args) {
+	static void main(String[] args) {
 		SpringApplication application = new SpringApplication(PembanaRainGaugeApplication.class);
 		application.addInitializers(new RequiredAdministratorPropertiesInitializer());
 		application.run(args);

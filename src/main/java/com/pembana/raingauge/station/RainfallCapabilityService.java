@@ -20,6 +20,8 @@ import java.util.Comparator;
 import java.util.Set;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.pembana.raingauge.observation.shef.ShefPrecipitationCode;
@@ -32,6 +34,8 @@ import com.pembana.raingauge.station.client.ProviderException;
  */
 @Service
 public class RainfallCapabilityService {
+
+	private static final Logger logger = LoggerFactory.getLogger(RainfallCapabilityService.class);
 
 	private final IemStationVariableClient stationVariableClient;
 
@@ -86,6 +90,8 @@ public class RainfallCapabilityService {
 			return new CapabilityDiscovery(RainfallCapability.TEMPORARILY_SILENT, null);
 		}
 		catch (ProviderException ex) {
+			logger.warn("Could not discover rainfall capability for station {}: {}", station.getStationId(),
+					ex.getMessage());
 			return new CapabilityDiscovery(RainfallCapability.PRECIPITATION_TYPE_UNKNOWN, null);
 		}
 	}

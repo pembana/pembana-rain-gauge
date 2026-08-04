@@ -70,7 +70,6 @@ class StationServiceTests {
 	 * Creates isolated station-service collaborators before each test.
 	 */
 	@BeforeEach
-	@SuppressWarnings("unchecked")
 	void setUp() {
 		this.repository = mock(StationRepository.class);
 		this.catalogClient = mock(IemStationCatalogClient.class);

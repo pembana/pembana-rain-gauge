@@ -32,7 +32,11 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author Gunnar Hillert
  */
 @Testcontainers(disabledWithoutDocker = true)
-@SpringBootTest(properties = "hawaii.rainfall.catalog.startup-enabled=false")
+@SpringBootTest(properties = {
+		"hawaii.rainfall.catalog.startup-enabled=false",
+		"hawaii.rainfall.administrator.username=administrator",
+		"hawaii.rainfall.administrator.password={noop}test-password"
+})
 class PostgreSqlMigrationTests {
 
 	@Container
