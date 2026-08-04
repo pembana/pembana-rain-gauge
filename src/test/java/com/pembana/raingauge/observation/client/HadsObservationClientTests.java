@@ -25,6 +25,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -150,9 +151,10 @@ class HadsObservationClientTests {
 			requests.incrementAndGet();
 			respond(exchange, 400, "invalid request");
 		});
+		HadsObservationClient hadsClient = client(2, Duration.ofSeconds(1));
+		List<String> stationIds = List.of("WIHH1");
 
-		assertThatThrownBy(() -> client(2, Duration.ofSeconds(1)).fetch(
-				List.of("WIHH1"), "HI_DCP", "PCIRG", FROM, TO))
+		assertThatThrownBy(() -> hadsClient.fetch(stationIds, "HI_DCP", "PCIRG", FROM, TO))
 				.isInstanceOf(ProviderException.class)
 				.hasMessageContaining("Unable to retrieve HADS observations");
 		assertThat(requests).hasValue(1);
@@ -164,22 +166,29 @@ class HadsObservationClientTests {
 	 */
 	@Test
 	void reportsReadTimeout() throws Exception {
+		CountDownLatch responseRelease = new CountDownLatch(1);
 		startServer((exchange) -> {
 			try {
-				Thread.sleep(150);
+				responseRelease.await();
 				respond(exchange, 200, VALID_BODY);
 			}
-			catch (InterruptedException ex) {
+			catch (InterruptedException _) {
 				Thread.currentThread().interrupt();
 			}
-			catch (IOException ex) {
+			catch (IOException _) {
 				// The client closes the exchange when its configured read timeout wins.
 			}
 		});
+		HadsObservationClient hadsClient = client(0, Duration.ofMillis(25));
+		List<String> stationIds = List.of("WIHH1");
 
-		assertThatThrownBy(() -> client(0, Duration.ofMillis(25)).fetch(
-				List.of("WIHH1"), "HI_DCP", "PCIRG", FROM, TO))
-				.isInstanceOf(ProviderException.class);
+		try {
+			assertThatThrownBy(() -> hadsClient.fetch(stationIds, "HI_DCP", "PCIRG", FROM, TO))
+					.isInstanceOf(ProviderException.class);
+		}
+		finally {
+			responseRelease.countDown();
+		}
 	}
 
 	/**
@@ -189,9 +198,10 @@ class HadsObservationClientTests {
 	@Test
 	void emptyResponseIsNotPresentedAsACompleteDataset() throws Exception {
 		startServer((exchange) -> respond(exchange, 200, ""));
+		HadsObservationClient hadsClient = client(0, Duration.ofSeconds(1));
+		List<String> stationIds = List.of("WIHH1");
 
-		assertThatThrownBy(() -> client(0, Duration.ofSeconds(1)).fetch(
-				List.of("WIHH1"), "HI_DCP", "PCIRG", FROM, TO))
+		assertThatThrownBy(() -> hadsClient.fetch(stationIds, "HI_DCP", "PCIRG", FROM, TO))
 				.isInstanceOf(ProviderException.class)
 				.hasMessageContaining("no response body");
 	}
