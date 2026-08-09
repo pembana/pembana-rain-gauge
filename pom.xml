@@ -31,7 +31,7 @@
 
 		<jte.version>3.2.4</jte.version>
 		<checkstyle.version>10.26.1</checkstyle.version>
-    <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
+    <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
 		<maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
     <nullability-maven-plugin.version>0.4.3</nullability-maven-plugin.version>
 		<spring-javaformat-checkstyle.version>0.0.47</spring-javaformat-checkstyle.version>
