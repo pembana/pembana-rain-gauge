@@ -30,12 +30,13 @@
     <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 
 		<jte.version>3.2.4</jte.version>
-		<checkstyle.version>14.1.0</checkstyle.version>
+		<checkstyle.version>14.3.0</checkstyle.version>
     <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
 		<maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
-    <nullability-maven-plugin.version>0.5.1</nullability-maven-plugin.version>
+    <nullability-maven-plugin.version>0.5.2</nullability-maven-plugin.version>
 		<spring-javaformat-checkstyle.version>0.0.48</spring-javaformat-checkstyle.version>
 		<exec-maven-plugin.version>3.6.4</exec-maven-plugin.version>
+		<node.executable>node</node.executable>
 		<argLine/>
 	</properties>
 
@@ -224,7 +225,7 @@
 							<goal>exec</goal>
 						</goals>
 						<configuration>
-							<executable>node</executable>
+							<executable>${node.executable}</executable>
 							<arguments>
 								<argument>--test</argument>
 								<argument>src/test/js/station-dashboard.test.js</argument>

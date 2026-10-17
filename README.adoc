@@ -214,6 +214,18 @@ ES-module tests with Node, exercises H2/Flyway, conditionally exercises PostgreS
 and runs Checkstyle. Tests use fixtures or local HTTP servers. There are no live-provider tests in
 the default suite; a manual live smoke check can use the URLs above after starting the application.
 
+The JavaScript tests require a working Node.js installation on Maven's `PATH`. To select a specific
+installation, set `node.executable` to its absolute path. For example, with Homebrew's Node 24:
+
+[source,bash]
+----
+./mvnw verify -Dnode.executable=/opt/homebrew/opt/node@24/bin/node
+----
+
+The same `-Dnode.executable=...` option can be added to an IDE's Maven run configuration if it uses
+a different `PATH` from the terminal. A macOS `dyld` error about a missing `libsimdjson` library
+indicates a broken Node installation; select a working installation or repair it with Homebrew.
+
 Build the production artifact or container with:
 
 [source,bash]
