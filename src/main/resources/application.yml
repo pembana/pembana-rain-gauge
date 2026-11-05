@@ -88,9 +88,6 @@ hawaii:
       near-zero-threshold: 0.05
       rollover-maximum: 100.00
       suspected-outlier-increment: 5.00
-    administrator:
-      username: ${RAINGAUGE_ADMIN_USERNAME:admin}
-      password: ${RAINGAUGE_ADMIN_PASSWORD:{noop}change-me}
     station-overrides:
       WIHH1:
         alias: HI82

@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.1.0</version>
+		<version>4.1.2</version>
 		<relativePath/>
 	</parent>
 
@@ -30,8 +30,8 @@
     <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 
 		<jte.version>3.2.4</jte.version>
-		<checkstyle.version>14.3.0</checkstyle.version>
-    <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
+		<checkstyle.version>14.4.0</checkstyle.version>
+    <jacoco-maven-plugin.version>0.8.16</jacoco-maven-plugin.version>
 		<maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
     <nullability-maven-plugin.version>0.5.2</nullability-maven-plugin.version>
 		<spring-javaformat-checkstyle.version>0.0.48</spring-javaformat-checkstyle.version>

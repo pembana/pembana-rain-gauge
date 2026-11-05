@@ -3,8 +3,8 @@
 The application serves these pinned production assets locally rather than
 loading its JavaScript or CSS from a CDN:
 
-* Tabler Core 1.4.0 (`tabler.min.css`, `tabler.min.js`), MIT License,
-  downloaded from the package published as `@tabler/core@1.4.0`.
+* Tabler Core 1.7.3 (`tabler.min.css`, `tabler.min.js`), MIT License,
+  downloaded from the package published as `@tabler/core@1.7.3`.
 * Tabler Icons 3.44.0 (selected SVG source icons in `tabler-icons/`), MIT License,
   downloaded from the package published as `@tabler/icons@3.44.0`. The navbar
   inlines these paths so they inherit the active theme color without a runtime request.
