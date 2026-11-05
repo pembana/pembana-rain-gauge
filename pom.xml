@@ -29,7 +29,7 @@
 		<java.version>26</java.version>
     <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 
-		<jte.version>3.2.4</jte.version>
+		<jte.version>3.2.5</jte.version>
 		<checkstyle.version>14.4.0</checkstyle.version>
     <jacoco-maven-plugin.version>0.8.16</jacoco-maven-plugin.version>
 		<maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
