@@ -20,6 +20,7 @@ spring:
       enabled: true
 
 server:
+  forward-headers-strategy: framework
   error:
     include-message: never
     include-stacktrace: never
@@ -78,8 +79,6 @@ hawaii:
       default-station: WIHH1
       default-period: 28d
       default-unit: metric
-    site:
-      base-url: ${RAINGAUGE_PUBLIC_BASE_URL:http://localhost:8080}
     station-map:
       tile-url: https://tile.openstreetmap.org/{z}/{x}/{y}.png
       attribution-label: OpenStreetMap

@@ -67,8 +67,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = {
 		"hawaii.rainfall.catalog.startup-enabled=false",
 		"hawaii.rainfall.administrator.username=admin",
-		"hawaii.rainfall.administrator.password={noop}change-me",
-		"hawaii.rainfall.site.base-url=https://rain.example.test"
+		"hawaii.rainfall.administrator.password={noop}change-me"
 })
 class DashboardMvcTests {
 
@@ -124,7 +123,7 @@ class DashboardMvcTests {
 	 */
 	@Test
 	void dashboardRendersCompleteServerPageAndSelector() throws Exception {
-		this.mockMvc.perform(get("/").queryParam("station", "WIHH1")
+		this.mockMvc.perform(get("http://localhost:8080/").queryParam("station", "WIHH1")
 				.queryParam("period", "28d").queryParam("unit", "imperial"))
 				.andExpect(status().isOk())
 				.andExpect(view().name("dashboard"))
@@ -132,12 +131,12 @@ class DashboardMvcTests {
 				.andExpect(content().string(containsString("Waiaha (HI82)")))
 				.andExpect(content().string(containsString("method=\"get\"")))
 				.andExpect(content().string(containsString(
-						"<link rel=\"canonical\" href=\"https://rain.example.test/\">")))
+						"<link rel=\"canonical\" href=\"http://localhost:8080/\">")))
 				.andExpect(content().string(containsString(
 						"<meta property=\"og:type\" content=\"website\">")))
 				.andExpect(content().string(containsString(
 						"<meta property=\"og:image\" "
-						+ "content=\"https://rain.example.test/social-image.png\">")))
+						+ "content=\"http://localhost:8080/social-image.png\">")))
 				.andExpect(content().string(containsString(
 						"<meta name=\"twitter:card\" content=\"summary_large_image\">")))
 				.andExpect(content().string(containsString("id=\"station-map-modal\"")))
@@ -150,6 +149,44 @@ class DashboardMvcTests {
 						"img-src 'self' data: https://tile.openstreetmap.org")))
 				.andExpect(content().string(containsString("Provisional data")))
 				.andExpect(content().string(containsString("daily-rainfall-table")));
+	}
+
+	/**
+	 * Verifies that metadata uses the public URL forwarded by the proxy.
+	 * @throws Exception if the operation cannot be completed
+	 */
+	@Test
+	void pageMetadataUsesForwardedPublicUrl() throws Exception {
+		this.mockMvc.perform(get("http://internal:8080/about-data").queryParam("tracking", "example")
+				.header("X-Forwarded-Proto", "https")
+				.header("X-Forwarded-Host", "rain.example.test")
+				.header("X-Forwarded-Port", "443"))
+				.andExpect(status().isOk())
+				.andExpect(content().string(containsString(
+						"<link rel=\"canonical\" href=\"https://rain.example.test/about-data\">")))
+				.andExpect(content().string(containsString(
+						"<meta property=\"og:url\" content=\"https://rain.example.test/about-data\">")))
+				.andExpect(content().string(containsString(
+						"<meta property=\"og:image\" content=\"https://rain.example.test/social-image.png\">")))
+				.andExpect(content().string(containsString(
+						"<meta name=\"twitter:image\" content=\"https://rain.example.test/social-image.png\">")));
+	}
+
+	/**
+	 * Verifies that metadata preserves forwarded ports and application prefixes.
+	 * @throws Exception if the operation cannot be completed
+	 */
+	@Test
+	void pageMetadataPreservesForwardedPortAndPrefix() throws Exception {
+		this.mockMvc.perform(get("http://internal:8080/about-data")
+				.header("Forwarded", "proto=https;host=\"rain.example.test:8443\"")
+				.header("X-Forwarded-Prefix", "/rain"))
+				.andExpect(status().isOk())
+				.andExpect(content().string(containsString(
+						"<link rel=\"canonical\" href=\"https://rain.example.test:8443/rain/about-data\">")))
+				.andExpect(content().string(containsString(
+						"<meta property=\"og:image\" "
+						+ "content=\"https://rain.example.test:8443/rain/social-image.png\">")));
 	}
 
 	/**

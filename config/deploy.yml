@@ -1,3 +1,5 @@
+<% require "dotenv"; Dotenv.load(".env") %>
+
 service: pembana-rain-gauge
 image: pembana/pembana-rain-gauge
 minimum_version: 2.12.0
@@ -6,9 +8,9 @@ deploy_timeout: 120
 servers:
   web:
     hosts:
-      - 46.224.62.221
+        - <%= ENV.fetch("RAINGAUGE_KAMAL_SERVER_HOST") %>
 proxy:
-  host: <%= ENV.fetch("KAMAL_PROXY_HOST") %>
+  host: <%= ENV.fetch("RAINGAUGE_KAMAL_PROXY_HOST") %>
   app_port: 8080
   ssl: true
   ssl_redirect: true
@@ -29,8 +31,6 @@ builder:
   arch: amd64
 
 env:
-  clear:
-    RAINGAUGE_PUBLIC_BASE_URL: https://<%= ENV.fetch("KAMAL_PROXY_HOST") %>
   secret:
     - RAINGAUGE_ADMIN_USERNAME
     - RAINGAUGE_ADMIN_PASSWORD

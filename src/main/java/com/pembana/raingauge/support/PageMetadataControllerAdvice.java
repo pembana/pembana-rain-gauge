@@ -19,8 +19,7 @@ package com.pembana.raingauge.support;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
-
-import com.pembana.raingauge.config.RainfallProperties;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 /**
  * Adds canonical page metadata to MVC models.
@@ -29,16 +28,6 @@ import com.pembana.raingauge.config.RainfallProperties;
 @ControllerAdvice
 public class PageMetadataControllerAdvice {
 
-	private final String baseUrl;
-
-	/**
-	 * Creates a new {@code PageMetadataControllerAdvice}.
-	 * @param properties the rainfall application properties
-	 */
-	PageMetadataControllerAdvice(RainfallProperties properties) {
-		this.baseUrl = withoutTrailingSlash(properties.getSite().getBaseUrl().toString());
-	}
-
 	/**
 	 * Adds canonical page metadata to every MVC model.
 	 * @param request the request
@@ -46,17 +35,10 @@ public class PageMetadataControllerAdvice {
 	 */
 	@ModelAttribute("pageMetadata")
 	PageMetadata pageMetadata(HttpServletRequest request) {
-		return new PageMetadata(this.baseUrl + request.getRequestURI(),
-				this.baseUrl + "/social-image.png");
-	}
-
-	/**
-	 * Removes a trailing slash from a URL.
-	 * @param value the value
-	 * @return the resulting without trailing slash
-	 */
-	private static String withoutTrailingSlash(String value) {
-		return value.endsWith("/") ? value.substring(0, value.length() - 1) : value;
+		return new PageMetadata(
+				ServletUriComponentsBuilder.fromRequestUri(request).build().toUriString(),
+				ServletUriComponentsBuilder.fromContextPath(request)
+						.path("/social-image.png").build().toUriString());
 	}
 
 }

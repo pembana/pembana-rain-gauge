@@ -236,41 +236,122 @@ docker build -t pembana-rain-gauge .
 
 == Deploying with Kamal
 
-The production configuration targets your server IP with Kamal 2.12.0. It publishes the image to
+The production configuration targets your server IP or SSH hostname with Kamal 2.12.0. It publishes the image to
 GitHub Container Registry and serves the application through `kamal-proxy` on HTTPS port 443.
 Kamal provisions and renews a Let's Encrypt certificate, and HTTP requests are redirected to HTTPS.
 The application currently uses its default in-memory H2 database, so station records are rebuilt
 after each application restart.
 
-Create a Cloudflare DNS record for the application hostname that points to the server listed in
-`config/deploy.yml`. For the first deployment, keep the record *DNS only* so Kamal can complete the
+Create a Cloudflare DNS record for `RAINGAUGE_KAMAL_PROXY_HOST` that points to the origin server
+identified by `RAINGAUGE_KAMAL_SERVER_HOST`. For the first deployment, keep the record *DNS only* so Kamal can complete the
 Let's Encrypt challenge directly against the origin. After HTTPS is working, change the record to
 *Proxied* and set the zone's SSL/TLS encryption mode to *Full (strict)*.
 
-Install the pinned Kamal release and export the required values before the first deployment:
+=== Required deployment variables
+
+Application-specific deployment settings use the `RAINGAUGE_KAMAL_` prefix. Application settings
+use `RAINGAUGE_`. Registry credentials are shared across applications and use
+`KAMAL_REGISTRY_USERNAME` and `KAMAL_REGISTRY_PASSWORD` without an application prefix.
+Use the same names locally and in GitHub Actions; other projects should use their own application
+prefix for their app-specific settings. Server addresses and credentials are supplied at deployment
+time instead of being committed to `config/deploy.yml`.
+
+[cols="2,4,1",options="header"]
+|===
+|Name |Value and purpose |GitHub Actions storage
+
+|`RAINGAUGE_KAMAL_SERVER_HOST`
+|Origin server IP address or SSH hostname, without a scheme or path. Must be reachable directly
+by SSH from the deployment machine; do not use a hostname that resolves to Cloudflare's HTTP proxy.
+|Secret
+
+|`RAINGAUGE_KAMAL_PROXY_HOST`
+|Public application hostname, for example `raingauge.pembana.com`, without `https://`, a port, or a path.
+|Variable
+
+|`KAMAL_REGISTRY_USERNAME`
+|GitHub username used to authenticate to `ghcr.io`.
+|Secret
+
+|`KAMAL_REGISTRY_PASSWORD`
+|GitHub token with permission to push and pull `ghcr.io/pembana/pembana-rain-gauge`.
+|Secret
+
+|`RAINGAUGE_ADMIN_USERNAME`
+|Username for the application's protected administrator operations.
+|Secret
+
+|`RAINGAUGE_ADMIN_PASSWORD`
+|Encoded administrator password including its encoder prefix, for example `{bcrypt}` followed
+by a bcrypt hash. Keep it single-quoted in `.env` to preserve literal dollar signs.
+|Secret
+
+|`RAINGAUGE_KAMAL_SSH_PRIVATE_KEY`
+|Private key contents for the CI SSH agent, with the matching public key authorized on the server.
+Required only for GitHub Actions; local deployments use your SSH configuration or agent.
+|Secret
+|===
+
+Only `RAINGAUGE_ADMIN_USERNAME` and `RAINGAUGE_ADMIN_PASSWORD` are passed into the application
+container. The committed `.kamal/secrets` file contains environment references for those settings
+and the registry credentials; never replace these references with raw credentials.
+
+=== Local deployment
+
+Install the pinned Kamal release. For a new checkout, create a local environment file
+(preserve and update an existing `.env` instead of overwriting it):
 
 [source,bash]
 ----
 gem install kamal -v 2.12.0
-export KAMAL_REGISTRY_USERNAME='<github-user>'
-export KAMAL_REGISTRY_PASSWORD='<github-token-with-package-access>'
-export KAMAL_ADMIN_USERNAME='<administrator-username>'
-export KAMAL_ADMIN_PASSWORD='<encoded-spring-security-password>'
-export KAMAL_PROXY_HOST='<rainfall.example.com>'
+cp .env.example .env
+----
+
+Edit `.env` and fill in all six settings from `.env.example` using the table above.
+`.env` is ignored by Git; never commit credentials or the origin server address.
+The deployment configuration explicitly loads this file, as described in
+https://kamal-deploy.org/docs/upgrading/secrets-changes/[Kamal's environment-loading guidance].
+Existing exported environment variables take precedence, including in GitHub Actions.
+
+The server must accept SSH key authentication for `root` (Kamal's default SSH user). Load your
+deployment key into your local SSH agent or configure SSH to use it. Allow SSH from the deployment
+machine and HTTP/HTTPS traffic required by the proxy and Let's Encrypt on ports 80 and 443.
+
+Then run the first deployment:
+
+[source,bash]
+----
 kamal setup
 ----
 
 `kamal setup` bootstraps Docker and the proxy, builds and pushes
 `ghcr.io/pembana/pembana-rain-gauge`, and deploys the application. Later releases use `kamal deploy`.
-The server must accept SSH key authentication for `root` (Kamal's default SSH user), and inbound TCP
-ports 22, 80, and 443 must be open. Access the deployed application through the configured hostname.
+The same `.env` file is loaded for subsequent commands, including in new terminal sessions.
+If you see `key not found: "RAINGAUGE_KAMAL_SERVER_HOST"` or
+`key not found: "RAINGAUGE_KAMAL_PROXY_HOST"`, set the named variable in `.env` or export it in the
+current shell, then run Kamal from the repository root. GitHub secrets and variables are only
+supplied by the workflows; they are not automatically available to local commands.
 
-The GitHub Actions deployment and Kamal-command workflows require `KAMAL_PROXY_HOST` as a repository
-variable. Add `KAMAL_REGISTRY_USERNAME`, `KAMAL_REGISTRY_PASSWORD`, `KAMAL_ADMIN_USERNAME`,
-`KAMAL_ADMIN_PASSWORD`, and `SSH_PRIVATE_KEY` as repository secrets. `KAMAL_ADMIN_PASSWORD` must
-include an encoder prefix under Spring Security's delegating password format, for example `{bcrypt}`
-followed by a bcrypt hash. The committed `.kamal/secrets` file contains environment references only;
-never put raw credentials in it.
+=== GitHub Actions deployment
+
+Under the repository's *Settings > Secrets and variables > Actions*, add every setting in the
+table to the indicated *Secrets* or *Variables* tab. Both the *KAMAL Deploy* and *KAMAL Command*
+workflows use these names. Supply the SSH private key itself, not a filename; the workflow loads
+it into an SSH agent. No `.env` file is needed on the runner.
+
+After the initial setup, run *KAMAL Deploy* to deploy. To bootstrap through CI instead, run
+*KAMAL Command* with `kamal setup` first. Access the deployed application through
+`https://<RAINGAUGE_KAMAL_PROXY_HOST>`.
+
+=== Migrating existing deployment settings
+
+Keep the shared `KAMAL_REGISTRY_USERNAME` and `KAMAL_REGISTRY_PASSWORD` names unchanged.
+Rename `KAMAL_PROXY_HOST` to `RAINGAUGE_KAMAL_PROXY_HOST`.
+Rename `KAMAL_ADMIN_USERNAME` and `KAMAL_ADMIN_PASSWORD` to
+`RAINGAUGE_ADMIN_USERNAME` and `RAINGAUGE_ADMIN_PASSWORD`. Rename the GitHub `SSH_PRIVATE_KEY`
+secret to `RAINGAUGE_KAMAL_SSH_PRIVATE_KEY`, and add `RAINGAUGE_KAMAL_SERVER_HOST` with the
+previously configured server address. Update local `.env` files, exported shell variables, and
+GitHub Actions settings before the next deployment; the old names are no longer read.
 
 == Known limitations
 

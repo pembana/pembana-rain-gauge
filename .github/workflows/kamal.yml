@@ -9,17 +9,18 @@ jobs:
   Command:
     runs-on: ubuntu-latest
     env:
+      RAINGAUGE_KAMAL_SERVER_HOST: ${{ secrets.RAINGAUGE_KAMAL_SERVER_HOST }}
+      RAINGAUGE_KAMAL_PROXY_HOST: ${{ vars.RAINGAUGE_KAMAL_PROXY_HOST }}
       KAMAL_REGISTRY_PASSWORD: ${{ secrets.KAMAL_REGISTRY_PASSWORD }}
       KAMAL_REGISTRY_USERNAME: ${{ secrets.KAMAL_REGISTRY_USERNAME }}
-      KAMAL_ADMIN_USERNAME: ${{ secrets.KAMAL_ADMIN_USERNAME }}
-      KAMAL_ADMIN_PASSWORD: ${{ secrets.KAMAL_ADMIN_PASSWORD }}
-      KAMAL_PROXY_HOST: ${{ vars.KAMAL_PROXY_HOST }}
+      RAINGAUGE_ADMIN_USERNAME: ${{ secrets.RAINGAUGE_ADMIN_USERNAME }}
+      RAINGAUGE_ADMIN_PASSWORD: ${{ secrets.RAINGAUGE_ADMIN_PASSWORD }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
       - uses: webfactory/ssh-agent@v0.10.0
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh-private-key: ${{ secrets.RAINGAUGE_KAMAL_SSH_PRIVATE_KEY }}
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
