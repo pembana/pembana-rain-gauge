@@ -45,7 +45,8 @@ key is normalized to `PCIRG`. NOAA metadata reports a 60-minute transmission int
 . subtracts each previous accumulator from the next one;
 . adds nonnegative deltas whose timestamp falls inside the requested period;
 . accepts only corroborated near-zero resets or configured rollovers;
-. retains but flags unusually large positive increments; and
+. excludes and reports brief spikes that return to the preceding reading within two observation
+   intervals, and retains other unusually large increases with a warning; and
 . reports the last observation actually used as the cutoff.
 
 For example, `10.00 → 10.02 → 10.05` produces `0.05 in`, exactly `1.270 mm`, displayed as `1.3 mm`.

@@ -80,8 +80,11 @@ public class CumulativeRainfallCalculator {
 				PrecipitationObservationDeduplicator.deduplicate(source);
 		List<String> warnings = new ArrayList<>(batch.warnings());
 		warnings.addAll(deduplicated.warnings());
-		List<PrecipitationObservation> observations = deduplicated.observations();
 		CalculationRequest request = new CalculationRequest(from, to, cadence, batch, unit);
+		List<String> spikeWarnings = new ArrayList<>();
+		List<PrecipitationObservation> observations = excludeTransientSpikes(
+				deduplicated.observations(), request, spikeWarnings);
+		warnings.addAll(spikeWarnings);
 		BaselineSelection selection = selectBaseline(observations, request, warnings);
 		PrecipitationObservation baseline = selection.observation();
 		if (baseline == null) {
@@ -89,8 +92,77 @@ public class CumulativeRainfallCalculator {
 			return unavailable(request, calculatedAt, warnings, deduplicated.conflicts());
 		}
 		Accumulation accumulation = accumulate(observations, baseline, request, warnings);
-		return completeResult(request, baseline, selection.provisional(), calculatedAt, deduplicated,
-				warnings, accumulation);
+		if (!spikeWarnings.isEmpty()) {
+			accumulation.recordOutlier();
+		}
+		return completeResult(request, baseline, selection.provisional(), calculatedAt,
+				deduplicated.conflicts(), observations, warnings, accumulation);
+	}
+
+	/**
+	 * Excludes brief excursions before selecting a baseline. A large increase remains
+	 * eligible unless a nearby valid reading returns to the exact pre-spike value.
+	 * @param observations the sorted, deduplicated observations
+	 * @param request the requested calculation
+	 * @param warnings the warnings for excluded spikes affecting this period
+	 * @return the observations eligible for the rainfall calculation
+	 */
+	private List<PrecipitationObservation> excludeTransientSpikes(
+			List<PrecipitationObservation> observations, CalculationRequest request,
+			List<String> warnings) {
+		List<PrecipitationObservation> filtered = new ArrayList<>(observations.size());
+		BigDecimal threshold = this.properties.getReset().getSuspectedOutlierIncrement();
+		PrecipitationObservation previous = null;
+		for (int index = 0; index < observations.size(); index++) {
+			PrecipitationObservation current = observations.get(index);
+			if (current.quality() == ObservationQuality.VALID) {
+				if (previous != null && current.value().subtract(previous.value()).compareTo(threshold) > 0) {
+					Instant deadline = previous.validAt().plus(request.cadence().multipliedBy(2));
+					int recoveryIndex = spikeRecoveryIndex(observations, index + 1, previous.value(),
+							threshold, deadline, request.to());
+					if (recoveryIndex >= 0) {
+						PrecipitationObservation recovery = observations.get(recoveryIndex);
+						if (recovery.validAt().isAfter(request.from())) {
+							warnings.add("Excluded transient accumulator spike at " + current.validAt()
+									+ " after the gauge returned to " + recovery.value().toPlainString()
+									+ " in at " + recovery.validAt());
+						}
+						index = recoveryIndex - 1;
+						continue;
+					}
+				}
+				previous = current;
+			}
+			filtered.add(current);
+		}
+		return filtered;
+	}
+
+	/**
+	 * Finds a return to the pre-spike value within the corroboration window.
+	 * @param observations the available observations
+	 * @param start the index after the suspected spike
+	 * @param baseline the value before the spike
+	 * @param threshold the minimum jump for a suspected spike
+	 * @param deadline the latest time for a return to the baseline
+	 * @param end the exclusive end of the requested range
+	 * @return the recovery index, or -1 without a confirmed recovery
+	 */
+	private int spikeRecoveryIndex(List<PrecipitationObservation> observations, int start,
+			BigDecimal baseline, BigDecimal threshold, Instant deadline, Instant end) {
+		for (int index = start; index < observations.size(); index++) {
+			PrecipitationObservation observation = observations.get(index);
+			if (observation.validAt().isAfter(deadline) || !observation.validAt().isBefore(end)) {
+				break;
+			}
+			if (observation.quality() == ObservationQuality.VALID) {
+				BigDecimal delta = observation.value().subtract(baseline);
+				if (delta.compareTo(threshold) <= 0) {
+					return (delta.signum() == 0) ? index : -1;
+				}
+			}
+		}
+		return -1;
 	}
 
 	/**
@@ -235,17 +307,17 @@ public class CumulativeRainfallCalculator {
 	 * @param baseline the selected baseline observation
 	 * @param provisionalBaseline whether the baseline was taken from inside the range
 	 * @param calculatedAt the calculation time
-	 * @param deduplicated the deduplicated source observations
+	 * @param conflicts the number of conflicting source timestamps
+	 * @param observations the observations eligible for the calculation
 	 * @param warnings the accumulated warnings
 	 * @param accumulation the accumulation state
 	 * @return the completed rainfall result
 	 */
 	private RainfallResult completeResult(CalculationRequest request,
 			PrecipitationObservation baseline, boolean provisionalBaseline, Instant calculatedAt,
-			PrecipitationObservationDeduplicator.Result deduplicated, List<String> warnings,
+			int conflicts, List<PrecipitationObservation> observations, List<String> warnings,
 			Accumulation accumulation) {
-		List<PrecipitationObservation> inWindow = validObservationsInWindow(
-				deduplicated.observations(), request);
+		List<PrecipitationObservation> inWindow = validObservationsInWindow(observations, request);
 		Instant first = inWindow.isEmpty() ? null : inWindow.getFirst().validAt();
 		Instant last = inWindow.isEmpty() ? baseline.validAt() : inWindow.getLast().validAt();
 		long expected = request.expectedSamples();
@@ -261,11 +333,11 @@ public class CumulativeRainfallCalculator {
 		Duration sourceAge = Duration.between(last, calculatedAt);
 		boolean stale = Duration.between(last, request.to())
 				.compareTo(request.cadence().multipliedBy(2)) > 0;
-		RainfallResultStatus status = status(deduplicated.conflicts(), provisionalBaseline,
+		RainfallResultStatus status = status(conflicts, provisionalBaseline,
 				accumulation, materialGap, request.batch().staleCache(), stale);
 		RainfallDataQuality quality = new RainfallDataQuality(expected, received, completeness,
 				accumulation.longestGap(), first, last, accumulation.unresolvedResets(),
-				accumulation.recognizedResets(), deduplicated.conflicts(),
+				accumulation.recognizedResets(), conflicts,
 				request.batch().warnings().size(), sourceAge, request.batch().staleCache());
 		return new RainfallResult(new RainfallAmount(accumulation.total()), RainfallMethod.CUMULATIVE,
 				request.unit(), "in", (request.unit() == RainfallUnit.IMPERIAL) ? 2 : 1,
@@ -481,7 +553,7 @@ public class CumulativeRainfallCalculator {
 		}
 
 		/**
-		 * Records a retained increment that exceeds the outlier threshold.
+		 * Records an outlier detected in the calculation.
 		 */
 		void recordOutlier() {
 			this.outlier = true;
@@ -552,7 +624,7 @@ public class CumulativeRainfallCalculator {
 		}
 
 		/**
-		 * Returns whether a retained increment exceeded the outlier threshold.
+		 * Returns whether the calculation detected an outlier.
 		 * @return {@code true} if an outlier was recorded; otherwise {@code false}
 		 */
 		boolean hasOutlier() {

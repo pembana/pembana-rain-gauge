@@ -183,6 +183,9 @@ public class DashboardService {
 		String baselineWarning = warningStartingWith(result, "No valid accumulator baseline");
 		String gapWarning = warningStartingWith(result, "Native observations contain a gap");
 		String outlierWarning = warningStartingWith(result, "Unusually large positive increment");
+		if (outlierWarning == null) {
+			outlierWarning = warningStartingWith(result, "Excluded transient accumulator spike");
+		}
 		return List.of(
 				condition("Starting baseline available", baselineWarning == null,
 						baselineWarning, "A valid reading exists at or before the period start."),

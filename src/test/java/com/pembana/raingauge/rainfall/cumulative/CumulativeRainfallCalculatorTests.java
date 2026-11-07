@@ -288,6 +288,37 @@ class CumulativeRainfallCalculatorTests {
 	}
 
 	/**
+	 * Verifies that the brief December 2025 Waiaha excursion contributes no rainfall,
+	 * including when the requested range starts during the excursion.
+	 */
+	@Test
+	void excludesBriefExcursionThatReturnsToThePreviousReading() {
+		List<PrecipitationObservation> observations = List.of(
+				PrecipitationObservation.valid("WIHH1", START, "PCIRG", new BigDecimal("81.97"), 0),
+				PrecipitationObservation.valid("WIHH1", START.plusSeconds(60), "PCIRG",
+						new BigDecimal("1006.54"), 1),
+				PrecipitationObservation.valid("WIHH1", START.plusSeconds(660), "PCIRG",
+						new BigDecimal("115.32"), 2),
+				PrecipitationObservation.valid("WIHH1", START.plusSeconds(900), "PCIRG",
+						new BigDecimal("81.97"), 3),
+				PrecipitationObservation.valid("WIHH1", START.plusSeconds(1800), "PCIRG",
+						new BigDecimal("82.00"), 4));
+		Instant end = START.plusSeconds(2700);
+
+		for (Instant from : List.of(START, START.plusSeconds(120))) {
+			RainfallResult result = calculate(observations, from, end, end);
+
+			assertThat(result.amount().inches()).isEqualByComparingTo("0.03");
+			assertThat(result.status()).isEqualTo(RainfallResultStatus.PARTIAL);
+			assertThat(result.quality().unresolvedResetCount()).isZero();
+			assertThat(result.increments()).extracting(RainfallIncrement::at)
+				.containsExactly(START.plusSeconds(900), START.plusSeconds(1800));
+			assertThat(result.warnings()).anyMatch((warning) ->
+					warning.startsWith("Excluded transient accumulator spike"));
+		}
+	}
+
+	/**
 	 * Calculates rainfall for the requested interval.
 	 * @param observations the precipitation observations to process
 	 * @param hours the hours
