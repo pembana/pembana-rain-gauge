@@ -13,7 +13,7 @@
   scriptModule = "/js/comparison.js",
   pageMetadata = pageMetadata,
   content = @`
-    <div class="page-header"><div class="container-xl py-4"><div class="page-pretitle">Common-period analysis</div><h1 class="page-title">Compare rainfall stations</h1><p class="text-secondary mb-0">Nearby stations can experience different microclimates; comparison does not make them interchangeable.</p></div></div>
+    <div class="page-header"><div class="container-xl py-4"><div class="page-pretitle">Common-period analysis</div><h1 class="page-title">Compare rainfall stations</h1><p class="text-secondary mb-0">Nearby stations can experience different microclimates; comparison does not make them interchangeable.</p><a class="btn btn-outline-primary mt-3" href="/compare/years">Compare years</a></div></div>
     <div class="page-body"><div class="container-xl">
       <form method="get" action="/compare" class="card card-body mb-3" id="comparison-form">
         <fieldset><legend class="form-label">Select up to eight stations</legend><div class="station-check-grid">

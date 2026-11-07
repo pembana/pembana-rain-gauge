@@ -186,12 +186,18 @@ Server pages:
 * `/` — dashboard and standard GET station selector
 * `/stations` and `/stations/{stationId}` — filterable catalog and station/custom-range detail
 * `/compare` — multi-station totals, daily bars, cumulative lines, and table
+* `/compare/years` — annual totals, monthly totals, and cumulative rainfall for one station
 * `/about-data` — methodology, provenance, precision, and build information
 
 JSON APIs include `/api/stations`, `/api/stations/{stationId}`,
 `/api/stations/{stationId}/dashboard`, `/observations`, `/monthly`, `/quality-events`, and
 `/api/compare`. Invalid station IDs, disabled stations, periods, units, and excessive ranges use
 RFC 9457 problem details.
+
+The year comparison defaults to the three most recent archive years. It uses Hawaiʻi calendar
+boundaries and offers matching year-to-date periods. Partial totals include only calculated
+rainfall, and missing months and days have no value. The JSON endpoint is
+`/api/stations/{stationId}/years?year=2024&year=2025&mode=calendar&unit=metric`.
 
 The aggregate dashboard response drives both JTE and AJAX presentation. The ES-module controller
 cancels superseded requests, prevents stale responses from winning, uses safe `textContent`/DOM

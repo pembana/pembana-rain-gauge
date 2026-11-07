@@ -14,6 +14,9 @@
       <div class="page-pretitle">Station ${view.station().stationId()} · ${view.station().network()}</div>
       <h1 class="page-title">${view.station().selectionLabel()}</h1>
       <p class="text-secondary mb-0">${view.station().sourceName()}</p>
+      @if (view.station().precipitationKey() != null)
+        <a class="btn btn-outline-primary mt-3" href="/compare/years?station=${view.station().stationId()}&amp;unit=${view.unit()}">Compare years</a>
+      @endif
     </div></div>
     <div class="page-body"><div class="container-xl dashboard-region" id="dashboard-region"
       data-station-id="${view.station().stationId()}" data-period="28d" data-unit="${view.unit()}"

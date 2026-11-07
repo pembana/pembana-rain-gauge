@@ -229,10 +229,21 @@ class CumulativeRainfallCalculatorTests {
 	@Test
 	void staleSourceIsIdentified() {
 		List<PrecipitationObservation> observations = values("5.00", "5.10", "5.10");
-		RainfallResult result = calculate(observations, START, START.plus(Duration.ofHours(3)),
+		RainfallResult result = calculate(observations, START, START.plus(Duration.ofHours(8)),
 				START.plus(Duration.ofHours(8)));
 
 		assertThat(result.status()).isEqualTo(RainfallResultStatus.STALE);
+	}
+
+	/**
+	 * Verifies that freshness for a historical calculation is relative to its end.
+	 */
+	@Test
+	void historicalReadingsCanCoverTheRequestedPeriod() {
+		RainfallResult result = calculate(values("5.00", "5.10", "5.10"), START,
+				START.plus(Duration.ofHours(3)), START.plus(Duration.ofDays(365)));
+
+		assertThat(result.status()).isEqualTo(RainfallResultStatus.COMPLETE);
 	}
 
 	/**

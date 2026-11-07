@@ -6,6 +6,7 @@ import {
   comparisonSeries,
   cumulativeComparisonSeries
 } from '../../main/resources/static/js/comparison.js';
+import { cumulativeYearSeries } from '../../main/resources/static/js/year-comparison.js';
 
 test('comparison URL sends repeated station parameters', () => {
   assert.equal(
@@ -52,4 +53,20 @@ test('comparison series uses display names and preserves missing daily values', 
     ],
     emphasis: { focus: 'series' }
   }]);
+});
+
+test('year comparison aligns dates without shifting or filling missing readings', () => {
+  const [common, leap] = cumulativeYearSeries([
+    { year: 2023, cumulative: [
+      { date: '2023-02-28', value: 0 }, { date: '2023-03-01', value: 1 }
+    ] },
+    { year: 2024, cumulative: [
+      { date: '2024-02-28', value: 2 }, { date: '2024-02-29', value: null },
+      { date: '2024-03-01', value: 3 }
+    ] }
+  ]);
+
+  assert.deepEqual(common.data, [['02-28', 0], ['03-01', 1]]);
+  assert.deepEqual(leap.data, [['02-28', 2], ['02-29', null], ['03-01', 3]]);
+  assert.equal(leap.connectNulls, false);
 });

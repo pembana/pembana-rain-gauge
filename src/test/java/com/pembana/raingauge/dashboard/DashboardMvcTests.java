@@ -41,13 +41,16 @@ import com.pembana.raingauge.station.StationOverride;
 import com.pembana.raingauge.station.StationRepository;
 import com.pembana.raingauge.station.client.CatalogStation;
 import com.pembana.raingauge.station.client.IemStationCatalogClient;
+import com.pembana.raingauge.station.client.ProviderException;
 import com.pembana.raingauge.station.client.StationCatalogResult;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.reset;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
@@ -149,6 +152,52 @@ class DashboardMvcTests {
 						"img-src 'self' data: https://tile.openstreetmap.org")))
 				.andExpect(content().string(containsString("Provisional data")))
 				.andExpect(content().string(containsString("daily-rainfall-table")));
+	}
+
+	/**
+	 * Verifies that selected annual and monthly totals render without JavaScript.
+	 * @throws Exception if the request fails
+	 */
+	@Test
+	void yearComparisonRendersAnnualAndMonthlyTables() throws Exception {
+		this.mockMvc.perform(get("/compare/years").queryParam("station", "WIHH1")
+				.queryParam("year", "2024", "2025").queryParam("unit", "imperial"))
+			.andExpect(status().isOk())
+			.andExpect(view().name("compareYears"))
+			.andExpect(content().string(containsString("Annual rainfall totals")))
+			.andExpect(content().string(containsString("Monthly rainfall")))
+			.andExpect(content().string(containsString("0.05 in")))
+			.andExpect(content().string(containsString("Partial")));
+	}
+
+	/**
+	 * Verifies that archive failures stay isolated to their affected year.
+	 * @throws Exception if the request fails
+	 */
+	@Test
+	void yearComparisonKeepsAvailableYearsWhenOneArchiveRequestFails() throws Exception {
+		Instant failedYearEnd = Instant.parse("2023-01-01T10:00:00Z");
+		willThrow(new ProviderException("Fixture provider failure")).given(this.observationClient)
+			.fetch(anyList(), anyString(), anyString(), any(), eq(failedYearEnd));
+
+		this.mockMvc.perform(get("/api/stations/WIHH1/years").queryParam("year", "2022", "2023"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.years[0].status").value("UNAVAILABLE"))
+			.andExpect(jsonPath("$.years[0].value").isEmpty())
+			.andExpect(jsonPath("$.years[1].status").value("PARTIAL"))
+			.andExpect(jsonPath("$.years[1].value").value(1.27))
+			.andExpect(jsonPath("$.years[1].months[0].value").isEmpty())
+			.andExpect(jsonPath("$.years[1].months[11].value").value(1.27));
+	}
+
+	/**
+	 * Verifies that unsupported future years are rejected.
+	 * @throws Exception if the request fails
+	 */
+	@Test
+	void yearComparisonRejectsFutureYears() throws Exception {
+		this.mockMvc.perform(get("/api/stations/WIHH1/years").queryParam("year", "9999"))
+			.andExpect(status().isBadRequest());
 	}
 
 	/**

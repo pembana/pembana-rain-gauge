@@ -259,7 +259,8 @@ public class CumulativeRainfallCalculator {
 					+ accumulation.longestGap().toMinutes() + " minutes");
 		}
 		Duration sourceAge = Duration.between(last, calculatedAt);
-		boolean stale = sourceAge.compareTo(request.cadence().multipliedBy(2)) > 0;
+		boolean stale = Duration.between(last, request.to())
+				.compareTo(request.cadence().multipliedBy(2)) > 0;
 		RainfallResultStatus status = status(deduplicated.conflicts(), provisionalBaseline,
 				accumulation, materialGap, request.batch().staleCache(), stale);
 		RainfallDataQuality quality = new RainfallDataQuality(expected, received, completeness,

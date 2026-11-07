@@ -223,7 +223,8 @@ public class IntervalRainfallCalculator {
 					+ accumulation.longestGap().toMinutes() + " minutes");
 		}
 		Duration sourceAge = Duration.between(accumulation.lastValid(), calculatedAt);
-		boolean stale = sourceAge.compareTo(request.interval().multipliedBy(2)) > 0;
+		boolean stale = Duration.between(accumulation.lastValid(), request.to())
+				.compareTo(request.interval().multipliedBy(2)) > 0;
 		RainfallResultStatus status = status(conflicts, accumulation, incompleteBoundaryCoverage,
 				materialGap, accumulation.received() < expected, request.batch().staleCache(), stale);
 		RainfallDataQuality quality = new RainfallDataQuality(expected, accumulation.received(),

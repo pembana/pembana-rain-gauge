@@ -71,7 +71,8 @@ public class SecurityConfiguration {
 	@Order(2)
 	SecurityFilterChain publicSecurityFilterChain(HttpSecurity http) {
 		http.authorizeHttpRequests((requests) -> requests
-				.requestMatchers("/", "/stations", "/stations/**", "/compare", "/about-data",
+				.requestMatchers("/", "/stations", "/stations/**", "/compare", "/compare/years",
+						"/about-data",
 						"/api/stations/**", "/api/compare", "/actuator/health")
 				.permitAll()
 				.requestMatchers("/css/**", "/js/**", "/vendor/**", "/favicon.svg",
