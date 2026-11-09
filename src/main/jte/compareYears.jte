@@ -46,7 +46,7 @@
                 @endfor
               </select>
             </div>
-            <div class="col-sm-auto"><button class="btn btn-outline-primary" type="submit">Load station</button></div>
+            <div class="col-sm-auto"><button class="btn btn-outline-primary" type="submit" data-loading-message="Loading station years…">Load station</button></div>
           </form>
           @if (!availableYears.isEmpty())
             <form method="get" action="/compare/years" class="row g-3">
@@ -76,7 +76,7 @@
                   <option value="imperial" selected="${unit.equals("imperial")}">Inches</option>
                 </select>
               </div>
-              <div class="col-sm-auto d-flex align-items-end"><button class="btn btn-primary" type="submit">Compare years</button></div>
+              <div class="col-sm-auto d-flex align-items-end"><button class="btn btn-primary" type="submit" data-loading-message="Comparing rainfall by year…">Compare years</button></div>
             </form>
           @endif
         </section>

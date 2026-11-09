@@ -26,7 +26,7 @@
           <div class="col-md-1"><label class="form-label" for="online-filter">Online</label><select class="form-select" id="online-filter" name="online"><option value="">Any</option><option value="true" selected="${Boolean.TRUE.equals(view.online())}">Yes</option><option value="false" selected="${Boolean.FALSE.equals(view.online())}">No</option></select></div>
           <div class="col-md-1"><label class="form-label" for="enabled-filter">Enabled</label><select class="form-select" id="enabled-filter" name="enabled"><option value="">Any</option><option value="true" selected="${Boolean.TRUE.equals(view.enabled())}">Yes</option><option value="false" selected="${Boolean.FALSE.equals(view.enabled())}">No</option></select></div>
           <div class="col-md-2"><label class="form-label" for="recent-filter">Observed in 24h</label><select class="form-select" id="recent-filter" name="recent"><option value="">Any</option><option value="true" selected="${Boolean.TRUE.equals(view.recent())}">Yes</option><option value="false" selected="${Boolean.FALSE.equals(view.recent())}">No</option></select></div>
-          <div class="col-md-1"><button class="btn btn-primary w-100" type="submit">Apply</button></div>
+          <div class="col-md-1"><button class="btn btn-primary w-100" type="submit" data-loading-message="Filtering stations…">Apply</button></div>
         </div>
       </form>
       <div class="card">

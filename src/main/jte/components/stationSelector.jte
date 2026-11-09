@@ -51,7 +51,7 @@
         </select>
       </div>
       <div class="col-12 col-md-auto">
-        <button class="btn btn-primary w-100" type="submit">View station</button>
+        <button class="btn btn-primary w-100" type="submit" data-loading-message="Loading rainfall observations…">View station</button>
       </div>
     </div>
   </div>

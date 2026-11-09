@@ -1,4 +1,4 @@
-import { applyTheme, nextTheme } from './site.js';
+import { applyTheme, nextTheme, setButtonLoading } from './site.js';
 
 const HAWAII_TIME = new Intl.DateTimeFormat('en-US', {
   timeZone: 'Pacific/Honolulu',
@@ -161,6 +161,7 @@ export class StationDashboardController {
   constructor(root = document) {
     this.root = root;
     this.form = root.querySelector('#station-form');
+    this.submitButton = this.form?.querySelector('[data-loading-message]');
     this.stationSelector = root.querySelector('#station-selector');
     this.periodSelector = root.querySelector('#period-selector');
     this.unitSelector = root.querySelector('#unit-selector');
@@ -198,6 +199,7 @@ export class StationDashboardController {
     }
     this.form.addEventListener('submit', (event) => {
       event.preventDefault();
+      if (this.submitButton?.getAttribute('aria-disabled') === 'true') return;
       this.load(this.stationSelector.value, { push: true });
     });
     this.stationSelector.addEventListener('change', () => {
@@ -447,7 +449,6 @@ export class StationDashboardController {
     for (const [id, title, points, type, cumulative] of settings) {
       const chart = this.charts[id];
       if (!chart) continue;
-      chart.hideLoading();
       chart.setOption(chartOption(title, points, type, unit, cumulative), { notMerge: false });
     }
   }
@@ -463,10 +464,12 @@ export class StationDashboardController {
   }
 
   setLoading(loading) {
+    setButtonLoading(this.submitButton, loading);
     this.region.setAttribute('aria-busy', String(loading));
     this.region.classList.toggle('is-loading', loading);
     for (const chart of Object.values(this.charts)) {
       if (loading) chart.showLoading('default', { text: 'Loading rainfall observations…' });
+      else chart.hideLoading();
     }
   }
 

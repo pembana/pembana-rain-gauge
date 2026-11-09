@@ -232,6 +232,25 @@ body {
   height: 30rem;
 }
 
+.btn[data-loading-message][aria-disabled="true"] {
+  color: transparent;
+  cursor: progress;
+  position: relative;
+}
+
+.btn[data-loading-message] > .spinner-border {
+  color: var(--tblr-btn-color);
+  inset: 0;
+  margin: auto;
+  position: absolute;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn[data-loading-message] > .spinner-border {
+    animation: none;
+  }
+}
+
 .dashboard-region.is-loading .card,
 .dashboard-region.is-loading .station-hero {
   opacity: 0.66;

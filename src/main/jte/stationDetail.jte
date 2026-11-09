@@ -15,7 +15,7 @@
       <h1 class="page-title">${view.station().selectionLabel()}</h1>
       <p class="text-secondary mb-0">${view.station().sourceName()}</p>
       @if (view.station().precipitationKey() != null)
-        <a class="btn btn-outline-primary mt-3" href="/compare/years?station=${view.station().stationId()}&amp;unit=${view.unit()}">Compare years</a>
+        <a class="btn btn-outline-primary mt-3" href="/compare/years?station=${view.station().stationId()}&amp;unit=${view.unit()}" data-loading-message="Loading station years…">Compare years</a>
       @endif
     </div></div>
     <div class="page-body"><div class="container-xl dashboard-region" id="dashboard-region"
@@ -38,7 +38,7 @@
             <div class="col-md-4"><label class="form-label" for="from">From</label><input class="form-control" type="datetime-local" id="from" name="from" value="${view.from()}"></div>
             <div class="col-md-4"><label class="form-label" for="to">To</label><input class="form-control" type="datetime-local" id="to" name="to" value="${view.to()}"></div>
             <div class="col-md-2"><label class="form-label" for="custom-unit">Unit</label><select class="form-select" id="custom-unit" name="unit"><option value="imperial" selected="${view.unit().equals("imperial")}">Inches</option><option value="metric" selected="${view.unit().equals("metric")}">Millimeters</option></select></div>
-            <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit">Calculate</button></div>
+            <div class="col-md-2 d-flex align-items-end"><button class="btn btn-primary w-100" type="submit" data-loading-message="Calculating rainfall…">Calculate</button></div>
           </form>
           <p class="text-secondary mt-3 mb-0">Ranges use Pacific/Honolulu and half-open <code>[from, to)</code> boundaries. The maximum range is 366 days.</p>
           @if(view.error() != null)

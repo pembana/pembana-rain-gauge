@@ -38,6 +38,7 @@
   <link rel="stylesheet" href="/css/app.css">
 </head>
 <body>
+  <div id="request-status" class="visually-hidden" role="status"></div>
   <div class="page">
     @template.components.navbar(active = active)
     <main class="page-wrapper" id="main-content">
