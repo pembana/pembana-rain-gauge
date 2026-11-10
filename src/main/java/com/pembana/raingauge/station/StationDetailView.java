@@ -16,8 +16,6 @@
 
 package com.pembana.raingauge.station;
 
-import java.util.List;
-
 import org.jspecify.annotations.Nullable;
 
 import com.pembana.raingauge.dashboard.DashboardResponse;
@@ -26,7 +24,6 @@ import com.pembana.raingauge.rainfall.RainfallResult;
 /**
  * Describes a station detail view.
  * @param station the station to process
- * @param stations the stations
  * @param dashboard the dashboard
  * @param customResult the custom result
  * @param from the inclusive start of the requested interval
@@ -37,7 +34,6 @@ import com.pembana.raingauge.rainfall.RainfallResult;
  */
 public record StationDetailView(
 		StationResponse station,
-		List<StationResponse> stations,
 		@Nullable DashboardResponse dashboard,
 		@Nullable RainfallResult customResult,
 		@Nullable String from,
@@ -45,18 +41,4 @@ public record StationDetailView(
 		String unit,
 		@Nullable String error) {
 
-	/**
-	 * Creates a new {@code StationDetailView}.
-	 * @param station the station to process
-	 * @param stations the stations
-	 * @param dashboard the dashboard
-	 * @param customResult the custom result
-	 * @param from the inclusive start of the requested interval
-	 * @param to the exclusive end of the requested interval
-	 * @param unit the requested rainfall unit
-	 * @param error the error
-	 */
-	public StationDetailView {
-		stations = List.copyOf(stations);
-	}
 }

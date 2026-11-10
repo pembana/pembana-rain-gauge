@@ -29,6 +29,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.pembana.raingauge.dashboard.DashboardResponse;
 import com.pembana.raingauge.dashboard.DashboardService;
@@ -96,11 +97,12 @@ public class StationController {
 	}
 
 	/**
-	 * Creates a station for a test scenario.
+	 * Renders rainfall or metadata for a public station.
 	 * @param stationId the provider station identifier
 	 * @param from the inclusive start of the requested interval
 	 * @param to the exclusive end of the requested interval
 	 * @param unit the requested rainfall unit
+	 * @param tab the requested station page tab
 	 * @param model the MVC model to populate
 	 * @return the resulting station
 	 */
@@ -108,26 +110,42 @@ public class StationController {
 	public String station(@PathVariable String stationId,
 			@RequestParam(required = false) @Nullable String from,
 			@RequestParam(required = false) @Nullable String to,
-			@RequestParam(defaultValue = "metric") String unit, Model model) {
+			@RequestParam(defaultValue = "metric") String unit,
+			@RequestParam(defaultValue = "rainfall") String tab, Model model) {
 		Station station = this.stationService.requirePublicStation(stationId);
 		DashboardResponse dashboard = null;
 		RainfallResult customResult = null;
 		String error = null;
-		try {
-			dashboard = this.dashboardService.build(station, RainfallWindow.TWENTY_EIGHT_DAYS,
-					RainfallUnit.fromToken(unit));
-			if (from != null && to != null && !from.isBlank() && !to.isBlank()) {
-				customResult = this.rainfallService.calculate(station,
-						LocalDateTime.parse(from).atZone(RainfallWindow.HAWAII).toInstant(),
-						LocalDateTime.parse(to).atZone(RainfallWindow.HAWAII).toInstant(),
+		boolean details = "details".equals(tab);
+		if (!details) {
+			try {
+				dashboard = this.dashboardService.build(station, RainfallWindow.TWENTY_EIGHT_DAYS,
 						RainfallUnit.fromToken(unit));
+				if (from != null && to != null && !from.isBlank() && !to.isBlank()) {
+					customResult = this.rainfallService.calculate(station,
+							LocalDateTime.parse(from).atZone(RainfallWindow.HAWAII).toInstant(),
+							LocalDateTime.parse(to).atZone(RainfallWindow.HAWAII).toInstant(),
+							RainfallUnit.fromToken(unit));
+				}
+			}
+			catch (RuntimeException ex) {
+				error = ex.getMessage();
 			}
 		}
-		catch (RuntimeException ex) {
-			error = ex.getMessage();
+		UriComponentsBuilder stationUrl = UriComponentsBuilder.newInstance()
+			.pathSegment("stations", station.getStationId())
+			.queryParam("unit", unit);
+		if (from != null) {
+			stationUrl.queryParam("from", from);
 		}
+		if (to != null) {
+			stationUrl.queryParam("to", to);
+		}
+		model.addAttribute("rainfallUrl", stationUrl.build().encode().toUriString());
+		model.addAttribute("detailsUrl", stationUrl.queryParam("tab", "details")
+			.build().encode().toUriString());
+		model.addAttribute("details", details);
 		model.addAttribute("view", new StationDetailView(StationResponse.from(station),
-				this.stationService.findRainfallStations().stream().map(StationResponse::from).toList(),
 				dashboard, customResult, from, to, unit, error));
 		return "stationDetail";
 	}

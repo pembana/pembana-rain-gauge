@@ -371,6 +371,21 @@ body {
 
 }
 
+@media (min-width: 375px) and (max-width: 575.98px) {
+  .station-summary-grid {
+    gap: 0.75rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .station-summary-grid .rainfall-summary-card:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .station-summary-grid .rainfall-summary-card .card-body {
+    padding: 0.75rem;
+  }
+}
+
 @media (max-width: 767.98px) {
   #station-map-modal .modal-dialog,
   #station-map-modal .modal-content {
