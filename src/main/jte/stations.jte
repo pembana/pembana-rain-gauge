@@ -1,9 +1,11 @@
 @import com.pembana.raingauge.station.StationListView
+@import com.pembana.raingauge.station.StationType
 @import com.pembana.raingauge.station.StationResponse
 @import com.pembana.raingauge.station.RainfallCapability
 @import com.pembana.raingauge.support.PageMetadata
 
 @param StationListView view
+@param String network
 @param PageMetadata pageMetadata
 
 @template.layout.page(
@@ -13,14 +15,22 @@
   pageMetadata = pageMetadata,
   content = @`
     <div class="page-header"><div class="container-xl py-4">
-      <div class="page-pretitle">HI_DCP catalog</div>
+      <div class="page-pretitle">Station catalog</div>
       <h1 class="page-title">Hawaiʻi weather stations</h1>
       <p class="text-secondary mb-0">${view.stations().size()} shown of ${view.totalStations()} preserved catalog records.</p>
     </div></div>
     <div class="page-body"><div class="container-xl">
       <form class="card card-body mb-3" method="get" action="/stations">
         <div class="row g-2 align-items-end">
-          <div class="col-md-3"><label class="form-label" for="station-search">Name or station ID</label><input class="form-control" id="station-search" name="query" value="${view.query()}" placeholder="Waiaha or WIHH1"></div>
+          <div class="col-md-2"><label class="form-label" for="station-search">Name or station ID</label><input class="form-control" id="station-search" name="query" value="${view.query()}" placeholder="Waiaha or WIHH1"></div>
+          <div class="col-md-2">
+            <label class="form-label" for="network-filter">Network</label>
+            <select class="form-select" id="network-filter" name="network">
+              <option value="">All networks</option>
+              <option value="HI_DCP" selected="${network.equalsIgnoreCase("HI_DCP")}">HADS</option>
+              <option value="HI_COCORAHS" selected="${network.equalsIgnoreCase("HI_COCORAHS")}">CoCoRaHS</option>
+            </select>
+          </div>
           <div class="col-md-2"><label class="form-label" for="island-filter">Island</label><input class="form-control" id="island-filter" name="island" value="${view.island()}" placeholder="Hawaiʻi"></div>
           <div class="col-md-2"><label class="form-label" for="capability-filter">Rainfall capability</label><select class="form-select" id="capability-filter" name="capability"><option value="">Any</option>@for (RainfallCapability capability : RainfallCapability.values())<option value="${capability}" selected="${capability == view.capability()}">${capability}</option>@endfor</select></div>
           <div class="col-md-1"><label class="form-label" for="online-filter">Online</label><select class="form-select" id="online-filter" name="online"><option value="">Any</option><option value="true" selected="${Boolean.TRUE.equals(view.online())}">Yes</option><option value="false" selected="${Boolean.FALSE.equals(view.online())}">No</option></select></div>
@@ -41,7 +51,11 @@
                   <td>${station.island()}<div class="text-secondary">${station.region()}</div></td>
                   <td><span>${station.latitude()}, ${station.longitude()}</span><div class="text-secondary">${station.elevation()} m</div></td>
                   <td><span class="badge ${station.online() ? "bg-green-lt text-green" : "bg-secondary-lt"}">${station.online() ? "Online" : "Offline"}</span> <span class="badge ${station.enabled() ? "bg-blue-lt text-blue" : "bg-red-lt text-red"}">${station.enabled() ? "Enabled" : "Disabled"}</span> @if(station.featured())<span class="badge bg-purple-lt text-purple">Featured</span>@endif</td>
-                  <td>${station.rainfallCapability()}<div class="text-secondary">${station.precipitationKey()}</div></td>
+                  <td>@if (station.type() == StationType.DAILY_REPORTS)
+                    <span class="badge bg-azure-lt">CoCoRaHS · Daily reports</span>
+                    @else
+                      ${station.rainfallCapability()}<div class="text-secondary">${station.precipitationKey()}</div>
+                    @endif</td>
                   <td>${station.archiveBegin() == null ? "—" : station.archiveBegin().toString()} – ${station.archiveEnd() == null ? "present" : station.archiveEnd().toString()}<div class="text-secondary">Latest: ${station.latestObservationAt() == null ? "—" : station.latestObservationAt().toString()}</div></td>
                   <td>${station.catalogRefreshedAt() == null ? "—" : station.catalogRefreshedAt().toString()}<div class="text-secondary">${station.catalogConfirmed() ? "Confirmed" : "Unconfirmed"}</div></td>
                 </tr>

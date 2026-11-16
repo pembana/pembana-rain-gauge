@@ -20,10 +20,15 @@ import java.util.List;
 import java.util.Locale;
 
 import org.jspecify.annotations.Nullable;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.util.UriComponentsBuilder;
 import tools.jackson.databind.json.JsonMapper;
 
 import com.pembana.raingauge.config.RainfallProperties;
@@ -61,8 +66,9 @@ public class YearComparisonController {
 	String compare(@RequestParam(name = "station", required = false) @Nullable String stationId,
 			@RequestParam(name = "year", required = false) @Nullable List<String> years,
 			@RequestParam(defaultValue = "calendar") String mode,
-			@RequestParam(defaultValue = "metric") String unit, Model model) {
-		List<Station> stations = this.stations.findRainfallStations();
+			@RequestParam(defaultValue = "metric") String unit,
+			@RequestAttribute(name = "_csrf", required = false) @Nullable CsrfToken csrf, Model model) {
+		List<Station> stations = this.stations.findHistoricalRainfallStations();
 		Station selected = null;
 		List<Integer> availableYears = List.of();
 		List<Integer> selectedYears = List.of();
@@ -95,15 +101,28 @@ public class YearComparisonController {
 		model.addAttribute("unit", unit.toLowerCase(Locale.ROOT));
 		model.addAttribute("mode", mode);
 		model.addAttribute("comparison", response);
+		model.addAttribute("csrf", csrf);
 		model.addAttribute("chartData", (response != null)
 				? this.jsonMapper.writeValueAsString(response) : "");
 		model.addAttribute("error", error);
 		return "compareYears";
 	}
 
+	@PostMapping("/compare/years/refresh-reports")
+	String refreshReports(@RequestParam String station, @RequestParam(name = "year") List<Integer> years,
+			@RequestParam(defaultValue = "calendar") String mode, @RequestParam(defaultValue = "metric") String unit,
+			RedirectAttributes redirect) {
+		Station selected = this.stations.requirePublicStation(station);
+		RainfallUnit selectedUnit = RainfallUnit.fromToken(unit);
+		redirect.addFlashAttribute("refreshChecks", this.comparison.refreshReports(selected, years, mode));
+		return "redirect:" + UriComponentsBuilder.fromPath("/compare/years")
+				.queryParam("station", selected.getStationId()).queryParam("year", years)
+				.queryParam("mode", mode).queryParam("unit", selectedUnit.token()).build().encode().toUriString();
+	}
+
 	private @Nullable Station select(List<Station> available, @Nullable String requested) {
 		if (requested != null) {
-			return this.stations.requireRainfallStation(requested);
+			return this.stations.requireHistoricalRainfallStation(requested);
 		}
 		return available.stream().filter((station) -> station.getStationId()
 				.equalsIgnoreCase(this.defaultStation)).findFirst()

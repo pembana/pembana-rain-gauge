@@ -18,6 +18,8 @@ package com.pembana.raingauge.station;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -86,13 +88,14 @@ public class StationService {
 	 * Initializes the station catalog when no stations exist.
 	 * @return {@code true} when initialize catalog if empty; otherwise {@code false}
 	 */
-	public boolean initializeCatalogIfEmpty() {
-		if (this.stationRepository.count() > 0) {
-			logger.info("Station catalog bootstrap skipped because local records exist");
+	public synchronized boolean initializeCatalogIfEmpty() {
+		List<String> missing = catalogNetworks().stream()
+				.filter((network) -> !this.stationRepository.existsByNetwork(network)).toList();
+		if (missing.isEmpty()) {
 			return false;
 		}
 		try {
-			refreshCatalog();
+			refreshNetworks(missing);
 			return true;
 		}
 		catch (ProviderException ex) {
@@ -100,30 +103,59 @@ public class StationService {
 					&& this.stationRepository.count() == 0) {
 				throw ex;
 			}
-			logger.warn("Station catalog is unavailable; startup will continue with an empty catalog: {}",
-					ex.getMessage());
+			logger.warn("Station catalog bootstrap could not load the missing networks: {}", ex.getMessage());
 			return false;
 		}
 	}
 
 	/**
-	 * Retrieves and merges the complete remote station catalog.
-	 * @return the resulting refresh catalog
+	 * Refreshes each station network independently.
+	 * @return totals from successful refreshes and warnings from failed networks
 	 */
-	public CatalogRefreshSummary refreshCatalog() {
-		String network = this.properties.getCatalog().getNetwork();
-		StationCatalogResult remote = this.stationCatalogClient.fetchCompleteCatalog(network);
-		if (remote.stations().isEmpty()) {
-			throw new ProviderException("IEM station catalog contained no usable stations");
-		}
+	public synchronized CatalogRefreshSummary refreshCatalog() {
+		return refreshNetworks(catalogNetworks());
+	}
+
+	private List<String> catalogNetworks() {
+		return List.of(this.properties.getCatalog().getNetwork(), StationType.COCORAHS_NETWORK)
+				.stream().distinct().toList();
+	}
+
+	private CatalogRefreshSummary refreshNetworks(List<String> networks) {
 		Instant refreshedAt = this.clock.instant();
-		CatalogRefreshSummary summary = this.transactionTemplate.execute((status) ->
-				mergeCatalog(remote, refreshedAt));
-		logger.info("Station catalog refreshed added={} updated={} unconfirmed={} rejected={} warnings={}",
-				summary.added(), summary.updated(), summary.unconfirmed(), summary.rejected(),
-				summary.warnings());
-		this.eventPublisher.publishEvent(new StationCatalogRefreshedEvent(summary.refreshedAt()));
-		return summary;
+		int added = 0;
+		int updated = 0;
+		int unconfirmed = 0;
+		int rejected = 0;
+		int warnings = 0;
+		int successes = 0;
+		ProviderException failure = null;
+		for (String network : networks) {
+			try {
+				StationCatalogResult remote = this.stationCatalogClient.fetchCompleteCatalog(network);
+				if (remote.stations().isEmpty()) {
+					throw new ProviderException("IEM station catalog contained no usable stations");
+				}
+				CatalogRefreshSummary summary = this.transactionTemplate.execute((status) ->
+						mergeCatalog(network, remote, refreshedAt));
+				added += summary.added();
+				updated += summary.updated();
+				unconfirmed += summary.unconfirmed();
+				rejected += summary.rejected();
+				warnings += summary.warnings();
+				successes++;
+			}
+			catch (ProviderException ex) {
+				logger.warn("Catalog refresh failed for {}: {}", network, ex.getMessage());
+				failure = (failure != null) ? failure : ex;
+				warnings++;
+			}
+		}
+		if (successes == 0 && failure != null) {
+			throw failure;
+		}
+		this.eventPublisher.publishEvent(new StationCatalogRefreshedEvent(refreshedAt));
+		return new CatalogRefreshSummary(added, updated, unconfirmed, rejected, warnings, refreshedAt);
 	}
 
 	/**
@@ -143,14 +175,17 @@ public class StationService {
 
 	/**
 	 * Merges catalog.
+	 * @param network the provider network identifier
 	 * @param remote the remote
 	 * @param refreshedAt the refreshed at
 	 * @return the resulting merge catalog
 	 */
-	private CatalogRefreshSummary mergeCatalog(StationCatalogResult remote, Instant refreshedAt) {
+	private CatalogRefreshSummary mergeCatalog(String network, StationCatalogResult remote, Instant refreshedAt) {
 		Map<String, Station> existing = new HashMap<>();
 		for (Station station : this.stationRepository.findAll()) {
-			existing.put(key(station.getNetwork(), station.getStationId()), station);
+			if (network.equals(station.getNetwork())) {
+				existing.put(key(station.getNetwork(), station.getStationId()), station);
+			}
 		}
 		Set<String> seen = new HashSet<>();
 		int added = 0;
@@ -171,6 +206,9 @@ public class StationService {
 			StationOverride override = this.properties.getStationOverrides().get(source.stationId());
 			if (override != null) {
 				station.applyOverride(override);
+			}
+			if (station.getType() == StationType.DAILY_REPORTS) {
+				station.updateCapability(RainfallCapability.DAILY_REPORTS, null);
 			}
 		}
 		int unconfirmed = 0;
@@ -225,6 +263,30 @@ public class StationService {
 	}
 
 	/**
+	 * Finds stations supported by the year comparison.
+	 * @return automated and daily stations with usable archive types
+	 */
+	public List<Station> findHistoricalRainfallStations() {
+		List<Station> stations = new ArrayList<>(findRainfallStations());
+		findPublicStations().stream().filter((station) -> station.getType() == StationType.DAILY_REPORTS)
+				.forEach(stations::add);
+		return stations.stream().sorted(Comparator.comparing(Station::getDisplayName)).toList();
+	}
+
+	/**
+	 * Resolves a public station that supports year comparisons.
+	 * @param stationId the station identifier
+	 * @return the matching station
+	 */
+	public Station requireHistoricalRainfallStation(String stationId) {
+		Station station = requirePublicStation(stationId);
+		if (station.getType() == StationType.AUTOMATED) {
+			checkAutomatedRainfall(station);
+		}
+		return station;
+	}
+
+	/**
 	 * Finds all stations.
 	 * @return the matching all stations
 	 */
@@ -261,13 +323,17 @@ public class StationService {
 	 */
 	public Station requireRainfallStation(String stationId) {
 		Station station = requirePublicStation(stationId);
-		if ((station.getRainfallCapability() != RainfallCapability.SUPPORTED_ACCUMULATOR
+		checkAutomatedRainfall(station);
+		return station;
+	}
+
+	private void checkAutomatedRainfall(Station station) {
+		if (station.getType() == StationType.DAILY_REPORTS || (station.getRainfallCapability() != RainfallCapability.SUPPORTED_ACCUMULATOR
 				&& station.getRainfallCapability()
 						!= RainfallCapability.SUPPORTED_INTERVAL_PRECIPITATION)
 				|| station.getPrecipitationKey() == null) {
-			throw new UnsupportedRainfallStationException(stationId);
+			throw new UnsupportedRainfallStationException(station.getStationId());
 		}
-		return station;
 	}
 
 	/**

@@ -24,6 +24,7 @@ import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 
+import com.pembana.raingauge.cocorahs.DailyReportsResponse;
 import com.pembana.raingauge.rainfall.RainfallResultStatus;
 import com.pembana.raingauge.station.StationResponse;
 
@@ -33,10 +34,11 @@ import com.pembana.raingauge.station.StationResponse;
  * @param unit the display unit token
  * @param mode the comparison mode
  * @param years the selected years in chronological order
+ * @param periodBasis the observation-date or automated gauge period basis
  * @author OpenAI Codex
  */
 public record YearComparisonResponse(StationResponse station, String unit, String mode,
-		List<YearResult> years) {
+		List<YearResult> years, String periodBasis) {
 
 	/**
 	 * Rainfall for one selected period. Period boundaries use Hawaiʻi local time.
@@ -55,13 +57,29 @@ public record YearComparisonResponse(StationResponse station, String unit, Strin
 	 * @param warnings the calculation and provider warnings
 	 * @param months the monthly rainfall buckets
 	 * @param cumulative the daily cumulative rainfall points
+	 * @param reportDetails daily report coverage and multi-day allocations, when applicable
 	 */
 	public record YearResult(int year, LocalDateTime from, LocalDateTime to, boolean yearToDate,
 			@Nullable BigDecimal value, String display, RainfallResultStatus status,
 			@Nullable BigDecimal completeness, @Nullable Instant observationCutoff,
 			@Nullable String provider, @Nullable Instant fetchedAt, boolean staleCache,
-			List<String> warnings, List<MonthResult> months, List<DailyPoint> cumulative) {
+			List<String> warnings, List<MonthResult> months, List<DailyPoint> cumulative,
+			@Nullable ReportDetails reportDetails) {
 
+	}
+
+	/**
+	 * CoCoRaHS coverage and totals that cannot be allocated to a single month.
+	 * @param coverage count of observation dates covered
+	 * @param trace whether any included report contains trace rainfall
+	 * @param unallocatedValue measurable precipitation spanning month boundaries
+	 * @param unallocatedTrace whether trace rainfall spans month boundaries
+	 * @param unallocatedDisplay display value for the unallocated amount
+	 * @param spans the multi-day reports considered for the period
+	 */
+	public record ReportDetails(DailyReportsResponse.Coverage coverage, boolean trace,
+			@Nullable BigDecimal unallocatedValue, boolean unallocatedTrace, String unallocatedDisplay,
+			List<DailyReportsResponse.Span> spans) {
 	}
 
 	/**
@@ -78,8 +96,13 @@ public record YearComparisonResponse(StationResponse station, String unit, Strin
 	 * Observed accumulation through a given day.
 	 * @param date the Hawaiʻi local date
 	 * @param value the cumulative rainfall, or null when the day has no calculated rainfall
+	 * @param annotation the note associated with this report date
 	 */
-	public record DailyPoint(LocalDate date, @Nullable BigDecimal value) {
+	public record DailyPoint(LocalDate date, @Nullable BigDecimal value, @Nullable String annotation) {
+
+		DailyPoint(LocalDate date, @Nullable BigDecimal value) {
+			this(date, value, null);
+		}
 
 	}
 

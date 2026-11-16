@@ -53,6 +53,9 @@ public class RainfallCapabilityService {
 	 * @return the resulting discover
 	 */
 	public CapabilityDiscovery discover(Station station) {
+		if (station.getType() == StationType.DAILY_REPORTS) {
+			return new CapabilityDiscovery(RainfallCapability.DAILY_REPORTS, null);
+		}
 		if (station.getPrecipitationKey() != null) {
 			return new CapabilityDiscovery(station.getRainfallCapability(), station.getPrecipitationKey());
 		}

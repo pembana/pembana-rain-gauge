@@ -18,7 +18,15 @@ export function cumulativeYearSeries(years) {
     type: 'line',
     connectNulls: false,
     showSymbol: false,
-    data: year.cumulative.map((point) => [point.date.slice(5), point.value])
+    data: year.cumulative.map((point) => [point.date.slice(5), point.value]),
+    ...(year.reportDetails ? { markPoint: {
+      symbol: 'diamond',
+      symbolSize: 12,
+      label: { show: false },
+      tooltip: { trigger: 'item', renderMode: 'richText', formatter: (point) => point.name },
+      data: year.cumulative.filter((point) => point.value != null && point.annotation?.startsWith('Multi-day'))
+        .map((point) => ({ name: point.annotation, coord: [point.date.slice(5), point.value] }))
+    } } : {})
   }));
 }
 

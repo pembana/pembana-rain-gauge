@@ -72,7 +72,7 @@ public class SecurityConfiguration {
 	SecurityFilterChain publicSecurityFilterChain(HttpSecurity http) {
 		http.authorizeHttpRequests((requests) -> requests
 				.requestMatchers("/", "/stations", "/stations/**", "/compare", "/compare/years",
-						"/about-data",
+						"/about-data", "/compare/years/refresh-reports",
 						"/api/stations/**", "/api/compare", "/actuator/health")
 				.permitAll()
 				.requestMatchers("/css/**", "/js/**", "/vendor/**", "/favicon.svg",

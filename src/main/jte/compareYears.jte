@@ -2,7 +2,11 @@
 @import java.time.format.TextStyle
 @import java.util.List
 @import java.util.Locale
+@import com.pembana.raingauge.cocorahs.DailyReportService.RefreshCheck
+@import org.springframework.security.web.csrf.CsrfToken
+@import com.pembana.raingauge.cocorahs.DailyReportsResponse
 @import com.pembana.raingauge.dashboard.YearComparisonResponse
+@import com.pembana.raingauge.station.StationType
 @import com.pembana.raingauge.station.StationResponse
 @import com.pembana.raingauge.support.PageMetadata
 @import org.jspecify.annotations.Nullable
@@ -17,6 +21,8 @@
 @param String chartData
 @param @Nullable String error
 @param PageMetadata pageMetadata
+@param @Nullable CsrfToken csrf
+@param @Nullable List<RefreshCheck> refreshChecks
 
 @template.layout.page(
   title = "Compare years — Pembana Rain Gauge",
@@ -42,7 +48,7 @@
               <label class="form-label" for="years-station">Station</label>
               <select class="form-select" id="years-station" name="station">
                 @for (StationResponse station : stations)
-                  <option value="${station.stationId()}" selected="${stationId.equals(station.stationId())}">${station.selectionLabel()}</option>
+                  <option value="${station.stationId()}" selected="${stationId.equals(station.stationId())}">${station.selectionLabel()}${station.type() == StationType.DAILY_REPORTS ? " · CoCoRaHS" : ""}</option>
                 @endfor
               </select>
             </div>
@@ -82,20 +88,38 @@
         </section>
       @endif
 
+      @template.components.cocorahsRefreshStatus(checks = refreshChecks, day = null)
       @if (error != null)
         @template.components.alert(tone = "danger", title = "Comparison unavailable", message = error)
       @elseif (comparison == null || comparison.years().isEmpty())
         <div class="alert alert-info">No rainfall archive years are available.</div>
       @else
+        !{boolean observationDates = comparison.periodBasis().equals("observation-date");}
         <div id="year-comparison-results" data-comparison="${chartData}">
-          <p class="text-secondary">Periods use Hawaiʻi local time. The current year ends at the latest comparison cutoff. Partial totals and cumulative lines reflect observed rainfall. A dash marks a month without a calculated value.</p>
+          @if (observationDates)
+            @if (csrf != null)
+              <form method="post" action="/compare/years/refresh-reports" class="mb-3">
+                <input type="hidden" name="${csrf.getParameterName()}" value="${csrf.getToken()}">
+                <input type="hidden" name="station" value="${stationId}">
+                <input type="hidden" name="mode" value="${mode}">
+                <input type="hidden" name="unit" value="${unit}">
+                @for (Integer year : selectedYears)
+                  <input type="hidden" name="year" value="${year}">
+                @endfor
+                <button class="btn btn-outline-primary" type="submit" data-loading-message="Checking CoCoRaHS…">Refresh displayed series</button>
+              </form>
+            @endif
+            <p class="text-secondary">Periods use Hawaiʻi observation dates. Reports describe precipitation preceding each reading. Multi-day amounts enter the cumulative total on the ending observation date.</p>
+          @else
+            <p class="text-secondary">Periods use Hawaiʻi local time. The current year ends at the latest comparison cutoff. Partial totals and cumulative lines reflect observed rainfall. A dash marks a month without a calculated value.</p>
+          @endif
           <div class="row row-cards">
             <section class="col-12"><article class="card">
               <div class="card-header"><h2 class="card-title">${mode.equals("ytd") ? "Matching year-to-date totals" : "Annual rainfall totals"}</h2></div>
               <div id="annual-rainfall-chart" class="rainfall-chart" hidden aria-hidden="true"></div>
               <div class="table-responsive">
                 <table class="table table-vcenter card-table">
-                  <thead><tr><th scope="col">Year</th><th scope="col">Rainfall</th><th scope="col">Coverage</th><th scope="col">Period end</th></tr></thead>
+                  <thead><tr><th scope="col">Year</th><th scope="col">Rainfall</th><th scope="col">Coverage</th><th scope="col">${observationDates ? "Last observation date in period" : "Period end"}</th></tr></thead>
                   <tbody>
                     @for (YearComparisonResponse.YearResult year : comparison.years())
                       <tr>
@@ -105,6 +129,10 @@
                           @template.components.qualityBadge(status = year.status())
                           @if (year.completeness() != null)
                             <span class="ms-1">${year.completeness()}%</span>
+                          @endif
+                          !{YearComparisonResponse.ReportDetails details = year.reportDetails();}
+                          @if (details != null)
+                            <span class="d-block text-secondary">${details.coverage().coveredDays()} of ${details.coverage().expectedDays()} dates covered</span>
                           @endif
                           @if (year.staleCache())
                             <span class="d-block text-secondary">Cached observations</span>
@@ -119,7 +147,9 @@
                             </details>
                           @endif
                         </td>
-                        <td>${year.to().toString().replace('T', ' ')}</td>
+                        <td>${observationDates
+                          ? (year.from().equals(year.to()) ? "—" : year.to().toLocalDate().minusDays(1).toString())
+                          : year.to().toString().replace('T', ' ')}</td>
                       </tr>
                     @endfor
                   </tbody>
@@ -144,16 +174,49 @@
                         @endfor
                       </tr>
                     @endfor
+                    @if (observationDates)
+                      <tr><th scope="row">Unallocated across months</th>
+                        @for (YearComparisonResponse.YearResult year : comparison.years())
+                          !{YearComparisonResponse.ReportDetails details = year.reportDetails();}
+                          <td>${details == null ? "—" : details.unallocatedDisplay()}</td>
+                        @endfor
+                      </tr>
+                    @endif
                   </tbody>
                 </table>
               </div>
             </article></section>
+            @if (observationDates)
+              <section class="col-12"><article class="card">
+                <div class="card-header"><h2 class="card-title">Multi-day reports</h2></div>
+                <div class="table-responsive">
+                  <table class="table table-vcenter card-table">
+                    <thead><tr><th scope="col">Year</th><th scope="col">Observation dates</th><th scope="col">Precipitation</th><th scope="col">Treatment</th></tr></thead>
+                    <tbody>
+                      @for (YearComparisonResponse.YearResult year : comparison.years())
+                        !{YearComparisonResponse.ReportDetails details = year.reportDetails();}
+                        @if (details != null && !details.spans().isEmpty())
+                          @for (DailyReportsResponse.Span span : details.spans())
+                            <tr><th scope="row">${year.year()}</th><td>${span.report().start().toString()} to ${span.report().end().toString()}</td><td>${span.display()}</td><td>${span.reason()}</td></tr>
+                          @endfor
+                        @else
+                          <tr><th scope="row">${year.year()}</th><td colspan="3">No multi-day reports available for this period.</td></tr>
+                        @endif
+                      @endfor
+                    </tbody>
+                  </table>
+                </div>
+              </article></section>
+            @endif
             <section id="cumulative-year-rainfall" class="col-12" hidden><article class="card">
               <div class="card-header"><h2 class="card-title">Cumulative rainfall by day</h2></div>
               <div id="cumulative-year-rainfall-chart" class="rainfall-chart large" role="img" aria-label="Cumulative observed rainfall for each selected year"></div>
             </article></section>
           </div>
         </div>
+        @if (observationDates)
+          <p class="text-secondary mt-3">Reports from <a href="https://www.cocorahs.org/Content.aspx?page=datausagepolicy">CoCoRaHS (CC BY 4.0)</a>. Station metadata from <a href="https://mesonet.agron.iastate.edu/cocorahs/">Iowa Environmental Mesonet</a>.</p>
+        @endif
       @endif
     </div></div>
   `

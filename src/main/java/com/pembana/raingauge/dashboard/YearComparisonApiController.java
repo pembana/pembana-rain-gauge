@@ -48,7 +48,7 @@ public class YearComparisonApiController {
 			@RequestParam(name = "year", required = false) @Nullable List<Integer> years,
 			@RequestParam(defaultValue = "calendar") String mode,
 			@RequestParam(defaultValue = "metric") String unit) {
-		return this.comparison.compare(this.stations.requireRainfallStation(stationId),
+		return this.comparison.compare(this.stations.requireHistoricalRainfallStation(stationId),
 				(years != null) ? years : List.of(), mode, RainfallUnit.fromToken(unit));
 	}
 

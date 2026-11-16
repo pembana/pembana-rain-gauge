@@ -17,6 +17,7 @@ forms continue to work with JavaScript disabled.
 == Data sources and provenance
 
 * Station discovery: IEM `HI_DCP` https://mesonet.agron.iastate.edu/geojson/network.py?network=HI_DCP[GeoJSON catalog].
+* CoCoRaHS: IEM `HI_COCORAHS` metadata and direct https://data.cocorahs.org/cocorahs/Export/ExportManager.aspx[CoCoRaHS] daily and multi-day exports (https://www.cocorahs.org/Content.aspx?page=datausagepolicy[CC BY 4.0]).
 * Native observations: IEM https://mesonet.agron.iastate.edu/cgi-bin/request/hads.py?help=[HADS archive request service].
 * Recent variable discovery: IEM `dcp_vars.py`.
 * Station and SHEF verification: NOAA HADS metadata and SHEF descriptions.
@@ -106,9 +107,7 @@ PostgreSQL profile.
 ----
 
 Open http://localhost:8080. The default profile uses the entirely in-memory
-H2 URL `jdbc:h2:mem:pembana-rain-gauge`; all station records disappear on restart. If the station
-table is empty, an `ApplicationRunner` fetches `HI_DCP` outside a transaction, then performs a short
-transactional merge. A populated table skips the bootstrap. Provider failure permits startup by
+H2 URL `jdbc:h2:mem:pembana-rain-gauge`; all station records disappear on restart. An `ApplicationRunner` fetches each missing network (`HI_DCP` and `HI_COCORAHS`) outside a transaction, then performs short, independent transactional merges. Provider failure permits startup by
 default and produces a degraded health/empty-page state; set
 `hawaii.rainfall.catalog.fail-startup-when-empty=true` for strict startup.
 
@@ -194,6 +193,17 @@ JSON APIs include `/api/stations`, `/api/stations/{stationId}`,
 `/api/stations/{stationId}/dashboard`, `/observations`, `/monthly`, `/quality-events`, and
 `/api/compare`. Invalid station IDs, disabled stations, periods, units, and excessive ranges use
 RFC 9457 problem details.
+
+CoCoRaHS stations appear under `/stations?network=HI_COCORAHS` and in year comparison.
+`/api/stations/{stationId}/daily-reports?from=2026-11-01&to=2026-11-14&unit=metric` uses inclusive
+Hawaiʻi observation dates. Daily reports reflect precipitation preceding the reported reading.
+Multi-day totals are shown separately and counted only when the whole span fits. A span crossing months
+can contribute to the annual total while remaining unallocated by month. Reports are cached by station and year
+for one hour in the current year and 24 hours in historical years, with marked stale fallback for up to seven days.
+Use “Check for update” on a missing or pending date to check its year, or “Refresh displayed series”
+to check all years in the selected view. On each app instance, visitors share one in-flight fetch per
+station and year. Both successful and failed checks have a five-minute cooldown; a failed check
+keeps previously fetched reports available.
 
 The year comparison defaults to the three most recent archive years. It uses Hawaiʻi calendar
 boundaries and offers matching year-to-date periods. Partial totals include only calculated

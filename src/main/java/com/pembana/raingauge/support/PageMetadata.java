@@ -16,6 +16,9 @@
 
 package com.pembana.raingauge.support;
 
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
 /**
  * Describes a page metadata.
  * @param canonicalUrl the canonical URL
@@ -23,5 +26,12 @@ package com.pembana.raingauge.support;
  * @author Gunnar Hillert
  */
 public record PageMetadata(String canonicalUrl, String socialImageUrl) {
+
+	static PageMetadata fromRequest(HttpServletRequest request) {
+		return new PageMetadata(
+				ServletUriComponentsBuilder.fromRequestUri(request).build().toUriString(),
+				ServletUriComponentsBuilder.fromContextPath(request)
+						.path("/social-image.png").build().toUriString());
+	}
 
 }

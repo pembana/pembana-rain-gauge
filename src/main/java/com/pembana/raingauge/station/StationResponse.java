@@ -26,6 +26,7 @@ import org.jspecify.annotations.Nullable;
  * Describes a station response.
  * @param stationId the provider station identifier
  * @param network the provider network identifier
+ * @param type how the station reports precipitation
  * @param sourceName the source name
  * @param displayName the display name
  * @param alias the alias
@@ -50,6 +51,7 @@ import org.jspecify.annotations.Nullable;
 public record StationResponse(
 		String stationId,
 		String network,
+		StationType type,
 		String sourceName,
 		String displayName,
 		@Nullable String alias,
@@ -76,7 +78,7 @@ public record StationResponse(
 	 * @return the value represented by the supplied token or domain object
 	 */
 	public static StationResponse from(Station station) {
-		return new StationResponse(station.getStationId(), station.getNetwork(),
+		return new StationResponse(station.getStationId(), station.getNetwork(), station.getType(),
 				station.getSourceName(), station.getDisplayName(), station.getAlias(),
 				station.getIsland(), station.getRegion(), station.getLatitude(),
 				station.getLongitude(), station.getElevation(), station.isSourceOnline(),

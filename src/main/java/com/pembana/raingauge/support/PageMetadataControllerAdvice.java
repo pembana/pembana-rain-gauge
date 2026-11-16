@@ -19,7 +19,6 @@ package com.pembana.raingauge.support;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 /**
  * Adds canonical page metadata to MVC models.
@@ -35,10 +34,7 @@ public class PageMetadataControllerAdvice {
 	 */
 	@ModelAttribute("pageMetadata")
 	PageMetadata pageMetadata(HttpServletRequest request) {
-		return new PageMetadata(
-				ServletUriComponentsBuilder.fromRequestUri(request).build().toUriString(),
-				ServletUriComponentsBuilder.fromContextPath(request)
-						.path("/social-image.png").build().toUriString());
+		return PageMetadata.fromRequest(request);
 	}
 
 }

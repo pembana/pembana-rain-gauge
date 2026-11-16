@@ -24,7 +24,6 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -38,6 +37,7 @@ import org.springframework.web.client.RestClientResponseException;
 
 import com.pembana.raingauge.config.ProviderRestClientFactory;
 import com.pembana.raingauge.config.RainfallProperties;
+import com.pembana.raingauge.station.StationType;
 import com.pembana.raingauge.support.ProviderStatusRegistry;
 
 /**
@@ -48,8 +48,6 @@ import com.pembana.raingauge.support.ProviderStatusRegistry;
 public class IemStationCatalogClient {
 
 	private static final Logger logger = LoggerFactory.getLogger(IemStationCatalogClient.class);
-
-	private static final Pattern STATION_ID = Pattern.compile("[A-Z0-9]{3,12}");
 
 	private final RestClient restClient;
 
@@ -85,14 +83,27 @@ public class IemStationCatalogClient {
 			String body = retrieveWithRetry(network);
 			StationCatalogResult result = parse(body, network);
 			long duration = (System.nanoTime() - started) / 1_000_000;
-			this.providerStatusRegistry.catalogSucceeded(this.clock.instant(), duration);
+			if (result.stations().isEmpty()) {
+				throw new ProviderException("IEM station catalog contained no usable stations");
+			}
+			if (StationType.COCORAHS_NETWORK.equals(network)) {
+				this.providerStatusRegistry.cocorahsCatalogSucceeded(this.clock.instant(), duration);
+			}
+			else {
+				this.providerStatusRegistry.catalogSucceeded(this.clock.instant(), duration);
+			}
 			logger.info("Catalog provider={} network={} durationMs={} parsed={} rejected={} warnings={}",
 					"IEM", network, duration, result.stations().size(), result.rejectedEntries(),
 					result.warnings().size());
 			return result;
 		}
 		catch (RuntimeException ex) {
-			this.providerStatusRegistry.catalogFailed(this.clock.instant(), ex.getMessage());
+			if (StationType.COCORAHS_NETWORK.equals(network)) {
+				this.providerStatusRegistry.cocorahsCatalogFailed(this.clock.instant(), ex.getMessage());
+			}
+			else {
+				this.providerStatusRegistry.catalogFailed(this.clock.instant(), ex.getMessage());
+			}
 			throw ex;
 		}
 	}
@@ -214,7 +225,7 @@ public class IemStationCatalogClient {
 		}
 		Map<String, Object> typedProperties = (Map<String, Object>) propertiesObject;
 		String stationId = requiredString(typedProperties, "sid").toUpperCase();
-		if (!STATION_ID.matcher(stationId).matches()) {
+		if (!StationType.fromNetwork(expectedNetwork).acceptsStationId(stationId)) {
 			throw new IllegalArgumentException("station ID was invalid");
 		}
 		String network = nullableString(typedProperties.get("network"));

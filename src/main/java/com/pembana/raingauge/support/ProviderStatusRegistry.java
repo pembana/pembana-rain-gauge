@@ -33,6 +33,34 @@ public class ProviderStatusRegistry {
 
 	private final AtomicReference<ProviderState> observations = new AtomicReference<>(ProviderState.unknown());
 
+	private final AtomicReference<ProviderState> cocorahsCatalog = new AtomicReference<>(ProviderState.unknown());
+
+	private final AtomicReference<ProviderState> cocorahsReports = new AtomicReference<>(ProviderState.unknown());
+
+	public void cocorahsCatalogSucceeded(Instant at, long durationMillis) {
+		this.cocorahsCatalog.set(ProviderState.available(at, durationMillis));
+	}
+
+	public void cocorahsCatalogFailed(Instant at, @Nullable String message) {
+		this.cocorahsCatalog.updateAndGet((state) -> ProviderState.failed(at, message, state.lastSuccess()));
+	}
+
+	public void cocorahsReportsSucceeded(Instant at, long durationMillis) {
+		this.cocorahsReports.set(ProviderState.available(at, durationMillis));
+	}
+
+	public void cocorahsReportsFailed(Instant at, @Nullable String message) {
+		this.cocorahsReports.updateAndGet((state) -> ProviderState.failed(at, message, state.lastSuccess()));
+	}
+
+	public ProviderState cocorahsCatalog() {
+		return this.cocorahsCatalog.get();
+	}
+
+	public ProviderState cocorahsReports() {
+		return this.cocorahsReports.get();
+	}
+
 	/**
 	 * Records a successful station-catalog request.
 	 * @param at the time at which the provider operation completed

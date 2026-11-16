@@ -230,6 +230,7 @@
 								<argument>--test</argument>
 								<argument>src/test/js/station-dashboard.test.js</argument>
 								<argument>src/test/js/comparison.test.js</argument>
+								<argument>src/test/js/cocorahs.test.js</argument>
 								<argument>src/test/js/site.test.js</argument>
 							</arguments>
 						</configuration>

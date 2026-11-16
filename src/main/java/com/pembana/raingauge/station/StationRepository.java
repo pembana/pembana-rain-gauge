@@ -32,6 +32,13 @@ import org.springframework.data.repository.query.Param;
 public interface StationRepository extends JpaRepository<Station, UUID> {
 
 	/**
+	 * Checks whether a network has been initialized.
+	 * @param network the provider network identifier
+	 * @return whether any station exists in the network
+	 */
+	boolean existsByNetwork(String network);
+
+	/**
 	 * Finds by network and station ID.
 	 * @param network the provider network identifier
 	 * @param stationId the provider station identifier

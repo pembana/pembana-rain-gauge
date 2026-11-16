@@ -114,7 +114,7 @@ public class RainfallCapabilityRefresher {
 	CapabilityRefreshSummary refresh() {
 		List<Station> candidates = this.stationRepository
 				.findAllByEnabledTrueOrderByDisplayNameAsc().stream()
-				.filter((station) -> station.getPrecipitationKey() == null)
+				.filter((station) -> station.getType() == StationType.AUTOMATED && station.getPrecipitationKey() == null)
 				.toList();
 		if (candidates.isEmpty()) {
 			return new CapabilityRefreshSummary(0, 0, 0, 0, 0);

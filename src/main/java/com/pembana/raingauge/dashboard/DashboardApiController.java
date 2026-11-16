@@ -30,6 +30,7 @@ import com.pembana.raingauge.rainfall.RainfallUnit;
 import com.pembana.raingauge.rainfall.RainfallWindow;
 import com.pembana.raingauge.station.Station;
 import com.pembana.raingauge.station.StationService;
+import com.pembana.raingauge.station.StationType;
 
 /**
  * Handles dashboard API HTTP requests.
@@ -123,7 +124,8 @@ public class DashboardApiController {
 	 * @param stationId the provider station identifier
 	 */
 	private void validateStationId(String stationId) {
-		if (!stationId.matches("[A-Za-z0-9]{3,12}")) {
+		if (!StationType.AUTOMATED.acceptsStationId(stationId)
+				&& !StationType.DAILY_REPORTS.acceptsStationId(stationId)) {
 			throw new IllegalArgumentException("Station ID is invalid");
 		}
 	}

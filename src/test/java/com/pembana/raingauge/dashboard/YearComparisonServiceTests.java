@@ -55,7 +55,8 @@ class YearComparisonServiceTests {
 		RainfallProperties properties = new RainfallProperties();
 		Clock clock = Clock.fixed(now, ZoneOffset.UTC);
 		RainfallService rainfall = mock(RainfallService.class);
-		YearComparisonService service = new YearComparisonService(rainfall, properties, clock);
+		YearComparisonService service = new YearComparisonService(rainfall, properties, clock,
+				mock(DailyYearComparison.class));
 		Station station = new Station("HI_DCP", "TESTH1", "Test station");
 		station.updateCapability(RainfallCapability.SUPPORTED_INTERVAL_PRECIPITATION, "PPHRG");
 		RainfallUnit unit = RainfallUnit.IMPERIAL;

@@ -22,6 +22,9 @@ package com.pembana.raingauge.station;
  */
 public enum RainfallCapability {
 
+	/** Station reports volunteer precipitation by observation date. */
+	DAILY_REPORTS,
+
 	/** Station exposes a cumulative precipitation accumulator. */
 	SUPPORTED_ACCUMULATOR,
 

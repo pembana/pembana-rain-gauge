@@ -59,6 +59,7 @@ hawaii:
     providers:
       iem-base-url: https://mesonet.agron.iastate.edu
       hads-base-url: https://mesonet.agron.iastate.edu
+      cocorahs-base-url: https://data.cocorahs.org
       connect-timeout: 5s
       read-timeout: 30s
       retries: 2

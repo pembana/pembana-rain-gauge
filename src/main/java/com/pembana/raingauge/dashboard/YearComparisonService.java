@@ -33,6 +33,8 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
+import com.pembana.raingauge.cocorahs.DailyReportService;
+import com.pembana.raingauge.cocorahs.DailyReportService.RefreshCheck;
 import com.pembana.raingauge.config.RainfallProperties;
 import com.pembana.raingauge.dashboard.YearComparisonResponse.DailyPoint;
 import com.pembana.raingauge.dashboard.YearComparisonResponse.MonthResult;
@@ -48,6 +50,7 @@ import com.pembana.raingauge.rainfall.RainfallWindow;
 import com.pembana.raingauge.station.RainfallCapability;
 import com.pembana.raingauge.station.Station;
 import com.pembana.raingauge.station.StationResponse;
+import com.pembana.raingauge.station.StationType;
 import com.pembana.raingauge.station.client.ProviderException;
 
 /**
@@ -65,12 +68,15 @@ public class YearComparisonService {
 
 	private final Clock clock;
 
+	private final DailyYearComparison dailyComparison;
+
 	private final Cache<YearQuery, YearResult> historical;
 
 	private final Cache<YearQuery, YearResult> recent;
 
 	YearComparisonService(RainfallService rainfallService, RainfallProperties properties,
-			Clock clock) {
+			Clock clock, DailyYearComparison dailyComparison) {
+		this.dailyComparison = dailyComparison;
 		this.rainfallService = rainfallService;
 		this.clock = clock;
 		this.historical = cache(properties.getCache().getHistoricalObservations());
@@ -84,24 +90,21 @@ public class YearComparisonService {
 		if (end != null) {
 			latest = Math.min(latest, end.getYear());
 		}
-		int first = (begin != null) ? begin.getYear() : FIRST_ARCHIVE_YEAR;
+		int defaultFirst = (station.getType() == StationType.DAILY_REPORTS)
+				? DailyReportService.FIRST_HAWAII_YEAR : FIRST_ARCHIVE_YEAR;
+		int first = (begin != null) ? begin.getYear() : defaultFirst;
 		return IntStream.rangeClosed(first, latest).mapToObj((year) -> year).toList();
 	}
 
 	YearComparisonResponse compare(Station station, List<Integer> requested, String mode,
 			RainfallUnit unit) {
-		if (!mode.equals("calendar") && !mode.equals("ytd")) {
-			throw new IllegalArgumentException("Choose calendar years or matching year to date");
-		}
-		if (requested.size() > MAX_YEARS) {
-			throw new IllegalArgumentException("Choose up to eight years");
-		}
-		List<Integer> available = availableYears(station);
-		List<Integer> years = requested.isEmpty()
-				? available.stream().skip(Math.max(0, available.size() - 3)).toList()
-				: requested.stream().distinct().sorted().toList();
-		if (!available.containsAll(years)) {
-			throw new IllegalArgumentException("Choose years within the station's archive");
+		List<Integer> years = selectYears(station, requested, mode);
+
+		if (station.getType() == StationType.DAILY_REPORTS) {
+			List<YearResult> results = years.stream()
+					.map((year) -> this.dailyComparison.load(station, year, mode, unit)).toList();
+			return new YearComparisonResponse(StationResponse.from(station), unit.token(), mode,
+					results, DailyReportService.PERIOD_BASIS);
 		}
 
 		// A stable cutoff lets repeated requests reuse current data for up to five minutes.
@@ -117,7 +120,28 @@ public class YearComparisonService {
 			results.add(load(station, from, to, unit, year == localCutoff.getYear()));
 		}
 		return new YearComparisonResponse(StationResponse.from(station), unit.token(), mode,
-				List.copyOf(results));
+				List.copyOf(results), "local-time");
+	}
+
+	List<RefreshCheck> refreshReports(Station station, List<Integer> requested, String mode) {
+		return this.dailyComparison.refresh(station, selectYears(station, requested, mode));
+	}
+
+	private List<Integer> selectYears(Station station, List<Integer> requested, String mode) {
+		if (!mode.equals("calendar") && !mode.equals("ytd")) {
+			throw new IllegalArgumentException("Choose calendar years or matching year to date");
+		}
+		if (requested.size() > MAX_YEARS) {
+			throw new IllegalArgumentException("Choose up to eight years");
+		}
+		List<Integer> available = availableYears(station);
+		List<Integer> years = requested.isEmpty()
+				? available.stream().skip(Math.max(0, available.size() - 3)).toList()
+				: requested.stream().distinct().sorted().toList();
+		if (!available.containsAll(years)) {
+			throw new IllegalArgumentException("Choose years within the station's archive");
+		}
+		return years;
 	}
 
 	private YearResult load(Station station, LocalDateTime from, LocalDateTime to,
@@ -185,14 +209,14 @@ public class YearComparisonService {
 				(amount != null) ? amount.display(result.unit()) : "Unavailable", status,
 				result.quality().completenessPercentage(), result.observationCutoff(),
 				result.provider(), result.fetchedAt(), result.quality().staleCacheUsed(),
-				List.copyOf(warnings), months(monthly, result.unit()), List.copyOf(cumulative));
+				List.copyOf(warnings), months(monthly, result.unit()), List.copyOf(cumulative), null);
 	}
 
 	private YearResult unavailable(LocalDateTime from, LocalDateTime to, RainfallUnit unit,
 			String warning) {
 		return new YearResult(from.getYear(), from, to, !to.equals(from.plusYears(1)), null,
 				"Unavailable", RainfallResultStatus.UNAVAILABLE, null, null, null, null, false,
-				List.of(warning), months(Map.of(), unit), List.of());
+				List.of(warning), months(Map.of(), unit), List.of(), null);
 	}
 
 	private List<MonthResult> months(Map<Integer, BigDecimal> inches, RainfallUnit unit) {

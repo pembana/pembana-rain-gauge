@@ -308,6 +308,9 @@ public class RainfallProperties {
 		@NotBlank
 		private String hadsBaseUrl = "https://mesonet.agron.iastate.edu";
 
+		@NotBlank
+		private String cocorahsBaseUrl = "https://data.cocorahs.org";
+
 		@NotNull
 		private Duration connectTimeout = Duration.ofSeconds(5);
 
@@ -326,6 +329,22 @@ public class RainfallProperties {
 
 		@NotBlank
 		private String userAgent = "Pembana-Rain-Gauge/0.1 (+https://github.com/pembana/pembana-rain-gauge)";
+
+		/**
+		 * Returns the CoCoRaHS export host.
+		 * @return the base URL
+		 */
+		public String getCocorahsBaseUrl() {
+			return this.cocorahsBaseUrl;
+		}
+
+		/**
+		 * Sets the CoCoRaHS export host.
+		 * @param cocorahsBaseUrl the base URL
+		 */
+		public void setCocorahsBaseUrl(String cocorahsBaseUrl) {
+			this.cocorahsBaseUrl = cocorahsBaseUrl;
+		}
 
 		/**
 		 * Returns the IEM base URL.

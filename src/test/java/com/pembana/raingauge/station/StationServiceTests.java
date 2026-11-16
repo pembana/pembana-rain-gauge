@@ -43,8 +43,10 @@ import com.pembana.raingauge.station.client.StationCatalogResult;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 
@@ -73,6 +75,8 @@ class StationServiceTests {
 	void setUp() {
 		this.repository = mock(StationRepository.class);
 		this.catalogClient = mock(IemStationCatalogClient.class);
+		given(this.catalogClient.fetchCompleteCatalog(StationType.COCORAHS_NETWORK))
+				.willThrow(new ProviderException("CoCoRaHS fixture provider down"));
 		this.eventPublisher = mock(ApplicationEventPublisher.class);
 		this.properties = new RainfallProperties();
 		TransactionTemplate transactionTemplate = mock(TransactionTemplate.class);
@@ -104,10 +108,30 @@ class StationServiceTests {
 	 */
 	@Test
 	void populatedDatabaseSkipsBootstrapRetrieval() {
-		given(this.repository.count()).willReturn(1L);
+		given(this.repository.existsByNetwork("HI_DCP")).willReturn(true);
+		given(this.repository.existsByNetwork(StationType.COCORAHS_NETWORK)).willReturn(true);
 
 		assertThat(this.service.initializeCatalogIfEmpty()).isFalse();
 		then(this.catalogClient).should(never()).fetchCompleteCatalog(any());
+	}
+
+	/**
+	 * Adds the volunteer catalog at startup when automated gauges are already present.
+	 */
+	@Test
+	void bootstrapLoadsOnlyMissingNetwork() {
+		given(this.repository.existsByNetwork("HI_DCP")).willReturn(true);
+		CatalogStation volunteer = new CatalogStation(StationType.COCORAHS_NETWORK, "HI-HI-121",
+				"Holualoa", null, null, null, null, null, true, "HI", "US", "Pacific/Honolulu", "fixture");
+		willReturn(result(volunteer)).given(this.catalogClient).fetchCompleteCatalog(StationType.COCORAHS_NETWORK);
+
+		assertThat(this.service.initializeCatalogIfEmpty()).isTrue();
+		then(this.catalogClient).should(never()).fetchCompleteCatalog("HI_DCP");
+		then(this.repository).should().saveAll(argThat((Iterable<Station> stations) -> {
+			Station added = stations.iterator().next();
+			return added.getStationId().equals("HI-HI-121")
+					&& added.getRainfallCapability() == RainfallCapability.DAILY_REPORTS;
+		}));
 	}
 
 	/**
@@ -170,7 +194,8 @@ class StationServiceTests {
 	void refreshUpdatesExistingAndRetainsAbsentStationAsUnconfirmed() {
 		Station existing = new Station("HI_DCP", "WIHH1", "Old source name");
 		Station absent = new Station("HI_DCP", "OLDH1", "Absent from this response");
-		given(this.repository.findAll()).willReturn(List.of(existing, absent));
+		Station volunteer = new Station(StationType.COCORAHS_NETWORK, "HI-HI-121", "Holualoa");
+		given(this.repository.findAll()).willReturn(List.of(existing, absent, volunteer));
 		given(this.catalogClient.fetchCompleteCatalog("HI_DCP")).willReturn(result(station("WIHH1")));
 
 		StationService.CatalogRefreshSummary summary = this.service.refreshCatalog();
@@ -179,6 +204,7 @@ class StationServiceTests {
 		assertThat(summary.unconfirmed()).isEqualTo(1);
 		assertThat(existing.getSourceName()).isEqualTo("Kailua-Kona 3SE - Waiaha");
 		assertThat(absent.isCatalogConfirmed()).isFalse();
+		assertThat(volunteer.isCatalogConfirmed()).isTrue();
 	}
 
 	/**

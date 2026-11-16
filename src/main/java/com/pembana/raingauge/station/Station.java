@@ -264,6 +264,14 @@ public class Station {
 	}
 
 	/**
+	 * Returns the station type inferred from its catalog network.
+	 * @return the station type
+	 */
+	public StationType getType() {
+		return StationType.fromNetwork(this.network);
+	}
+
+	/**
 	 * Returns the station ID.
 	 * @return the station ID
 	 */

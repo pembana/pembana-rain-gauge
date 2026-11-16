@@ -18,9 +18,11 @@ package com.pembana.raingauge.station;
 
 import java.util.List;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -43,11 +45,14 @@ public class StationApiController {
 
 	/**
 	 * Returns the public station catalog.
+	 * @param network optional network filter
 	 * @return the resulting stations
 	 */
 	@GetMapping
-	public List<StationResponse> stations() {
-		return this.stationService.findRainfallStations().stream().map(StationResponse::from).toList();
+	public List<StationResponse> stations(@RequestParam(required = false) @Nullable String network) {
+		return this.stationService.findHistoricalRainfallStations().stream()
+				.filter((station) -> network == null || network.isBlank() || station.getNetwork().equalsIgnoreCase(network))
+				.map(StationResponse::from).toList();
 	}
 
 	/**

@@ -39,6 +39,7 @@ import com.pembana.raingauge.station.RainfallCapability;
 import com.pembana.raingauge.station.Station;
 import com.pembana.raingauge.station.StationOverride;
 import com.pembana.raingauge.station.StationRepository;
+import com.pembana.raingauge.station.StationType;
 import com.pembana.raingauge.station.client.CatalogStation;
 import com.pembana.raingauge.station.client.IemStationCatalogClient;
 import com.pembana.raingauge.station.client.ProviderException;
@@ -113,6 +114,8 @@ class DashboardMvcTests {
 					return new ObservationBatch(observations, List.of(), Instant.now(),
 							Duration.ZERO, false, false, "fixture", 0);
 				});
+		given(this.catalogClient.fetchCompleteCatalog(StationType.COCORAHS_NETWORK))
+				.willThrow(new ProviderException("CoCoRaHS fixture provider down"));
 		given(this.catalogClient.fetchCompleteCatalog("HI_DCP")).willReturn(new StationCatalogResult(
 				List.of(new CatalogStation("HI_DCP", "WIHH1",
 						"Kailua-Kona 3SE - Waiaha", null, null, null, null, null, true,
