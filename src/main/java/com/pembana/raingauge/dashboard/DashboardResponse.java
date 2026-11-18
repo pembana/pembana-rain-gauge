@@ -35,6 +35,7 @@ import com.pembana.raingauge.station.StationResponse;
  * @param calculatedAt the calculated at
  * @param observationCutoff the observation cutoff
  * @param summary the summary
+ * @param status the quality status for the selected period
  * @param quality the quality
  * @param dailyRainfall the daily rainfall
  * @param charts the charts
@@ -49,6 +50,7 @@ public record DashboardResponse(
 		Instant calculatedAt,
 		@Nullable Instant observationCutoff,
 		Summary summary,
+		RainfallResultStatus status,
 		RainfallDataQuality quality,
 		List<DailyRainfall> dailyRainfall,
 		Charts charts,
@@ -63,6 +65,7 @@ public record DashboardResponse(
 	 * @param calculatedAt the calculated at
 	 * @param observationCutoff the observation cutoff
 	 * @param summary the summary
+	 * @param status the quality status for the selected period
 	 * @param quality the quality
 	 * @param dailyRainfall the daily rainfall
 	 * @param charts the charts

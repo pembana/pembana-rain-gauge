@@ -1,22 +1,38 @@
 @import java.util.List
 @import com.pembana.raingauge.dashboard.DashboardView.StationMap
 @import com.pembana.raingauge.station.StationResponse
+@import com.pembana.raingauge.station.StationType
+@import com.pembana.raingauge.rainfall.RainfallWindow
+@import org.jspecify.annotations.Nullable
 
 @param List<StationResponse> stations
 @param String selectedStationId
 @param String period
 @param String unit
 @param StationMap stationMap
+@param boolean dailyStation
+@param @Nullable String compare
 
 <form method="get" action="/" id="station-form" class="station-form card card-sm">
+  @if (compare != null)
+    <input type="hidden" name="compare" value="${compare}">
+  @endif
   <div class="card-body">
     <div class="row g-2 align-items-end">
       <div class="col-12 col-md">
         <label class="form-label" for="station-selector">Weather station</label>
         <div class="input-group">
           <select class="form-select" name="station" id="station-selector">
-            @for (StationResponse station : stations)
-              <option value="${station.stationId()}" selected="${station.stationId().equals(selectedStationId)}">${station.selectionLabel()}</option>
+            @for (StationType type : StationType.values())
+              @if (stations.stream().anyMatch(station -> station.type() == type))
+                <optgroup label="${type == StationType.AUTOMATED ? "Automated gauges · HADS" : "Volunteer gauges · CoCoRaHS"}">
+                  @for (StationResponse station : stations)
+                    @if (station.type() == type)
+                      <option value="${station.stationId()}" data-type="${type.name()}" selected="${station.stationId().equals(selectedStationId)}">${station.selectionLabel()}${station.archiveEnd() == null ? "" : " · archive through " + station.archiveEnd().getYear()}</option>
+                    @endif
+                  @endfor
+                </optgroup>
+              @endif
             @endfor
           </select>
           <button class="btn btn-outline-secondary station-map-trigger" type="button"
@@ -34,11 +50,14 @@
         </div>
       </div>
       <div class="col-6 col-md-3">
-        <label class="form-label" for="period-selector">Chart period</label>
+        <label class="form-label" for="period-selector">${dailyStation ? "Reporting period" : "Chart period"}</label>
         <select class="form-select" name="period" id="period-selector">
-          <option value="24h" selected="${period.equals("24h")}">24 hours</option>
-          <option value="7d" selected="${period.equals("7d")}">7 days</option>
-          <option value="28d" selected="${period.equals("28d")}">28 days</option>
+          @if (!List.of("24h", "7d", "28d", "mtd", "ytd").contains(period))
+            <option value="${period}" selected>${RainfallWindow.fromToken(period).label()}</option>
+          @endif
+          <option value="24h" selected="${period.equals("24h")}">${dailyStation ? "Today’s report" : "24 hours"}</option>
+          <option value="7d" selected="${period.equals("7d")}">${dailyStation ? "7 report dates" : "7 days"}</option>
+          <option value="28d" selected="${period.equals("28d")}">${dailyStation ? "28 report dates" : "28 days"}</option>
           <option value="mtd" selected="${period.equals("mtd")}">Month to date</option>
           <option value="ytd" selected="${period.equals("ytd")}">Year to date</option>
         </select>
@@ -64,7 +83,12 @@
       <div class="modal-header">
         <div>
           <h2 class="modal-title" id="station-map-title">Rainfall stations across Hawaiʻi</h2>
-          <p class="text-secondary mb-0">Select a pin to open that station.</p>
+          <fieldset class="map-legend mt-2">
+            <legend class="visually-hidden">Show stations on the map</legend>
+            <label><input class="visually-hidden" type="radio" name="map-network" value="all" checked><span>All stations</span></label>
+            <label><input class="visually-hidden" type="radio" name="map-network" value="AUTOMATED"><span><i class="network-dot" aria-hidden="true"></i>Automated</span></label>
+            <label><input class="visually-hidden" type="radio" name="map-network" value="DAILY_REPORTS"><span><i class="network-dot volunteer" aria-hidden="true"></i>CoCoRaHS</span></label>
+          </fieldset>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
@@ -80,6 +104,7 @@
           @for (StationResponse station : stations)
             @if (station.latitude() != null && station.longitude() != null)
               <span data-station-map-pin data-station-id="${station.stationId()}"
+                    data-type="${station.type().name()}"
                     data-station-label="${station.selectionLabel()}"
                     data-station-location="${station.island() == null ? "" : station.island()}${station.region() == null ? "" : " · " + station.region()}"
                     data-latitude="${station.latitude()}" data-longitude="${station.longitude()}"></span>
@@ -89,7 +114,7 @@
       </div>
       <div class="modal-footer justify-content-between">
         <span class="text-secondary">
-          Only stations with confirmed rainfall data and catalog coordinates are shown.
+          Select a pin to see the station and its network.
           <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener noreferrer">Report a map issue</a>.
         </span>
         <button type="button" class="btn" data-bs-dismiss="modal">Close</button>

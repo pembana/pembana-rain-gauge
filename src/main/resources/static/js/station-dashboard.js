@@ -1,7 +1,9 @@
 import { applyTheme, nextTheme, setButtonLoading } from './site.js';
+import './cocorahs-station.js';
 
 const HAWAII_TIME = new Intl.DateTimeFormat('en-US', {
   timeZone: 'Pacific/Honolulu',
+  year: 'numeric',
   month: 'short',
   day: 'numeric',
   hour: 'numeric',
@@ -198,22 +200,41 @@ export class StationDashboardController {
       return;
     }
     this.form.addEventListener('submit', (event) => {
+      if (this.usesServerView()) {
+        this.abortController?.abort();
+        this.requestSequence++;
+        this.setLoading(false);
+        const compare = this.form.elements.namedItem('compare');
+        if (compare) compare.disabled = this.stationSelector.value !== this.region.dataset.stationId;
+        return;
+      }
       event.preventDefault();
-      if (this.submitButton?.getAttribute('aria-disabled') === 'true') return;
       this.load(this.stationSelector.value, { push: true });
     });
-    this.stationSelector.addEventListener('change', () => {
-      this.load(this.stationSelector.value, { push: true });
-    });
-    this.periodSelector?.addEventListener('change', () => {
-      this.load(this.stationSelector.value, { push: true });
-    });
-    this.unitSelector?.addEventListener('change', () => {
-      this.load(this.stationSelector.value, { push: true });
+    this.form.addEventListener('change', () => this.form.requestSubmit(this.submitButton));
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) this.restoreControls();
     });
     this.connectStationMap();
     window.addEventListener('popstate', () => this.restoreFromLocation());
-    this.load(this.stationSelector.value, { replace: true });
+    if (this.region.dataset.type === 'AUTOMATED' && this.region.querySelector('[data-summary-card]')) {
+      this.load(this.region.dataset.stationId, { replace: !this.root.querySelector('#gauge-comparison') });
+    }
+  }
+
+  usesServerView() {
+    return this.stationSelector.selectedOptions[0]?.dataset.type === 'DAILY_REPORTS'
+      || this.region.dataset.type === 'DAILY_REPORTS'
+      || Boolean(this.root.querySelector('#gauge-comparison'))
+      || !this.region.querySelector('[data-summary-card]');
+  }
+
+  restoreControls() {
+    this.stationSelector.value = this.region.dataset.stationId;
+    this.periodSelector.value = this.region.dataset.period;
+    this.unitSelector.value = this.region.dataset.unit;
+    const compare = this.form.elements.namedItem('compare');
+    if (compare) compare.disabled = false;
   }
 
   connectStationMap() {
@@ -225,6 +246,9 @@ export class StationDashboardController {
     this.mapModal.addEventListener('shown.bs.modal', () => {
       if (!this.stationMap) this.initializeStationMap();
       this.stationMap?.invalidateSize({ pan: false });
+    });
+    this.mapModal.addEventListener('change', (event) => {
+      if (event.target.name === 'map-network') this.filterMap(event.target.value);
     });
   }
 
@@ -247,34 +271,49 @@ export class StationDashboardController {
       if (!coordinates) continue;
       const selected = pin.dataset.stationId === this.stationSelector.value;
       const marker = leaflet.marker(coordinates, {
-        alt: `Show ${pin.dataset.stationLabel}`,
-        icon: this.stationMapIcon(selected),
+        alt: `Show ${pin.dataset.stationLabel}, ${this.networkLabel(pin.dataset.type)}`,
+        icon: this.stationMapIcon(selected, pin.dataset.type),
         keyboard: true,
         riseOnHover: true,
         title: pin.dataset.stationLabel,
         zIndexOffset: selected ? 1000 : 0
-      }).addTo(this.stationMap);
+      });
       marker.bindPopup(this.stationMapPopup(pin), { minWidth: 190 });
-      this.stationMapMarkers.set(pin.dataset.stationId, marker);
+      this.stationMapMarkers.set(pin.dataset.stationId, { marker, type: pin.dataset.type });
     }
+    this.mapSelection = this.stationSelector.value;
+    this.filterMap(this.mapModal.querySelector('[name="map-network"]:checked').value);
     this.stationMap.fitBounds([
       [HAWAII_BOUNDS.south, HAWAII_BOUNDS.west],
       [HAWAII_BOUNDS.north, HAWAII_BOUNDS.east]
     ], { padding: [24, 24] });
   }
 
-  stationMapIcon(selected) {
-    const stroke = selected ? '#7f1d1d' : '#c2413b';
-    const fill = selected ? '#fecaca' : '#fee2e2';
+  networkLabel(type) {
+    return type === 'DAILY_REPORTS' ? 'CoCoRaHS volunteer' : 'Automated gauge';
+  }
+
+  filterMap(network) {
+    for (const { marker, type } of this.stationMapMarkers.values()) {
+      if (network === 'all' || network === type) marker.addTo(this.stationMap);
+      else marker.remove();
+    }
+  }
+
+  stationMapIcon(selected, type) {
+    const volunteer = type === 'DAILY_REPORTS';
+    const stroke = volunteer ? '#0b695c' : '#0b506e';
+    const fill = volunteer ? '#bcebdd' : '#cdeaf9';
+    const center = volunteer ? '<path d="m12 8 3 3-3 3-3-3z"/>' : '<circle cx="12" cy="11" r="2"/>';
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" `
       + `fill="${fill}" stroke="${stroke}" stroke-width="2" stroke-linecap="round" `
       + 'stroke-linejoin="round"><path d="M12 21c-4-4.35-6-7.35-6-10a6 6 0 1 1 12 0'
-      + 'c0 2.65-2 5.65-6 10z"/><circle cx="12" cy="11" r="2"/></svg>';
+      + `c0 2.65-2 5.65-6 10z"/>${center}</svg>`;
     return window.L.icon({
       className: `station-leaflet-marker${selected ? ' is-selected' : ''}`,
-      iconAnchor: [14, 38],
+      iconAnchor: selected ? [17, 46] : [14, 38],
       iconUrl: `data:image/svg+xml,${encodeURIComponent(svg)}`,
-      iconSize: [28, 38],
+      iconSize: selected ? [35, 46] : [28, 38],
       popupAnchor: [0, -34]
     });
   }
@@ -286,7 +325,8 @@ export class StationDashboardController {
     name.textContent = pin.dataset.stationLabel;
     const location = document.createElement('span');
     location.className = 'text-secondary';
-    location.textContent = pin.dataset.stationLocation || 'Hawaiʻi';
+    location.textContent = [this.networkLabel(pin.dataset.type), pin.dataset.stationLocation]
+      .filter(Boolean).join(' · ');
     const button = document.createElement('button');
     button.className = 'btn btn-primary btn-sm mt-2';
     button.type = 'button';
@@ -313,17 +353,20 @@ export class StationDashboardController {
 
   selectMapStation(stationId) {
     this.stationSelector.value = stationId;
-    this.updateStationMapSelection(stationId);
     this.mapModal.querySelector('.btn-close')?.click();
-    this.load(stationId, { push: true });
+    this.form.requestSubmit(this.submitButton);
   }
 
   updateStationMapSelection(stationId) {
-    for (const [candidateId, marker] of this.stationMapMarkers) {
+    if (stationId === this.mapSelection) return;
+    for (const candidateId of [this.mapSelection, stationId]) {
+      const pin = this.stationMapMarkers.get(candidateId);
+      if (!pin) continue;
       const selected = candidateId === stationId;
-      marker.setIcon(this.stationMapIcon(selected));
-      marker.setZIndexOffset(selected ? 1000 : 0);
+      pin.marker.setIcon(this.stationMapIcon(selected, pin.type));
+      pin.marker.setZIndexOffset(selected ? 1000 : 0);
     }
+    this.mapSelection = stationId;
   }
 
   async load(stationId, historyMode = {}) {
@@ -353,6 +396,7 @@ export class StationDashboardController {
     } catch (error) {
       if (error.name !== 'AbortError' && isCurrentRequest(sequence, this.requestSequence)) {
         this.showError(error.message);
+        if (this.form) this.restoreControls();
       }
     } finally {
       if (isCurrentRequest(sequence, this.requestSequence)) this.setLoading(false);
@@ -363,9 +407,16 @@ export class StationDashboardController {
     const station = dashboard.station;
     putText(this.region, '[data-station-heading]', station.alias
       ? `${station.displayName} (${station.alias})` : `${station.displayName} (${station.stationId})`);
-    putText(this.region, '[data-station-location]', [station.island, station.region].filter(Boolean).join(' · '));
-    putText(this.region, '[data-station-source-name]', station.sourceName);
+    putText(this.region, '[data-station-location]', [station.island || 'Hawaiʻi', station.region].filter(Boolean).join(' · '));
     putText(this.region, '[data-station-id]', station.stationId);
+    const code = this.region.querySelector('[data-station-code]');
+    if (code) code.hidden = !station.alias;
+    const { period, unit } = dashboard.selection;
+    Object.assign(this.region.dataset, { stationId: station.stationId, period, unit });
+    const nearby = this.region.querySelector('[data-nearby-link]');
+    if (nearby) nearby.href = historyUrl(station.stationId, period, unit) + '&compare=nearest#gauge-comparison';
+    const detail = this.region.querySelector('[data-station-detail]');
+    if (detail) detail.href = `/stations/${encodeURIComponent(station.stationId)}?unit=${encodeURIComponent(unit)}`;
     putText(this.region, '[data-observation-cutoff]', formatHawaii(dashboard.observationCutoff));
     document.title = `${station.displayName} rainfall — Pembana Rain Gauge`;
     const summary = dashboard.summary;
@@ -378,9 +429,8 @@ export class StationDashboardController {
       existing?.replaceWith(makeBadge(result.status));
       updateQualityConditions(card, result.qualityConditions);
     }
-    const qualityStatus = summary.twentyEightDays?.status || 'UNAVAILABLE';
     const qualityBadge = this.region.querySelector('#quality-panel [data-quality-status]');
-    qualityBadge?.replaceWith(makeBadge(qualityStatus));
+    qualityBadge?.replaceWith(makeBadge(dashboard.status));
     putText(this.region, '[data-quality-completeness]', `${dashboard.quality.completenessPercentage}%`);
     putText(this.region, '[data-quality-received]', dashboard.quality.receivedSamples);
     putText(this.region, '[data-quality-expected]', dashboard.quality.expectedSamples);
@@ -458,6 +508,11 @@ export class StationDashboardController {
     const station = parameters.get('station') || this.stationSelector.value;
     const period = parameters.get('period') || '28d';
     const unit = parameters.get('unit') || 'metric';
+    this.stationSelector.value = station;
+    if (this.usesServerView()) {
+      location.reload();
+      return;
+    }
     if (this.periodSelector) this.periodSelector.value = period;
     if (this.unitSelector) this.unitSelector.value = unit;
     this.load(station);

@@ -20,6 +20,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service;
 import com.pembana.raingauge.config.RainfallProperties;
 import com.pembana.raingauge.observation.ObservationBatch;
 import com.pembana.raingauge.observation.ObservationService;
+import com.pembana.raingauge.observation.PrecipitationObservation;
 import com.pembana.raingauge.observation.shef.ShefPrecipitationCode;
 import com.pembana.raingauge.rainfall.cumulative.CumulativeRainfallCalculator;
 import com.pembana.raingauge.rainfall.interval.IntervalRainfallCalculator;
@@ -151,6 +153,24 @@ public class RainfallService {
 	 * @return the calculated rainfall result
 	 */
 	public RainfallResult calculate(Station station, Instant from, Instant to, RainfallUnit unit) {
+		return calculateRange(station, from, to, unit, false);
+	}
+
+	/**
+	 * Calculates rainfall using only native measurements between two gauge readings,
+	 * including a sample taken exactly at either reading time.
+	 * @param station the automated gauge
+	 * @param from the opening volunteer reading
+	 * @param to the closing volunteer reading
+	 * @param unit the display unit
+	 * @return the measured total and its actual coverage
+	 */
+	public RainfallResult betweenReadings(Station station, Instant from, Instant to, RainfallUnit unit) {
+		return calculateRange(station, from, to, unit, true);
+	}
+
+	private RainfallResult calculateRange(Station station, Instant from, Instant to, RainfallUnit unit,
+			boolean betweenReadings) {
 		validateRange(from, to);
 		RainfallCapabilityService.CapabilityDiscovery capability =
 				this.capabilityService.discover(station);
@@ -162,11 +182,24 @@ public class RainfallService {
 		if (precipitationKey == null) {
 			throw new IllegalStateException("A supported rainfall capability requires a SHEF key");
 		}
-		Instant queryFrom = (capability.capability() == RainfallCapability.SUPPORTED_ACCUMULATOR)
+		boolean accumulator = capability.capability() == RainfallCapability.SUPPORTED_ACCUMULATOR;
+		Instant queryFrom = (accumulator && !betweenReadings)
 				? from.minus(this.properties.getQuery().getBaselineLookback()) : from;
+		// The archive query uses an exclusive end and native timestamps have second precision.
+		Instant queryTo = betweenReadings ? to.plusSeconds(1) : to;
 		ObservationBatch observations = this.observationService.observations(station.getStationId(),
-				station.getNetwork(), precipitationKey, queryFrom, to);
+				station.getNetwork(), precipitationKey, queryFrom, queryTo);
 		Duration observationPeriod = observationPeriod(capability, observations);
+		if (betweenReadings) {
+			// Covering cache entries may contain earlier readings. An accumulator delta
+			// across the opening boundary would count rain from outside the report.
+			List<PrecipitationObservation> inside = observations.observations().stream()
+					.filter((reading) -> !reading.validAt().isBefore(from) && !reading.validAt().isAfter(to))
+					.toList();
+			return accumulator ? this.cumulativeCalculator.calculate(inside, from, to.plusNanos(1),
+					observationPeriod, observations, unit) : this.intervalCalculator.calculate(inside, from, to,
+							observationPeriod, observations, unit);
+		}
 		return calculate(capability.capability(), observations, from, to, observationPeriod, unit);
 	}
 

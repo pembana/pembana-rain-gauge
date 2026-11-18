@@ -194,7 +194,18 @@ JSON APIs include `/api/stations`, `/api/stations/{stationId}`,
 `/api/compare`. Invalid station IDs, disabled stations, periods, units, and excessive ranges use
 RFC 9457 problem details.
 
-CoCoRaHS stations appear under `/stations?network=HI_COCORAHS` and in year comparison.
+The dashboard station selector and map include automated gauges and CoCoRaHS volunteers.
+For volunteers, the period selects inclusive Hawaiʻi observation dates. The one-day option shows today's report.
+The dashboard links to the full report detail for the same dates and units. CoCoRaHS stations also appear under
+`/stations?network=HI_COCORAHS` and in year comparison.
+
+“Compare with a nearby gauge” opens a comparison with the closest mapped station in the other network whose archive
+overlaps the selected dates. The station can be changed. For example,
+`/?station=WIHH1&period=7d&unit=imperial&compare=nearest` pairs Waiaha with a volunteer gauge.
+The most recent usable single-day report in the period and the preceding date's usable daily reading establish the window.
+Only native measurements inside both boundaries contribute. Each gauge has its own value, and partial automated
+coverage shows the actual sample times. A missing opening reading leaves the automated comparison unavailable.
+
 `/api/stations/{stationId}/daily-reports?from=2026-11-01&to=2026-11-14&unit=metric` uses inclusive
 Hawaiʻi observation dates. Daily reports reflect precipitation preceding the reported reading.
 Multi-day totals are shown separately and counted only when the whole span fits. A span crossing months
@@ -210,7 +221,7 @@ boundaries and offers matching year-to-date periods. Partial totals include only
 rainfall, and missing months and days have no value. The JSON endpoint is
 `/api/stations/{stationId}/years?year=2024&year=2025&mode=calendar&unit=metric`.
 
-The aggregate dashboard response drives both JTE and AJAX presentation. The ES-module controller
+The automated dashboard response drives both JTE and AJAX presentation. Volunteer and paired views use a standard GET and server-rendered report data. The ES-module controller
 cancels superseded requests, prevents stale responses from winning, uses safe `textContent`/DOM
 creation, keeps the last valid view on failure, and updates the URL only after success. ECharts
 instances are created once and updated with `setOption`; important rainfall values also have

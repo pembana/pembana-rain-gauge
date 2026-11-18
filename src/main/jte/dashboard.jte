@@ -18,7 +18,7 @@
           <div class="col">
             <div class="page-pretitle">Hawaiʻi environmental data</div>
             <h1 class="page-title">Rainfall station dashboard</h1>
-            <p class="text-secondary mb-0">Totals calculated from station observations.</p>
+            <p class="text-secondary mb-0">Explore automated gauges and daily CoCoRaHS reports across Hawaiʻi.</p>
           </div>
           <div class="col-auto">
             <span class="provisional-pill">Provisional data</span>
@@ -34,7 +34,8 @@
         @else
           @template.components.stationSelector(stations = view.stations(),
             selectedStationId = view.selectedStation().stationId(), period = view.period(), unit = view.unit(),
-            stationMap = view.stationMap())
+            stationMap = view.stationMap(), dailyStation = view.dailyStation(),
+            compare = view.comparison() == null || view.comparison().selected() == null ? null : view.comparison().selected().station().getStationId())
         @endif
         <div id="dashboard-error" class="alert alert-danger mt-3 ${view.error() == null ? "d-none" : ""}" role="alert">
           <strong>Could not update rainfall data.</strong>
@@ -42,27 +43,57 @@
         </div>
         @if (view.selectedStation() != null)
           <section id="dashboard-region" class="dashboard-region mt-3" aria-live="polite" aria-busy="false"
+                   data-station-id="${view.selectedStation().stationId()}" data-type="${view.selectedStation().type().name()}"
                    data-period="${view.period()}" data-unit="${view.unit()}">
-            <div class="station-heading card station-hero">
+            <div class="station-heading card station-hero ${view.dailyStation() ? "volunteer-hero" : ""}">
               <div class="card-body">
                 <div class="row align-items-center g-3">
                   <div class="col">
-                    <div class="text-secondary" data-station-location>${view.selectedStation().island()} · ${view.selectedStation().region()}</div>
+                    <div class="network-label mb-1"><i class="network-dot ${view.dailyStation() ? "volunteer" : ""}" aria-hidden="true"></i>
+                      ${view.dailyStation() ? "CoCoRaHS · Volunteer gauge" : "HADS · Automated gauge"}
+                    </div>
                     <h2 class="mb-1" data-station-heading>${view.selectedStation().selectionLabel()}</h2>
                     <div class="text-secondary">
-                      <span data-station-source-name>${view.selectedStation().sourceName()}</span>
-                      · <code data-station-id>${view.selectedStation().stationId()}</code>
+                      <span data-station-location>${view.selectedStation().island() == null ? "Hawaiʻi" : view.selectedStation().island()}${view.selectedStation().region() == null ? "" : " · " + view.selectedStation().region()}</span>
+                      <span data-station-code hidden="${view.selectedStation().alias() == null}"> · <code data-station-id>${view.selectedStation().stationId()}</code></span>
+                      @if (view.dailyStation())
+                        · <a href="/stations/${view.selectedStation().stationId()}?unit=${view.unit()}&amp;to=${view.reportDates().to().toString()}&amp;from=${view.reportDates().from().toString()}">Report details</a>
+                      @else
+                        · <a data-station-detail href="/stations/${view.selectedStation().stationId()}?unit=${view.unit()}">Station details</a>
+                      @endif
                     </div>
                   </div>
-                  <div class="col-auto text-end">
-                    <div class="subheader">Latest observation</div>
-                    <div class="fw-semibold" data-observation-cutoff>${view.dashboard() != null && view.dashboard().observationCutoff() != null ? view.dashboard().observationCutoff().toString() : "Unavailable"}</div>
+                  <div class="col-12 col-sm-auto text-sm-end">
+                    <div class="subheader">${view.dailyStation() ? "Latest reading in period" : "Latest observation"}</div>
+                    @if (view.dailyStation())
+                      <div class="fw-semibold">${view.reports() == null ? "Unavailable" : DashboardView.readingTime(view.reports().latestReadingInRange())}</div>
+                    @else
+                      <div class="fw-semibold" data-observation-cutoff>${view.dashboard() == null ? "Unavailable" : DashboardView.observationTime(view.dashboard().observationCutoff())}</div>
+                    @endif
                   </div>
                 </div>
+                @if (view.comparison() == null)
+                  <a class="btn btn-sm btn-outline-primary mt-3" data-nearby-link
+                     href="/?station=${view.selectedStation().stationId()}&amp;period=${view.period()}&amp;unit=${view.unit()}&amp;compare=nearest#gauge-comparison"
+                     data-loading-message="Comparing nearby gauges…">${view.dailyStation() ? "Compare with a nearby automated gauge" : "Compare with a nearby CoCoRaHS gauge"}</a>
+                @endif
               </div>
             </div>
-            @if (view.dashboard() != null)
-              <div class="row row-cards mt-1 summary-grid">
+            @if (view.comparison() != null)
+              @template.components.gaugeComparison(view = view, comparison = view.comparison())
+            @endif
+            @if (view.dailyStation())
+              @if (view.selectedStation().archiveEnd() != null && view.selectedStation().archiveEnd().isBefore(view.reportDates().from()))
+                <section class="card card-body mt-3">
+                  <h3 class="card-title">Archived CoCoRaHS station</h3>
+                  <p>This station’s archive ends ${view.selectedStation().archiveEnd().toString()}, before your selected dates.</p>
+                  <div><a href="/stations/${view.selectedStation().stationId()}?to=${view.selectedStation().archiveEnd().toString()}&amp;unit=${view.unit()}">View its last 28 report dates</a></div>
+                </section>
+              @elseif (view.reports() != null)
+                @template.components.reportDashboard(reports = view.reports(), dates = view.reportDates())
+              @endif
+            @elseif (view.dashboard() != null)
+              <div class="row row-cards mt-1 summary-grid station-summary-grid">
                 @template.components.rainfallCard(key = "twentyFourHours", label = "24 hours", result = view.dashboard().summary().twentyFourHours())
                 @template.components.rainfallCard(key = "sevenDays", label = "7 days", result = view.dashboard().summary().sevenDays())
                 @template.components.rainfallCard(key = "twentyEightDays", label = "28 days", result = view.dashboard().summary().twentyEightDays())
@@ -80,7 +111,7 @@
                   <article class="card h-100">
                     <div class="card-header"><h3 class="card-title">Data quality</h3></div>
                     <div class="card-body" id="quality-panel">
-                      <div class="mb-3">@template.components.qualityBadge(status = view.dashboard().summary().twentyEightDays().status())</div>
+                      <div class="mb-3">@template.components.qualityBadge(status = view.dashboard().status())</div>
                       <dl class="quality-grid mb-0">
                         <div><dt>Completeness</dt><dd data-quality-completeness>${view.dashboard().quality().completenessPercentage()}%</dd></div>
                         <div><dt>Received</dt><dd data-quality-received>${view.dashboard().quality().receivedSamples()}</dd></div>
@@ -140,9 +171,11 @@
                 <p class="text-secondary">Station metadata remains available. Try again after the provider recovers.</p>
               </div></div>
             @endif
-            <div class="alert alert-info mt-3" role="note">
+            @if (!view.dailyStation())
+              <div class="alert alert-info mt-3" role="note">
               <strong>Provisional data.</strong> Missing intervals are never treated as zero. Displaying 0.1 mm does not imply 0.1 mm sensor resolution; 0.01 in equals 0.254 mm.
-            </div>
+              </div>
+            @endif
           </section>
         @endif
       </div>

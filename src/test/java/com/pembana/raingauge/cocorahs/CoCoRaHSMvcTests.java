@@ -19,12 +19,16 @@ package com.pembana.raingauge.cocorahs;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.math.BigDecimal;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Map;
 
 import com.sun.net.httpserver.HttpServer;
 import org.junit.jupiter.api.AfterAll;
@@ -39,8 +43,13 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.pembana.raingauge.observation.ObservationBatch;
+import com.pembana.raingauge.observation.PrecipitationObservation;
+import com.pembana.raingauge.observation.client.HadsObservationClient;
+import com.pembana.raingauge.observation.client.IemDailySummaryClient;
 import com.pembana.raingauge.station.RainfallCapability;
 import com.pembana.raingauge.station.Station;
 import com.pembana.raingauge.station.StationRepository;
@@ -48,6 +57,11 @@ import com.pembana.raingauge.station.StationType;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -77,6 +91,12 @@ class CoCoRaHSMvcTests {
 
 	@Autowired
 	private StationRepository repository;
+
+	@MockitoBean
+	private HadsObservationClient observations;
+
+	@MockitoBean
+	private IemDailySummaryClient summaries;
 
 	@DynamicPropertySource
 	static void configure(DynamicPropertyRegistry registry) {
@@ -128,6 +148,92 @@ class CoCoRaHSMvcTests {
 				.andExpect(jsonPath("$.latestReport.observedAt").value("2024-02-11T07:00:00"));
 		this.mvc.perform(get("/api/stations/HI-HI-1/dashboard")).andExpect(status().isUnprocessableContent());
 		this.mvc.perform(get("/compare")).andExpect(content().string(not(containsString("HI-HI-1"))));
+	}
+
+	@Test
+	void volunteerOnlyDashboardLinksToTheArchiveAfterReportingEnds() throws Exception {
+		this.mvc.perform(get("/").param("station", "HI-HI-1").param("period", "24h"))
+				.andExpect(status().isOk())
+				.andExpect(content().string(containsString("CoCoRaHS · Volunteer gauge")))
+				.andExpect(content().string(containsString("Today’s report")))
+				.andExpect(content().string(not(containsString("Awaiting today’s report"))))
+				.andExpect(content().string(containsString("View its last 28 report dates")))
+				.andExpect(content().string(not(containsString("Native interval increments"))));
+		verifyNoInteractions(this.observations);
+	}
+
+	@Test
+	void dashboardComparesOnlyMeasurementsBetweenTheTwoActualReadingTimes() throws Exception {
+		savePair("HI-HI-1", RainfallCapability.SUPPORTED_ACCUMULATOR, "PCIRG");
+		given(this.summaries.fetch(anyString(), anyString(), any())).willReturn(Map.of());
+		Instant open = Instant.parse("2028-02-29T17:05:00Z");
+		// A covering cache entry includes a sample before the window and one after it.
+		given(this.observations.fetch(anyList(), anyString(), anyString(), any(), any())).willReturn(
+				new ObservationBatch(List.of(sample(open.minusSeconds(300), "PCIRG", "4.00"),
+						sample(open.plusSeconds(600), "PCIRG", "5.00"), sample(NOW.minusSeconds(900), "PCIRG", "5.15"),
+						sample(NOW, "PCIRG", "5.25"), sample(NOW.plusSeconds(900), "PCIRG", "6.00")),
+						List.of(), NOW, Duration.ZERO, false, false, "fixture", 0));
+		this.mvc.perform(get("/").param("station", "AUT01").param("period", "24h")
+				.param("unit", "imperial").param("compare", "nearest"))
+				.andExpect(status().isOk())
+				.andExpect(content().string(containsString("Nearby gauge comparison")))
+				.andExpect(content().string(containsString("Feb 29, 2028 · 7:05 AM HST")))
+				.andExpect(content().string(containsString("Mar 1, 2028 · 8:00 AM HST")))
+				.andExpect(content().string(containsString("Samples cover Feb 29, 2028 · 7:15 AM HST")))
+				.andExpect(content().string(containsString("0.25 in")))
+				.andExpect(content().string(containsString("Trace")))
+				.andExpect(content().string(containsString("Native interval increments")));
+		this.mvc.perform(get("/").param("station", "HI-HI-1").param("period", "7d").param("compare", "AUT01"))
+				.andExpect(status().isOk())
+				.andExpect(content().string(containsString("6.4 mm")))
+				.andExpect(content().string(containsString("2 of 7 dates")))
+				.andExpect(content().string(containsString("7 report dates")))
+				.andExpect(content().string(containsString("Feb 24, 2028 – Mar 1, 2028")))
+				.andExpect(content().string(not(containsString("Native interval increments"))));
+	}
+
+	@Test
+	void comparesWholeAutomatedIntervalsAndExcludesOneCrossingTheOpeningReading() throws Exception {
+		savePair("HI-HI-1", RainfallCapability.SUPPORTED_INTERVAL_PRECIPITATION, "PPHRZ");
+		Instant firstHour = Instant.parse("2028-02-29T18:00:00Z");
+		given(this.observations.fetch(anyList(), anyString(), anyString(), any(), any())).willReturn(
+				new ObservationBatch(List.of(sample(firstHour, "PPHRZ", "0.50"),
+						sample(firstHour.plusSeconds(3600), "PPHRZ", "0.04"), sample(NOW, "PPHRZ", "0.06")),
+						List.of(), NOW, Duration.ZERO, false, false, "fixture", 0));
+		this.mvc.perform(get("/").param("station", "HI-HI-1").param("period", "24h")
+				.param("unit", "imperial").param("compare", "nearest"))
+				.andExpect(status().isOk())
+				.andExpect(content().string(containsString("0.10 in")))
+				.andExpect(content().string(containsString("Samples cover Feb 29, 2028 · 8:00 AM HST")));
+	}
+
+	@Test
+	void keepsAnIsolatedVolunteerReportWithoutInventingAnOpeningReading() throws Exception {
+		savePair("HI-HI-2", RainfallCapability.SUPPORTED_ACCUMULATOR, "PCIRG");
+		this.mvc.perform(get("/").param("station", "HI-HI-2").param("period", "24h")
+				.param("unit", "imperial").param("compare", "nearest"))
+				.andExpect(status().isOk())
+				.andExpect(content().string(containsString("0.12 in")))
+				.andExpect(content().string(containsString("A usable reading from the previous date is needed")));
+		verifyNoInteractions(this.observations);
+	}
+
+	private void savePair(String id, RainfallCapability capability, String key) {
+		Station volunteer = this.repository.findByStationIdIgnoreCase(id)
+				.orElseGet(() -> new Station(StationType.COCORAHS_NETWORK, id, "Naalehu"));
+		volunteer.updateSourceMetadata(new Station.SourceMetadata("Naalehu", new BigDecimal("19.06"),
+				new BigDecimal("-155.61"), null, true, null, null, "HI", "US", "Pacific/Honolulu", null), NOW);
+		volunteer.updateCapability(RainfallCapability.DAILY_REPORTS, null);
+		this.repository.saveAndFlush(volunteer);
+		Station automated = new Station("HI_DCP", "AUT01", "South gauge");
+		automated.updateSourceMetadata(new Station.SourceMetadata("South gauge", new BigDecimal("19.07"),
+				new BigDecimal("-155.61"), null, true, null, null, "HI", "US", "Pacific/Honolulu", null), NOW);
+		automated.updateCapability(capability, key);
+		this.repository.saveAndFlush(automated);
+	}
+
+	private static PrecipitationObservation sample(Instant time, String key, String inches) {
+		return PrecipitationObservation.valid("AUT01", time, key, new BigDecimal(inches), 0);
 	}
 
 	@Test
@@ -204,6 +310,16 @@ class CoCoRaHSMvcTests {
 							body = input.readAllBytes();
 						}
 					}
+					else if (!multiDay && query.contains("Station=HI-HI-1") && query.contains("StartDate=2028-01-01")) {
+						body = ("<Cocorahs><DailyPrecipReports>" + dailyRow("HI-HI-1", "2028-02-29", "07:05:00", "0.00")
+								+ dailyRow("HI-HI-1", "2028-03-01", "08:00:00", "T") + "</DailyPrecipReports></Cocorahs>")
+								.getBytes(StandardCharsets.UTF_8);
+					}
+					else if (!multiDay && query.contains("Station=HI-HI-2") && query.contains("StartDate=2028-01-01")) {
+						body = ("<Cocorahs><DailyPrecipReports>" + dailyRow("HI-HI-2", "2028-03-01", "07:20:00", "0.12")
+								+ "</DailyPrecipReports></Cocorahs>")
+								.getBytes(StandardCharsets.UTF_8);
+					}
 					else {
 						body = ("<Cocorahs><" + type + "PrecipReports/></Cocorahs>")
 								.getBytes(StandardCharsets.UTF_8);
@@ -219,6 +335,14 @@ class CoCoRaHSMvcTests {
 		catch (IOException ex) {
 			throw new UncheckedIOException(ex);
 		}
+	}
+
+	private static String dailyRow(String station, String date, String time, String inches) {
+		return """
+				<DailyPrecipReport><ObservationDate>%s</ObservationDate><ObservationTime>%s</ObservationTime>
+				<StationNumber>%s</StationNumber><TotalPrecipAmt>%s</TotalPrecipAmt>
+				<DateTimeStamp>%s %s</DateTimeStamp></DailyPrecipReport>
+				""".formatted(date, time, station, inches, date, time);
 	}
 
 	@TestConfiguration(proxyBeanMethods = false)

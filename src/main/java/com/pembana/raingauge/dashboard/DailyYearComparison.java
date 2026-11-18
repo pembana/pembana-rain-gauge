@@ -124,7 +124,7 @@ class DailyYearComparison {
 				cumulative.add(new DailyPoint(day.date(), running.value(unit),
 						"Multi-day report " + report.start() + " to " + report.end() + " · " + span.display()));
 			}
-			else if (daily != null && (day.value() != null || "Trace".equals(day.display()))) {
+			else if (daily != null && day.included()) {
 				running.add(daily);
 				cutoff = daily.observedAt();
 				months.computeIfAbsent(day.date().getMonthValue(), (_) -> new Amount()).add(daily);

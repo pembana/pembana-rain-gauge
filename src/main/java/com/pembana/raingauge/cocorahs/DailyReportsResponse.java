@@ -19,7 +19,10 @@ package com.pembana.raingauge.cocorahs;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
 
@@ -51,8 +54,15 @@ public record DailyReportsResponse(StationResponse station, LocalDate from, Loca
 		boolean trace, Coverage coverage, RainfallResultStatus status, Source source,
 		List<String> warnings) {
 
+	public @Nullable LocalDateTime latestReadingInRange() {
+		return Stream.concat(this.days.stream().map(Day::report).filter(Objects::nonNull),
+				this.spans.stream().map(Span::report))
+				.filter((report) -> !report.end().isAfter(this.to))
+				.map(DailyReport::observedAt).max(LocalDateTime::compareTo).orElse(null);
+	}
+
 	public record Day(LocalDate date, @Nullable DailyReport report, @Nullable BigDecimal value,
-			String display) {
+			String display, boolean included) {
 	}
 
 	public record Span(DailyReport report, @Nullable BigDecimal value, String display,

@@ -13,7 +13,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Near-real-time and historical Hawaiʻi rainfall from native station observations">
+  <meta name="description" content="Hawaiʻi rainfall from automated gauges and CoCoRaHS volunteer reports">
   <meta name="color-scheme" content="light dark">
   <title>${title}</title>
   <link rel="canonical" href="${pageMetadata.canonicalUrl()}">
@@ -21,7 +21,7 @@
   <meta property="og:locale" content="en_US">
   <meta property="og:site_name" content="Pembana Rain Gauge">
   <meta property="og:title" content="${title}">
-  <meta property="og:description" content="Near-real-time and historical Hawaiʻi rainfall from native station observations">
+  <meta property="og:description" content="Hawaiʻi rainfall from automated gauges and CoCoRaHS volunteer reports">
   <meta property="og:url" content="${pageMetadata.canonicalUrl()}">
   <meta property="og:image" content="${pageMetadata.socialImageUrl()}">
   <meta property="og:image:type" content="image/png">
@@ -30,7 +30,7 @@
   <meta property="og:image:alt" content="Pembana Rain Gauge logo">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${title}">
-  <meta name="twitter:description" content="Near-real-time and historical Hawaiʻi rainfall from native station observations">
+  <meta name="twitter:description" content="Hawaiʻi rainfall from automated gauges and CoCoRaHS volunteer reports">
   <meta name="twitter:image" content="${pageMetadata.socialImageUrl()}">
   <meta name="twitter:image:alt" content="Pembana Rain Gauge logo">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">

@@ -6,12 +6,14 @@ import { cumulativeYearSeries } from '../../main/resources/static/js/year-compar
 test('daily bars distinguish explicit zero, missing, and trace', () => {
   const rows = [
     { date: '2024-02-01', value: '0', label: '0 in' },
-    { date: '2024-02-02', value: '', label: 'Missing' },
-    { date: '2024-02-03', value: '', label: 'Trace' }
+    { date: '2024-02-02', label: 'Missing' },
+    { date: '2024-02-03', time: '08:00', value: '', label: 'Trace' }
   ];
   const chart = dailyReportChart(rows, 'imperial');
   assert.deepEqual(chart.series[0].data, [0, null, null]);
   assert.deepEqual(chart.series[1].data, [null, null, 0]);
+  assert.deepEqual(chart.series[2].data, [0, null, null]);
+  assert.match(chart.tooltip.formatter([{ dataIndex: 2 }]), /08:00 HST\nTrace/);
 });
 
 test('annual accumulation annotates the multi-day amount only on its ending date', () => {

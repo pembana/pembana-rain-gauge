@@ -306,23 +306,28 @@ public class DailyReportService {
 		}
 		List<DailyReportsResponse.Day> days = new ArrayList<>();
 		int dailyCount = 0;
+		boolean pendingToday = to.equals(today) && !daily.containsKey(today) && !covered.contains(today)
+				&& (station.getArchiveEnd() == null || !station.getArchiveEnd().isBefore(today));
 		for (LocalDate date : from.datesUntil(to.plusDays(1)).toList()) {
 			DailyReport report = daily.get(date);
 			BigDecimal value = null;
-			String label = (date.equals(today) && !covered.contains(date)) ? "Pending" : "Missing";
-			if (report != null) {
-				if (conflicted.contains(report)) {
-					label = "Conflict · " + display(report, unit);
-				}
-				else {
-					label = display(report, unit);
-					value = value(report, unit);
-					dailyCount += report.usable() ? 1 : 0;
-				}
+			String label = (date.equals(today) && pendingToday) ? "Pending" : "Missing";
+			boolean included = false;
+			if (report != null && conflicted.contains(report)) {
+				label = "Conflict · " + display(report, unit);
 			}
-			days.add(new DailyReportsResponse.Day(date, report, value, label));
+			else if (report != null && report.usable()) {
+				label = display(report, unit);
+				value = value(report, unit);
+				included = true;
+				dailyCount++;
+			}
+			else if (covered.contains(date)) {
+				label = "Multi-day report";
+			}
+			days.add(new DailyReportsResponse.Day(date, report, value, label, included));
 		}
-		int expected = days.size() - ((to.equals(today) && !daily.containsKey(today) && !covered.contains(today)) ? 1 : 0);
+		int expected = days.size() - (pendingToday ? 1 : 0);
 		RainfallResultStatus status = status(conflicted, covered, expected, stale);
 		List<String> warnings = new ArrayList<>();
 		if (!conflicted.isEmpty()) {

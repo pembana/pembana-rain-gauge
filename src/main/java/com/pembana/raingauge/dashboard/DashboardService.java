@@ -116,7 +116,7 @@ public class DashboardService {
 						selected.requestedStart().atZone(HAWAII),
 						selected.requestedEnd().atZone(HAWAII)),
 				selected.calculatedAt(), selected.observationCutoff(), summary(results),
-				selected.quality(), daily, charts,
+				selected.status(), selected.quality(), daily, charts,
 				new DashboardResponse.Source(selected.provider(), selected.fetchedAt(),
 						cacheAgeSeconds,
 						selected.quality().staleCacheUsed(), cadenceLabel(selected),

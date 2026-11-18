@@ -79,7 +79,8 @@ class DailyReportTests {
 
 		assertThat(response.display()).isEqualTo("0.35 in + trace");
 		assertThat(response.days()).extracting(DailyReportsResponse.Day::display)
-				.containsExactly("0.10 in", "Missing", "Missing", "Missing", "0 in", "Trace", "Missing", "Missing");
+				.containsExactly("0.10 in", "Multi-day report", "Multi-day report", "Multi-day report",
+						"0 in", "Trace", "Missing", "Missing");
 		assertThat(response.days().getFirst().report().observedAt().toString()).isEqualTo("2024-01-29T06:19");
 		assertThat(response.coverage()).isEqualTo(new DailyReportsResponse.Coverage(8, 3, 6));
 		assertThat(response.spans()).singleElement().satisfies((span) -> assertThat(span.included()).isTrue());
