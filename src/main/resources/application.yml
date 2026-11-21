@@ -20,7 +20,11 @@ spring:
       enabled: true
 
 server:
-  forward-headers-strategy: framework
+  request:
+    header:
+      forwarded:
+        strategy: framework
+        use-prefix: true
   error:
     include-message: never
     include-stacktrace: never

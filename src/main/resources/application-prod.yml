@@ -8,6 +8,3 @@ hawaii:
     administrator:
       username: ${RAINGAUGE_ADMIN_USERNAME}
       password: ${RAINGAUGE_ADMIN_PASSWORD}
-
-server:
-  forward-headers-strategy: framework

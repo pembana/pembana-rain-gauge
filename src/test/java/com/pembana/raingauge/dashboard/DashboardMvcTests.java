@@ -231,7 +231,9 @@ class DashboardMvcTests {
 	@Test
 	void pageMetadataPreservesForwardedPortAndPrefix() throws Exception {
 		this.mockMvc.perform(get("http://internal:8080/about-data")
-				.header("Forwarded", "proto=https;host=\"rain.example.test:8443\"")
+				.header("X-Forwarded-Proto", "https")
+				.header("X-Forwarded-Host", "rain.example.test")
+				.header("X-Forwarded-Port", "8443")
 				.header("X-Forwarded-Prefix", "/rain"))
 				.andExpect(status().isOk())
 				.andExpect(content().string(containsString(

@@ -2,6 +2,7 @@ gg:
   jte:
     development-mode: true
     use-precompiled-templates: false
+    class-directory: target/jte-classes
 
 logging:
   level:
